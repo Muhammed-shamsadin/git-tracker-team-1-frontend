@@ -307,7 +307,7 @@ export function DataTable<T extends Record<string, any>>({
     // Calculate search input width based on content
     const searchPlaceholder = `Search ${searchableFields.join(", ")}...`;
     const searchInputWidth = Math.max(
-        200, // minimum width
+        300, // minimum width
         Math.min(
             400,
             globalFilter.length * 8 + 120,
