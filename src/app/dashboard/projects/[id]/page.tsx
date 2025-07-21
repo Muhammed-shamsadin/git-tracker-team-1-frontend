@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Project } from "@/types/Project";
-import { mockProjects } from "@/data/developers";
+import { mockProjects } from "@/data/projects";
 import { useParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 

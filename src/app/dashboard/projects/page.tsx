@@ -11,7 +11,7 @@ import type {
 } from "@/components/data-table/types";
 import { Eye, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { mockProjects } from "@/data/developers";
+import { mockProjects } from "@/data/projects";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
