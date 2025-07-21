@@ -1,0 +1,106 @@
+"use client";
+
+import { Bell, Search, User } from "lucide-react";
+import { usePathname } from "next/navigation";
+
+import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+
+import React from "react";
+
+export default function AppNavbar() {
+    const pathname = usePathname();
+
+    const breadcrumbs = React.useMemo(() => {
+        const parts = pathname.split("/").filter(Boolean);
+        return parts.map((part, index) => {
+            const href = `/${parts.slice(0, index + 1).join("/")}`;
+            return {
+                label: part.charAt(0).toUpperCase() + part.slice(1),
+                href,
+                isLast: index === parts.length - 1,
+            };
+        });
+    }, [pathname]);
+
+    return (
+        <header className="top-0 z-50 sticky bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur border-b w-full">
+            <div className="flex items-center gap-4 px-6 h-14">
+                <SidebarTrigger className="-ml-1" />
+
+                <Breadcrumb>
+                    <BreadcrumbList>
+                        {breadcrumbs.map((crumb, index) => (
+                            <React.Fragment key={crumb.href}>
+                                {index > 0 && <BreadcrumbSeparator />}
+                                <BreadcrumbItem>
+                                    {crumb.isLast ? (
+                                        <BreadcrumbPage>
+                                            {crumb.label}
+                                        </BreadcrumbPage>
+                                    ) : (
+                                        <BreadcrumbLink href={crumb.href}>
+                                            {crumb.label}
+                                        </BreadcrumbLink>
+                                    )}
+                                </BreadcrumbItem>
+                            </React.Fragment>
+                        ))}
+                    </BreadcrumbList>
+                </Breadcrumb>
+
+                <div className="flex items-center gap-2 ml-auto">
+                    <div className="relative">
+                        <Search className="top-2.5 left-2.5 absolute w-4 h-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search... (⌘K)"
+                            className="pl-8 w-[300px]"
+                        />
+                    </div>
+                    <ThemeToggle />
+
+                    {/* Should add notifications dropdown */}
+                    <Button variant="ghost" size="icon">
+                        <Bell className="w-4 h-4" />
+                    </Button>
+
+                    {/* User account dropdown */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                                <User className="w-4 h-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem>Profile</DropdownMenuItem>
+                            <DropdownMenuItem>Settings</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem>Sign out</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </div>
+        </header>
+    );
+}
