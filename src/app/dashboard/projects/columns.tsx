@@ -14,7 +14,7 @@ export const projectColomns: ColumnDef<Project>[] = [
             const project = row.original;
             return (
                 <Link
-                    href={`/projects/${project.id}`}
+                    href={`/dashboard/projects/${project.id}`}
                     className="hover:underline"
                 >
                     {project.name}
