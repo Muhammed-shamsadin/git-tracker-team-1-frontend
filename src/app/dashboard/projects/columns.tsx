@@ -54,8 +54,17 @@ export const projectColomns: ColumnDef<Project>[] = [
     {
         accessorKey: "updatedDate",
         header: "Last Updated",
+        // Ensure the value is properly typed as a date for sorting
+        accessorFn: (row: any) => new Date(row.updatedDate),
+        // Custom sorting function that compares dates
+        sortingFn: (rowA: any, rowB: any, columnId: string) => {
+            const dateA = rowA.getValue(columnId) as Date;
+            const dateB = rowB.getValue(columnId) as Date;
+            return dateA.getTime() - dateB.getTime();
+        },
+        // Format the cell display
         cell: ({ row }) => {
-            const updatedDate = new Date(row.getValue("updatedDate"));
+            const updatedDate = row.getValue("updatedDate") as Date;
             const now = new Date();
             const timeDiff = Math.abs(now.getTime() - updatedDate.getTime());
             const seconds = Math.floor(timeDiff / 1000);
