@@ -1,12 +1,12 @@
 "use client";
 
-import { Repositories } from "@/types/Repositories";
+import { Repository } from "@/types/Repository";
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
-export const repositoryColumns: ColumnDef<Repositories>[] = [
+export const repositoryColumns: ColumnDef<Repository>[] = [
     {
         accessorKey: "name",
         header: "Repository",
@@ -26,6 +26,18 @@ export const repositoryColumns: ColumnDef<Repositories>[] = [
         accessorKey: "owner",
         header: "Owner",
         cell: ({ row }) => row.getValue("owner"),
+    },
+    {
+        accessorKey: "projectId",
+        header: "Project ID",
+        cell: ({ row }) => (
+            <Link
+                href={`/dashboard/projects/${row.getValue("projectId")}`}
+                className="hover:underline"
+            >
+                {row.getValue("projectId")}
+            </Link>
+        ),
     },
     {
         accessorKey: "branchCount",

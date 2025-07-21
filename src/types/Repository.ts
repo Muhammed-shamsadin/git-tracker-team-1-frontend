@@ -1,4 +1,4 @@
-export interface Repositories {
+export interface Repository {
     id: string; // Unique identifier for the repository
     name: string; // Name of the repository
     description?: string; // Optional description of the repository
