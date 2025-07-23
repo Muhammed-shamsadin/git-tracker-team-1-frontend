@@ -1,7 +1,7 @@
 export interface Project {
     id: string; // Unique identifier for the project
     name: string; // Name of the project
-    description?: string; // Optional description of the project
+    description: string; // Optional description of the project
     owner: string; // User ID of the project owner
     createdDate: string; // ISO date string
     updatedDate: string; // ISO date string
