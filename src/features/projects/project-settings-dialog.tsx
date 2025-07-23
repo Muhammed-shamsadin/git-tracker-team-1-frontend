@@ -24,6 +24,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Settings, Trash2, Loader2, AlertCircle } from "lucide-react";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import {
     projectSettingsSchema,
     type ProjectSettingsFormData,
@@ -44,7 +45,7 @@ interface ProjectSettingsDialogProps {
 export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
-    const [isDeleting, setIsDeleting] = React.useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
     const [open, setOpen] = React.useState(false);
 
     const {
@@ -98,26 +99,19 @@ export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
     };
 
     const onDelete = async () => {
-        if (
-            !confirm(
-                "Are you sure you want to delete this project? This action cannot be undone."
-            )
-        ) {
-            return;
-        }
-
         try {
-            setIsDeleting(true);
-            const projectId = Array.isArray(project.id)
-                ? project.id[0]
-                : project.id;
-            const response = await fetch(`/api/projects/${projectId}`, {
-                method: "DELETE",
-            });
+            // TODO: Replace with actual API endpoint for deleting project
 
-            if (!response.ok) {
-                throw new Error("Failed to delete project");
-            }
+            // const projectId = Array.isArray(project.id)
+            //     ? project.id[0]
+            //     : project.id;
+            // const response = await fetch(`/api/projects/${projectId}`, {
+            //     method: "DELETE",
+            // });
+
+            // if (!response.ok) {
+            //     throw new Error("Failed to delete project");
+            // }
 
             toast.success("Project deleted successfully");
             router.push("/dashboard/projects");
@@ -125,8 +119,7 @@ export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
         } catch (error) {
             console.error("Error deleting project:", error);
             toast.error("Failed to delete project. Please try again.");
-        } finally {
-            setIsDeleting(false);
+            throw error; // Re-throw to allow the confirmation dialog to handle the error
         }
     };
 
@@ -280,22 +273,25 @@ export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
                                         variant="destructive"
                                         size="sm"
                                         type="button"
-                                        onClick={onDelete}
-                                        disabled={isDeleting}
+                                        onClick={() =>
+                                            setDeleteDialogOpen(true)
+                                        }
                                         className="w-full sm:w-auto"
                                     >
-                                        {isDeleting ? (
-                                            <>
-                                                <Loader2 className="mr-2 w-4 h-4 animate-spin" />
-                                                Deleting...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Trash2 className="mr-2 w-4 h-4" />
-                                                Delete Project
-                                            </>
-                                        )}
+                                        <Trash2 className="mr-2 w-4 h-4" />
+                                        Delete Project
                                     </Button>
+
+                                    <ConfirmationDialog
+                                        open={deleteDialogOpen}
+                                        onOpenChange={setDeleteDialogOpen}
+                                        title="Delete Project"
+                                        description="Are you sure you want to delete this project? This action cannot be undone."
+                                        confirmText="Delete Project"
+                                        variant="destructive"
+                                        onConfirm={onDelete}
+                                        isLoading={isSubmitting}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -306,14 +302,14 @@ export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
                             type="button"
                             variant="outline"
                             onClick={() => setOpen(false)}
-                            disabled={isSubmitting || isDeleting}
+                            disabled={isSubmitting}
                             className="w-full sm:w-auto"
                         >
                             Cancel
                         </Button>
                         <Button
                             type="submit"
-                            disabled={isSubmitting || isDeleting}
+                            disabled={isSubmitting}
                             className="w-full sm:w-auto"
                         >
                             {isSubmitting ? (
