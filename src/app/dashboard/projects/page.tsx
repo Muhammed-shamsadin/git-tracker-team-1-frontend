@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { mockProjects } from "@/data/projects";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { ProjectCreateDialog } from "@/features/projects/project-create-dialog";
 
 export default function Projects() {
     const [projects, setProjects] = useState<Project[]>(mockProjects);
@@ -80,10 +81,7 @@ export default function Projects() {
                         Manage and monitor all your development projects
                     </p>
                 </div>
-                <Button>
-                    <Plus className="mr-2 w-4 h-4" />
-                    New Project
-                </Button>
+                <ProjectCreateDialog />
             </div>
             {/* Data Table */}
             <DataTable
