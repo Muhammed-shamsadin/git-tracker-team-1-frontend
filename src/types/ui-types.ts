@@ -1,3 +1,5 @@
+import * as React from "react";
+
 export default interface StatsCardProps {
     title: string;
     value: string | number;
