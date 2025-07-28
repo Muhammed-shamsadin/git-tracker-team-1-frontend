@@ -2,7 +2,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { set, z } from "zod";
 import { loginSchema } from "@/lib/validations/authValidations";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -28,40 +28,30 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { FaGoogle, FaGithub, FaSpinner } from "react-icons/fa";
+import { useAuthStore } from "@/stores/authStore";
+import { LoginData, LoginSchema } from "@/types/Auth";
+import { useState } from "react";
 
 export default function LoginPage() {
-    const [isLoading, setIsLoading] = React.useState(false);
-    const form = useForm<z.infer<typeof loginSchema>>({
-        resolver: zodResolver(loginSchema),
-        mode: "onTouched",
+    const { login, isLoading } = useAuthStore();
+    const [error, setError] = useState<string>("");
+    const form = useForm<LoginData>({
+        resolver: zodResolver(LoginSchema),
         defaultValues: {
             email: "",
             password: "",
-            remember: false,
+            rememberMe: false,
         },
     });
 
-    const onSubmit = async (values: z.infer<typeof loginSchema>) => {
-        setIsLoading(true);
-        toast(
-            <pre className="bg-slate-950 mt-2 p-4 rounded-md w-[340px]">
-                <code className="text-white">
-                    {JSON.stringify(values, null, 2)}
-                </code>
-            </pre>
-        );
+    const onSubmit = async (values: LoginData) => {
         try {
-            setTimeout(() => {
-                if (values.email === "fail@example.com") {
-                    toast.error("Invalid credentials. Please try again.");
-                    setIsLoading(false);
-                } else {
-                    window.location.href = "/dashboard";
-                }
-            }, 2000);
+            setError("");
+            await login(values);
+            toast.success("Login successful!");
+            window.location.href = "/dashboard";
         } catch (error) {
-            toast.error("An error occurred. Please try again.");
-            setIsLoading(false);
+            toast.error("Login failed. Please check your credentials.");
         }
     };
 
@@ -136,7 +126,7 @@ export default function LoginPage() {
                             {/* Remember Me Checkbox */}
                             <FormField
                                 control={form.control}
-                                name="remember"
+                                name="rememberMe"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-row items-center space-x-2">
                                         <FormControl>
