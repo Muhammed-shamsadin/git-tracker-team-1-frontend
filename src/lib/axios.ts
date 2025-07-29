@@ -1,3 +1,4 @@
+import { setAuthTokenCookie } from "@/stores/cookieUtils";
 import axios from "axios";
 
 const api = axios.create({
@@ -30,14 +31,18 @@ api.interceptors.response.use(
 
             try {
                 const refreshToken = localStorage.getItem("refresh-token");
-                const response = await axios.post("/auth/refresh", {
-                    refreshToken,
-                });
-                const { token } = response.data;
+                const response = await axios.post(
+                    "http://localhost:3001/api/auth/refresh",
+                    {
+                        refreshToken,
+                    }
+                );
 
-                localStorage.setItem("auth-token", token);
-                originalRequest.headers.Authorization = `Bearer ${token}`;
+                const access_token = response.data.data.access_token;
 
+                localStorage.setItem("auth-token", access_token);
+                originalRequest.headers.Authorization = `Bearer ${access_token}`;
+                setAuthTokenCookie(access_token);
                 return api(originalRequest);
             } catch (refreshError) {
                 localStorage.removeItem("auth-token");

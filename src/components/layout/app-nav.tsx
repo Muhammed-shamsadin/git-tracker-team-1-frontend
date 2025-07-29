@@ -25,9 +25,11 @@ import {
 } from "@/components/ui/breadcrumb";
 
 import React from "react";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function AppNavbar() {
     const pathname = usePathname();
+    const logout = useAuthStore((state) => state.logout);
 
     const breadcrumbs = React.useMemo(() => {
         const parts = pathname.split("/").filter(Boolean);
@@ -40,6 +42,10 @@ export default function AppNavbar() {
             };
         });
     }, [pathname]);
+    const handleLogout = () => {
+        logout();
+        window.location.href = "/login"; // Redirect to login after logout
+    };
 
     return (
         <header className="top-0 z-50 sticky bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur border-b w-full">
@@ -96,7 +102,9 @@ export default function AppNavbar() {
                             <DropdownMenuItem>Profile</DropdownMenuItem>
                             <DropdownMenuItem>Settings</DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>Sign out</DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleLogout}>
+                                Sign out
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>

@@ -108,20 +108,23 @@ export const useAuthStore = create<AuthState>()(
                         isAuthenticated: true,
                     });
                 } catch (error) {
-                    get().logout();
+                    console.error("Error checking auth:", error);
                 }
             },
 
             refreshToken: async () => {
                 const refreshToken = localStorage.getItem("refresh-token");
+                console.log(`Refreshing token with: ${refreshToken}`);
                 if (!refreshToken) throw new Error("No refresh token");
 
                 const response = await api.post("/auth/refresh", {
                     refreshToken,
                 });
+                console.log("Refresh response:", response);
                 const parsed = RefreshResponseSchema.parse(response.data);
+                console.log("Parsed refresh response:", parsed);
                 const { access_token } = parsed.data;
-
+                console.log(`New access token: ${access_token}`);
                 localStorage.setItem("auth-token", access_token);
                 setAuthTokenCookie(access_token);
                 set({ token: access_token });
