@@ -2,9 +2,7 @@
 
 import React from "react";
 import { useForm } from "react-hook-form";
-import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signupSchema } from "@/lib/validations/authValidations";
 import { toast } from "sonner";
 import { GitFork } from "lucide-react";
 import { Button } from "@/components/ui/button";
