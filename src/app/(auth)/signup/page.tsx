@@ -29,45 +29,30 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { FaGoogle, FaGithub, FaSpinner } from "react-icons/fa";
+import { useAuthStore } from "@/stores/authStore";
+import { RegisterData, RegisterSchema } from "@/types/Auth";
 
 export default function SignUpPage() {
-    const [userType, setUserType] = React.useState<"client" | "developer">(
-        "client"
-    );
-    const [isLoading, setIsLoading] = React.useState(false);
+    const { register, isLoading } = useAuthStore();
 
-    const form = useForm<z.infer<typeof signupSchema>>({
-        resolver: zodResolver(signupSchema),
+    const form = useForm<RegisterData>({
+        resolver: zodResolver(RegisterSchema),
         mode: "onTouched",
         defaultValues: {
             fullName: "",
             email: "",
             password: "",
+            userType: "client",
         },
     });
 
-    const onSubmit = async (values: z.infer<typeof signupSchema>) => {
-        const formData = { ...values, userType };
-        setIsLoading(true);
-        toast(
-            <pre className="bg-slate-950 mt-2 p-4 rounded-md w-[340px]">
-                <code className="text-white">
-                    {JSON.stringify(formData, null, 2)}
-                </code>
-            </pre>
-        );
+    const onSubmit = async (values: RegisterData) => {
         try {
-            setTimeout(() => {
-                if (values.email === "fail@example.com") {
-                    toast.error("Invalid credentials. Please try again.");
-                    setIsLoading(false);
-                } else {
-                    window.location.href = "/dashboard";
-                }
-            }, 3000);
+            await register(values);
+            toast.success("User registered successfully!");
+            window.location.href = "/login";
         } catch (error) {
-            toast.error("An error occurred. Please try again.");
-            setIsLoading(false);
+            toast.error("Signup failed! Please try again.");
         }
     };
 
@@ -157,50 +142,53 @@ export default function SignUpPage() {
                             />
 
                             {/* User Type Tabs */}
-                            <div className="space-y-2">
-                                <FormLabel>Account Type</FormLabel>
-                                <Tabs
-                                    value={userType}
-                                    onValueChange={(value) =>
-                                        setUserType(
-                                            value as "client" | "developer"
-                                        )
-                                    }
-                                >
-                                    <TabsList className="grid grid-cols-2 w-full">
-                                        <TabsTrigger value="client">
-                                            Client
-                                        </TabsTrigger>
-                                        <TabsTrigger value="developer">
-                                            Developer
-                                        </TabsTrigger>
-                                    </TabsList>
-                                    <TabsContent
-                                        value="client"
-                                        className="mt-2"
-                                    >
-                                        <p className="text-muted-foreground text-sm">
-                                            I'm looking to hire developers or
-                                            manage projects
-                                        </p>
-                                    </TabsContent>
-                                    <TabsContent
-                                        value="developer"
-                                        className="mt-2"
-                                    >
-                                        <p className="text-muted-foreground text-sm">
-                                            I'm a developer looking to work on
-                                            projects
-                                        </p>
-                                    </TabsContent>
-                                </Tabs>
-                            </div>
+                            <FormField
+                                control={form.control}
+                                name="userType"
+                                render={({ field }) => (
+                                    <div className="space-y-2">
+                                        <FormLabel>Account Type</FormLabel>
+                                        <Tabs
+                                            value={field.value}
+                                            onValueChange={field.onChange}
+                                        >
+                                            <TabsList className="grid grid-cols-2 w-full">
+                                                <TabsTrigger value="client">
+                                                    Client
+                                                </TabsTrigger>
+                                                <TabsTrigger value="developer">
+                                                    Developer
+                                                </TabsTrigger>
+                                            </TabsList>
+                                            <TabsContent
+                                                value="client"
+                                                className="mt-2"
+                                            >
+                                                <p className="text-muted-foreground text-sm">
+                                                    I'm looking to hire
+                                                    developers or manage
+                                                    projects
+                                                </p>
+                                            </TabsContent>
+                                            <TabsContent
+                                                value="developer"
+                                                className="mt-2"
+                                            >
+                                                <p className="text-muted-foreground text-sm">
+                                                    I'm a developer looking to
+                                                    work on projects
+                                                </p>
+                                            </TabsContent>
+                                        </Tabs>
+                                    </div>
+                                )}
+                            />
 
                             {/* Submit Button */}
                             <Button
                                 type="submit"
                                 className="flex justify-center items-center w-full"
-                                disabled={isLoading || !form.formState.isValid}
+                                disabled={isLoading}
                                 aria-busy={isLoading}
                             >
                                 {isLoading && (
