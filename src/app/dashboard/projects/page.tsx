@@ -40,7 +40,7 @@ export default function Projects() {
             label: "Delete",
             onClick: (row) => {
                 setProjects((prev) =>
-                    prev.filter((project) => project.id !== row.id)
+                    prev.filter((project) => project._id !== row._id)
                 );
                 toast.success(`Deleted project: ${row.name}`);
             },
@@ -88,7 +88,7 @@ export default function Projects() {
                 data={projects}
                 columns={projectColomns}
                 rowActions={rowActions}
-                searchableFields={["name", "owner"]}
+                searchableFields={["name"]}
                 filters={filters}
                 statusConfig={statusConfig}
                 enableRowSelection={true}

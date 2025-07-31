@@ -8,7 +8,7 @@ import {
     UpdateProjectData,
     AssignRemoveDevelopersData,
 } from "@/types/Project";
-import { z } from "zod";
+import { json, z } from "zod";
 
 interface ProjectState {
     projects: Project[];
@@ -72,7 +72,13 @@ export const useProjectStore = create<ProjectState>()(
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.post("/projects", data);
-                    const newProject = ProjectSchema.parse(response.data.data);
+                    // Defensive: check if repoLimit exists, else set to undefined
+                    const projectData = {
+                        ...response.data.data,
+                        repoLimit: response.data.data.repoLimit ?? undefined,
+                    };
+                    const newProject = ProjectSchema.parse(projectData);
+
                     set((state) => ({
                         projects: [...state.projects, newProject],
                         isLoading: false,
@@ -83,6 +89,7 @@ export const useProjectStore = create<ProjectState>()(
                         error: error.message || "Failed to create project",
                         isLoading: false,
                     });
+                    return undefined;
                 }
             },
 

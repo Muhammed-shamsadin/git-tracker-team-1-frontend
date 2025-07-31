@@ -24,17 +24,18 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Plus, Loader2, AlertCircle } from "lucide-react";
-import {
-    projectSettingsSchema,
-    type ProjectSettingsFormData,
-} from "@/lib/validations/projectValidations";
+
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/stores/authStore";
+import { useProjectStore } from "@/stores/projectStore";
+import { CreateProjectData, CreateProjectSchema } from "@/types/Project";
 
 export function ProjectCreateDialog() {
+    const { user } = useAuthStore();
+    const { createProject, isLoading } = useProjectStore();
     const router = useRouter();
-    const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [open, setOpen] = React.useState(false);
 
     const {
@@ -44,8 +45,8 @@ export function ProjectCreateDialog() {
         reset,
         setValue,
         watch,
-    } = useForm<ProjectSettingsFormData>({
-        resolver: zodResolver(projectSettingsSchema),
+    } = useForm<CreateProjectData>({
+        resolver: zodResolver(CreateProjectSchema),
         defaultValues: {
             name: "",
             description: "",
@@ -55,33 +56,19 @@ export function ProjectCreateDialog() {
 
     const currentStatus = watch("status");
 
-    const onSubmit = async (data: ProjectSettingsFormData) => {
+    const onSubmit = async (data: CreateProjectData) => {
         try {
-            setIsSubmitting(true);
+            const newProject = await createProject(data);
 
-            // TODO: Replace with actual API endpoint for creating a project
-            // const response = await fetch('/api/projects', {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //     },
-            //     body: JSON.stringify(data),
-            // });
-
-            // if (!response.ok) {
-            //     throw new Error('Failed to create project');
-            // }
-
-            // Simulate successful creation
-            toast.success("Project created successfully!");
-            toast.info(`Submitted Data: ${JSON.stringify(data, null, 2)}`);
-            setOpen(false);
-            router.refresh();
+            if (newProject) {
+                toast.success("Project created successfully!");
+                setOpen(false);
+                reset(); // Reset the form
+                router.refresh();
+            }
         } catch (error) {
             console.error("Error creating project:", error);
             toast.error("Failed to create project. Please try again.");
-        } finally {
-            setIsSubmitting(false);
         }
     };
 
@@ -151,7 +138,7 @@ export function ProjectCreateDialog() {
                                 </div>
                                 <Textarea
                                     id="description"
-                                    placeholder="Enter project description (optional)"
+                                    placeholder="Enter project description"
                                     rows={4}
                                     className={cn("w-full min-h-[120px]", {
                                         "border-destructive focus-visible:ring-destructive/50":
@@ -215,23 +202,22 @@ export function ProjectCreateDialog() {
                             type="button"
                             variant="outline"
                             onClick={() => setOpen(false)}
-                            disabled={isSubmitting}
+                            disabled={isLoading}
                             className="w-full sm:w-auto"
                         >
                             Cancel
                         </Button>
-                        <Button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="w-full sm:w-auto"
-                        >
-                            {isSubmitting ? (
+                        <Button type="submit" disabled={isLoading}>
+                            {isLoading ? (
                                 <>
                                     <Loader2 className="mr-2 w-4 h-4 animate-spin" />
                                     Creating...
                                 </>
                             ) : (
-                                "Create Project"
+                                <>
+                                    <Plus className="mr-2 w-4 h-4" />
+                                    Create Project
+                                </>
                             )}
                         </Button>
                     </DialogFooter>

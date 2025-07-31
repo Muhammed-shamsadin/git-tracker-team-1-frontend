@@ -1,11 +1,11 @@
-import { z } from "zod";
+import { optional, z } from "zod";
 
 export const ProjectSchema = z.object({
     _id: z.string(),
     name: z.string(),
     description: z.string(),
     status: z.enum(["active", "inactive"]),
-    repoLimit: z.number(),
+    repoLimit: z.number().optional(),
     clientId: z.string(),
     developers: z.array(z.string()),
     repositories: z.array(z.string()),
@@ -17,12 +17,13 @@ export type Project = z.infer<typeof ProjectSchema>;
 
 export const CreateProjectSchema = z.object({
     name: z.string().min(1, "Project name is required"),
-    description: z.string().optional(),
-    status: z.enum(["active", "inactive"]).default("active"),
+    description: z.string(),
+    status: z.enum(["active", "inactive"]),
     repoLimit: z
         .number()
         .int()
-        .positive("Repository limit must be a positive number"),
+        .positive("Repository limit must be a positive number")
+        .optional(),
 });
 
 export type CreateProjectData = z.infer<typeof CreateProjectSchema>;
