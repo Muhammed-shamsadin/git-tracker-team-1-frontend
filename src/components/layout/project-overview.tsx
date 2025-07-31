@@ -16,7 +16,7 @@ export function ProjectOverview() {
     // TODO: Replace with actual project fetching logic
     // For now, we will use a mock project from the mockProjects array
     const projectId = useParams();
-    const project = mockProjects.find((p) => p.id === projectId.id);
+    const project = mockProjects.find((p) => p._id === projectId._id);
 
     return (
         <div className="space-y-4">

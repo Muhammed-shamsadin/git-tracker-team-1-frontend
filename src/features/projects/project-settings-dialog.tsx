@@ -25,17 +25,14 @@ import {
 } from "@/components/ui/select";
 import { Settings, Trash2, Loader2, AlertCircle } from "lucide-react";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import {
-    projectSettingsSchema,
-    type ProjectSettingsFormData,
-} from "@/lib/validations/projectValidations";
+import { UpdateProjectSchema, UpdateProjectData } from "@/types/Project";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 interface ProjectSettingsDialogProps {
     project: {
-        id: string | string[];
+        _id: string | string[];
         name: string;
         description: string;
         status: string;
@@ -55,23 +52,23 @@ export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
         reset,
         setValue,
         watch,
-    } = useForm<ProjectSettingsFormData>({
-        resolver: zodResolver(projectSettingsSchema),
+    } = useForm<UpdateProjectData>({
+        resolver: zodResolver(UpdateProjectSchema),
         defaultValues: {
             name: project.name,
             description: project.description || "",
-            status: project.status as "active" | "maintenance" | "archived",
+            status: project.status as "active" | "inactive",
         },
     });
 
     const currentStatus = watch("status");
 
-    const onSubmit = async (data: ProjectSettingsFormData) => {
+    const onSubmit = async (data: UpdateProjectData) => {
         try {
             setIsSubmitting(true);
-            const projectId = Array.isArray(project.id)
-                ? project.id[0]
-                : project.id;
+            const projectId = Array.isArray(project._id)
+                ? project._id[0]
+                : project._id;
             // TODO: Replace with actual API endpoint for updating project settings
             // const response = await fetch(`/api/projects/${projectId}`, {
             //     method: "PATCH",
@@ -128,7 +125,7 @@ export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
             reset({
                 name: project.name,
                 description: project.description || "",
-                status: project.status as "active" | "maintenance" | "archived",
+                status: project.status as "active" | "inactive",
             });
         }
     }, [open, project, reset]);

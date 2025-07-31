@@ -94,6 +94,7 @@ export default function Projects() {
                 enableRowSelection={true}
                 onRowSelectionChange={handleRowSelectionChange}
                 pageSize={10}
+                rowIdAccessor="_id"
             />
         </div>
     );

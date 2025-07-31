@@ -14,7 +14,7 @@ export const projectColomns: ColumnDef<Project>[] = [
             const project = row.original;
             return (
                 <Link
-                    href={`/dashboard/projects/${project.id}`}
+                    href={`/dashboard/projects/${project._id}`}
                     className="hover:underline"
                 >
                     {project.name}
@@ -23,55 +23,53 @@ export const projectColomns: ColumnDef<Project>[] = [
         },
     },
 
+    // {
+    //     accessorKey: "owner",
+    //     header: "Owner",
+    //     cell: ({ row }) => row.getValue("owner"),
+    // },
     {
-        accessorKey: "owner",
-        header: "Owner",
-        cell: ({ row }) => row.getValue("owner"),
-    },
-    {
-        accessorKey: "repoCount",
         header: "Repository Count",
-        cell: ({ row }) => (
-            <Badge variant="secondary">{row.getValue("repoCount")}</Badge>
-        ),
+        accessorFn: (row) => row.repositories?.length ?? 0,
+        cell: ({ row }) => {
+            const repositories = row.original.repositories || [];
+            return <Badge variant="secondary">{repositories.length}</Badge>;
+        },
     },
     {
-        accessorKey: "memberCount",
-        header: "Member Count",
-        cell: ({ row }) => (
-            <Badge variant="secondary">{row.getValue("memberCount")}</Badge>
-        ),
+        header: "Developers Count",
+        accessorFn: (row) => row.developers?.length ?? 0,
+        cell: ({ row }) => {
+            const developers = row.original.developers || [];
+            return <Badge variant="secondary">{developers.length}</Badge>;
+        },
     },
     {
-        accessorKey: "createdDate",
+        accessorKey: "createdAt",
         header: "Created Date",
         cell: ({ row }) => (
             <div className="text-center">
-                {new Date(row.getValue("createdDate")).toLocaleDateString()}
+                {new Date(row.original.createdAt).toLocaleDateString()}
             </div>
         ),
     },
     {
-        accessorKey: "updatedDate",
+        accessorKey: "updatedAt",
         header: "Last Updated",
-        // Ensure the value is properly typed as a date for sorting
-        accessorFn: (row: any) => new Date(row.updatedDate),
-        // Custom sorting function that compares dates
+        accessorFn: (row: any) => new Date(row.updatedAt),
         sortingFn: (rowA: any, rowB: any, columnId: string) => {
             const dateA = rowA.getValue(columnId) as Date;
             const dateB = rowB.getValue(columnId) as Date;
             return dateA.getTime() - dateB.getTime();
         },
-        // Format the cell display
         cell: ({ row }) => {
-            const updatedDate = row.getValue("updatedDate") as Date;
+            const updatedDate = new Date(row.original.updatedAt);
             const now = new Date();
             const timeDiff = Math.abs(now.getTime() - updatedDate.getTime());
             const seconds = Math.floor(timeDiff / 1000);
             const minutes = Math.floor(seconds / 60);
             const hours = Math.floor(minutes / 60);
             const days = Math.floor(hours / 24);
-
             if (days > 0) return `${days} days ago`;
             if (hours > 0) return `${hours} hours ago`;
             if (minutes > 0) return `${minutes} minutes ago`;
