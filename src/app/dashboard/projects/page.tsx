@@ -11,17 +11,16 @@ import type {
 } from "@/components/data-table/types";
 import { Eye, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { mockProjects } from "@/data/projects";
+
 import { useProjectStore } from "@/stores/projectStore";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+
 import { ProjectCreateDialog } from "@/features/projects/project-create-dialog";
 import { useRouter } from "next/navigation";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 
 export default function Projects() {
     const router = useRouter();
-    const { fetchProjects, projects, isLoading, error, deleteProject } =
+    const { fetchClientsProjects, projects, isLoading, error, deleteProject } =
         useProjectStore();
     const [selectedRows, setSelectedRows] = useState<Project[]>([]);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -31,8 +30,8 @@ export default function Projects() {
 
     // Fetch projects on mount
     useEffect(() => {
-        fetchProjects();
-    }, [fetchProjects]);
+        fetchClientsProjects();
+    }, [fetchClientsProjects]);
 
     const handleDeleteClick = (row: Project) => {
         setProjectToDelete(row);
