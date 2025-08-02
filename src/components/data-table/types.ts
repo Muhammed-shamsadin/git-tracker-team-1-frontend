@@ -45,6 +45,7 @@ export interface DataTableProps<T> {
     pageSize?: number;
     enableRowSelection?: boolean;
     onRowSelectionChange?: (selectedRows: T[]) => void;
+    initialSort?: SortingState[];
 }
 
 export interface PaginationState {

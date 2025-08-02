@@ -11,9 +11,7 @@ import type {
 } from "@/components/data-table/types";
 import { Eye, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-
 import { useProjectStore } from "@/stores/projectStore";
-
 import { ProjectCreateDialog } from "@/features/projects/project-create-dialog";
 import { useRouter } from "next/navigation";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -136,6 +134,7 @@ export default function Projects() {
                     onRowSelectionChange={handleRowSelectionChange}
                     pageSize={10}
                     rowIdAccessor="_id"
+                    initialSort={[{ id: "updatedAt", desc: true }]}
                 />
             )}
         </div>
