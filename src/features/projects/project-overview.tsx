@@ -7,16 +7,43 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectStats } from "./project-stats";
 import { RecentActivity } from "./recent-activity";
 import { ProjectHealth } from "./project_health";
-import RepositoriesPage from "./repositories";
-import TeamPage from "./team";
+import RepositoriesPage from "../../components/layout/repositories";
+import TeamPage from "../../components/layout/team";
 import { ProjectSettingsDialog } from "@/features/projects/project-settings-dialog";
-import { mockProjects } from "@/data/projects";
+import { useProjectStore } from "@/stores/projectStore";
 import { useParams } from "next/navigation";
+import { useEffect } from "react";
 export function ProjectOverview() {
-    // TODO: Replace with actual project fetching logic
-    // For now, we will use a mock project from the mockProjects array
-    const projectId = useParams();
-    const project = mockProjects.find((p) => p._id === projectId._id);
+    const params = useParams();
+    const projectId = params.id as string;
+    const {
+        currentProject,
+        fetchProjectById,
+        isLoading,
+        error,
+        clearCurrentProject,
+    } = useProjectStore();
+
+    useEffect(() => {
+        if (projectId) {
+            fetchProjectById(projectId);
+        }
+        return () => {
+            clearCurrentProject();
+        };
+    }, [projectId, fetchProjectById, clearCurrentProject]);
+
+    if (isLoading) {
+        return <div>Loading project details...</div>;
+    }
+
+    if (error) {
+        return <div className="text-red-500">Error: {error}</div>;
+    }
+
+    if (!currentProject) {
+        return <div>Project not found.</div>;
+    }
 
     return (
         <div className="space-y-4">
@@ -28,17 +55,18 @@ export function ProjectOverview() {
                     <div>
                         <div className="flex items-center gap-2">
                             <h1 className="font-bold text-2xl">
-                                Web Application
+                                {currentProject.name}
                             </h1>
-                            <Badge variant="secondary">active</Badge>
+                            <Badge variant="secondary">
+                                {currentProject.status}
+                            </Badge>
                         </div>
                         <p className="text-muted-foreground">
-                            Main customer-facing web application built with
-                            React and Next.js
+                            {currentProject.description}
                         </p>
                     </div>
                 </div>
-                {project && <ProjectSettingsDialog project={project} />}
+                <ProjectSettingsDialog project={currentProject} />
             </div>
 
             <Tabs defaultValue="overview" className="w-full">
