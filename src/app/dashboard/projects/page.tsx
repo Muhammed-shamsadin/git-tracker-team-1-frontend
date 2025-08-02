@@ -17,17 +17,36 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ProjectCreateDialog } from "@/features/projects/project-create-dialog";
 import { useRouter } from "next/navigation";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 
 export default function Projects() {
     const router = useRouter();
     const { fetchProjects, projects, isLoading, error, deleteProject } =
         useProjectStore();
     const [selectedRows, setSelectedRows] = useState<Project[]>([]);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [projectToDelete, setProjectToDelete] = useState<Project | null>(
+        null
+    );
 
     // Fetch projects on mount
     useEffect(() => {
         fetchProjects();
     }, [fetchProjects]);
+
+    const handleDeleteClick = (row: Project) => {
+        setProjectToDelete(row);
+        setDeleteDialogOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (projectToDelete) {
+            await deleteProject(projectToDelete._id);
+            toast.success(`Deleted project: ${projectToDelete.name}`);
+            setProjectToDelete(null);
+            setDeleteDialogOpen(false);
+        }
+    };
 
     const rowActions: RowAction<Project>[] = [
         {
@@ -48,10 +67,7 @@ export default function Projects() {
             icon: <Trash2 className="w-4 h-4" />,
             label: "Delete",
             variant: "destructive",
-            onClick: async (row) => {
-                await deleteProject(row._id);
-                toast.success(`Deleted project: ${row.name}`);
-            },
+            onClick: handleDeleteClick,
         },
     ];
 
@@ -91,6 +107,16 @@ export default function Projects() {
                 </div>
                 <ProjectCreateDialog />
             </div>
+            {/* Confirmation Dialog for Delete */}
+            <ConfirmationDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                title="Delete Project"
+                description={`Are you sure you want to delete the project "${projectToDelete?.name}"? This action cannot be undone.`}
+                onConfirm={handleConfirmDelete}
+                confirmText="Delete"
+                variant="destructive"
+            />
             {/* Loading/Error States */}
             {isLoading && (
                 <div className="py-8 text-center">Loading projects...</div>
