@@ -17,7 +17,7 @@ export type Project = z.infer<typeof ProjectSchema>;
 
 export const CreateProjectSchema = z.object({
     name: z.string().min(1, "Project name is required"),
-    description: z.string(),
+    description: z.string().min(1, "Description is required"),
     status: z.enum(["active", "inactive"]),
     repoLimit: z
         .number()

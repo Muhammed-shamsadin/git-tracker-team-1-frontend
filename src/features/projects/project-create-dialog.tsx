@@ -41,12 +41,13 @@ export function ProjectCreateDialog() {
     const {
         register,
         handleSubmit,
-        formState: { errors },
+        formState: { errors, isValid },
         reset,
         setValue,
         watch,
     } = useForm<CreateProjectData>({
         resolver: zodResolver(CreateProjectSchema),
+        mode: "onTouched",
         defaultValues: {
             name: "",
             description: "",
@@ -61,7 +62,9 @@ export function ProjectCreateDialog() {
             const newProject = await createProject(data);
 
             if (newProject) {
-                toast.success("Project created successfully!");
+                toast.success(
+                    `Project ${newProject.name} was created successfully!`
+                );
                 setOpen(false);
                 reset(); // Reset the form
                 router.refresh();
@@ -207,7 +210,7 @@ export function ProjectCreateDialog() {
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={isLoading}>
+                        <Button type="submit" disabled={!isValid || isLoading}>
                             {isLoading ? (
                                 <>
                                     <Loader2 className="mr-2 w-4 h-4 animate-spin" />
