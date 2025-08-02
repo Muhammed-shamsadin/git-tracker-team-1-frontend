@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -26,25 +27,43 @@ import {
 
 import React from "react";
 import { useAuthStore } from "@/stores/authStore";
+import { useProjectStore } from "@/stores/projectStore";
 
 export default function AppNavbar() {
     const pathname = usePathname();
     const logout = useAuthStore((state) => state.logout);
+    const { currentProject, isLoading } = useProjectStore();
 
     const breadcrumbs = React.useMemo(() => {
         const parts = pathname.split("/").filter(Boolean);
+
         return parts.map((part, index) => {
             const href = `/${parts.slice(0, index + 1).join("/")}`;
+            let label = part
+                .replace(/-/g, " ")
+                .replace(/\b\w/g, (c) => c.toUpperCase());
+
+            if (index > 0 && parts[index - 1] === "projects") {
+                if (currentProject && part === currentProject._id) {
+                    label = currentProject.name;
+                } else if (isLoading) {
+                    label = "Loading...";
+                } else {
+                    label = part;
+                }
+            }
+
             return {
-                label: part.charAt(0).toUpperCase() + part.slice(1),
+                label,
                 href,
                 isLast: index === parts.length - 1,
             };
         });
-    }, [pathname]);
+    }, [pathname, currentProject, isLoading]);
+
     const handleLogout = () => {
         logout();
-        window.location.href = "/login"; // Redirect to login after logout
+        window.location.href = "/login";
     };
 
     return (
@@ -84,12 +103,10 @@ export default function AppNavbar() {
                     </div>
                     <ThemeToggle />
 
-                    {/* Should add notifications dropdown */}
                     <Button variant="ghost" size="icon">
                         <Bell className="w-4 h-4" />
                     </Button>
 
-                    {/* User account dropdown */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">

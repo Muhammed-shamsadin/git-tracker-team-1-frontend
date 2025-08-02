@@ -11,9 +11,10 @@ import RepositoriesPage from "../../components/layout/repositories";
 import TeamPage from "../../components/layout/team";
 import { ProjectSettingsDialog } from "@/features/projects/project-settings-dialog";
 import { useProjectStore } from "@/stores/projectStore";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 export function ProjectOverview() {
+    const router = useRouter();
     const params = useParams();
     const projectId = params.id as string;
     const {
@@ -49,7 +50,11 @@ export function ProjectOverview() {
         <div className="space-y-4">
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => router.back()}
+                    >
                         <ArrowLeft className="w-4 h-4" />
                     </Button>
                     <div>
