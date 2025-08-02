@@ -4,6 +4,7 @@ import { Project } from "@/types/Project";
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
+import { timeAgo } from "@/lib/timeAgo";
 import Link from "next/link";
 
 export const projectColomns: ColumnDef<Project>[] = [
@@ -62,19 +63,7 @@ export const projectColomns: ColumnDef<Project>[] = [
             const dateB = rowB.getValue(columnId) as Date;
             return dateA.getTime() - dateB.getTime();
         },
-        cell: ({ row }) => {
-            const updatedDate = new Date(row.original.updatedAt);
-            const now = new Date();
-            const timeDiff = Math.abs(now.getTime() - updatedDate.getTime());
-            const seconds = Math.floor(timeDiff / 1000);
-            const minutes = Math.floor(seconds / 60);
-            const hours = Math.floor(minutes / 60);
-            const days = Math.floor(hours / 24);
-            if (days > 0) return `${days} days ago`;
-            if (hours > 0) return `${hours} hours ago`;
-            if (minutes > 0) return `${minutes} minutes ago`;
-            return `${seconds} seconds ago`;
-        },
+        cell: ({ row }) => timeAgo(row.original.updatedAt),
     },
     {
         accessorKey: "status",

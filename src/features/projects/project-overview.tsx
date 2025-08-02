@@ -81,7 +81,7 @@ export function ProjectOverview() {
                     <TabsTrigger value="team">Team</TabsTrigger>
                 </TabsList>
                 <TabsContent value="overview" className="space-y-4">
-                    <ProjectStats />
+                    <ProjectStats {...currentProject} />
                     <ProjectHealth />
                     <RecentActivity />
                 </TabsContent>

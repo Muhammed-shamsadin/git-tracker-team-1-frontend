@@ -81,8 +81,7 @@ export default function Projects() {
             type: "select",
             options: [
                 { label: "Active", value: "active" },
-                { label: "Archived", value: "archived" },
-                { label: "Completed", value: "completed" },
+                { label: "Inactive", value: "inactive" },
             ],
         },
     ];

@@ -85,7 +85,7 @@ export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
         } catch (error) {
             console.error("Error deleting project:", error);
             toast.error("Failed to delete project. Please try again.");
-            throw error; 
+            throw error;
         }
     };
 
@@ -208,16 +208,10 @@ export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
                                                 Active
                                             </div>
                                         </SelectItem>
-                                        <SelectItem value="maintenance">
-                                            <div className="flex items-center gap-2">
-                                                <span className="bg-amber-500 rounded-full w-2 h-2" />
-                                                Maintenance
-                                            </div>
-                                        </SelectItem>
-                                        <SelectItem value="archived">
+                                        <SelectItem value="inactive">
                                             <div className="flex items-center gap-2">
                                                 <span className="bg-gray-500 rounded-full w-2 h-2" />
-                                                Archived
+                                                Inactive
                                             </div>
                                         </SelectItem>
                                     </SelectContent>
