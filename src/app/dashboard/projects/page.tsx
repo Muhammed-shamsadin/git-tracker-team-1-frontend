@@ -15,21 +15,33 @@ import { useProjectStore } from "@/stores/projectStore";
 import { ProjectCreateDialog } from "@/features/projects/project-create-dialog";
 import { useRouter } from "next/navigation";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function Projects() {
     const router = useRouter();
-    const { fetchClientsProjects, projects, isLoading, error, deleteProject } =
-        useProjectStore();
+    const {
+        fetchClientsProjects,
+        fetchAllProjects,
+        projects,
+        isLoading,
+        error,
+        deleteProject,
+    } = useProjectStore();
+    const { user } = useAuthStore();
     const [selectedRows, setSelectedRows] = useState<Project[]>([]);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(
         null
     );
 
-    // Fetch projects on mount
+    // Fetch projects on mount based on userType
     useEffect(() => {
-        fetchClientsProjects();
-    }, [fetchClientsProjects]);
+        if (user?.userType === "superadmin") {
+            fetchAllProjects();
+        } else if (user?.userType === "client") {
+            fetchClientsProjects();
+        }
+    }, [user?.userType, fetchAllProjects, fetchClientsProjects]);
 
     const handleDeleteClick = (row: Project) => {
         setProjectToDelete(row);

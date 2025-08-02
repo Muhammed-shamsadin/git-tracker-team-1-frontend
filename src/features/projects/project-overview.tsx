@@ -89,7 +89,7 @@ export function ProjectOverview() {
                     <RepositoriesPage />
                 </TabsContent>
                 <TabsContent value="team" className="space-y-4">
-                    <TeamPage />
+                    <TeamPage {...currentProject} />
                 </TabsContent>
             </Tabs>
         </div>

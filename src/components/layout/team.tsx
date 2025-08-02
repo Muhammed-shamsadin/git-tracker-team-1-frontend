@@ -21,6 +21,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { AddDeveloperDialog } from "@/features/projects/add-developer-dialog";
+import { Project } from "@/types/Project";
 
 interface TeamMember {
     id: string;
@@ -55,7 +56,7 @@ const teamMembers: TeamMember[] = [
     },
 ];
 
-export default function TeamPage() {
+export default function TeamPage(currentProject: Project) {
     const [members, setMembers] = useState<TeamMember[]>(teamMembers);
 
     const getInitials = (name: string) => {
@@ -90,7 +91,7 @@ export default function TeamPage() {
                         Manage your project team and their roles
                     </p>
                 </div>
-                <AddDeveloperDialog />
+                <AddDeveloperDialog projectId={currentProject._id} />
             </div>
 
             <Card>

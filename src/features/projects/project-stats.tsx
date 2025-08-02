@@ -20,7 +20,7 @@ export function ProjectStats(currentProject: Project) {
             },
             {
                 title: "Total Commits",
-                value: currentProject.totalCommits ?? "73",
+                value: currentProject?.totalCommits ?? "73",
                 icon: AlertCircle,
             },
             {
