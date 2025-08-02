@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { DataTable } from "@/components/data-table/DataTable";
 import { projectColomns } from "./columns";
 import { Project } from "@/types/Project";
@@ -12,20 +12,29 @@ import type {
 import { Eye, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { mockProjects } from "@/data/projects";
+import { useProjectStore } from "@/stores/projectStore";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ProjectCreateDialog } from "@/features/projects/project-create-dialog";
+import { useRouter } from "next/navigation";
 
 export default function Projects() {
-    const [projects, setProjects] = useState<Project[]>(mockProjects);
+    const router = useRouter();
+    const { fetchProjects, projects, isLoading, error, deleteProject } =
+        useProjectStore();
     const [selectedRows, setSelectedRows] = useState<Project[]>([]);
+
+    // Fetch projects on mount
+    useEffect(() => {
+        fetchProjects();
+    }, [fetchProjects]);
 
     const rowActions: RowAction<Project>[] = [
         {
             icon: <Eye className="w-4 h-4" />,
             label: "View",
             onClick: (row) => {
-                toast.success(`Viewing project: ${row.name}`);
+                router.push(`/dashboard/projects/${row._id}`);
             },
         },
         {
@@ -38,10 +47,9 @@ export default function Projects() {
         {
             icon: <Trash2 className="w-4 h-4" />,
             label: "Delete",
-            onClick: (row) => {
-                setProjects((prev) =>
-                    prev.filter((project) => project._id !== row._id)
-                );
+            variant: "destructive",
+            onClick: async (row) => {
+                await deleteProject(row._id);
                 toast.success(`Deleted project: ${row.name}`);
             },
         },
@@ -83,19 +91,28 @@ export default function Projects() {
                 </div>
                 <ProjectCreateDialog />
             </div>
+            {/* Loading/Error States */}
+            {isLoading && (
+                <div className="py-8 text-center">Loading projects...</div>
+            )}
+            {error && (
+                <div className="py-4 text-red-500 text-center">{error}</div>
+            )}
             {/* Data Table */}
-            <DataTable
-                data={projects}
-                columns={projectColomns}
-                rowActions={rowActions}
-                searchableFields={["name"]}
-                filters={filters}
-                statusConfig={statusConfig}
-                enableRowSelection={true}
-                onRowSelectionChange={handleRowSelectionChange}
-                pageSize={10}
-                rowIdAccessor="_id"
-            />
+            {!isLoading && !error && (
+                <DataTable
+                    data={projects}
+                    columns={projectColomns}
+                    rowActions={rowActions}
+                    searchableFields={["name"]}
+                    filters={filters}
+                    statusConfig={statusConfig}
+                    enableRowSelection={true}
+                    onRowSelectionChange={handleRowSelectionChange}
+                    pageSize={10}
+                    rowIdAccessor="_id"
+                />
+            )}
         </div>
     );
 }
