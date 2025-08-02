@@ -108,7 +108,9 @@ export default function Dashboard() {
                     </h1>
                     <p className="text-muted-foreground">
                         Welcome back,{" "}
-                        <b className="text-foreground">{user?.fullName}</b>!
+                        <span className="font-bold text-foreground">
+                            {`${user?.fullName.split(" ")[0]} ! `}
+                        </span>
                         Here's what's happening with your repositories.
                     </p>
                 </div>

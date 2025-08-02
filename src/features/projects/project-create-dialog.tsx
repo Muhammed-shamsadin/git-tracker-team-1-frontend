@@ -78,11 +78,11 @@ export function ProjectCreateDialog() {
     const statusVariant =
         {
             active: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-            maintenance:
-                "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
             archived:
                 "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400",
-        }[currentStatus as "active" | "maintenance" | "archived"] ||
+            deleted:
+                "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+        }[currentStatus as "active" | "archived" | "deleted"] ||
         "bg-gray-100 text-gray-800";
     return (
         <>
@@ -186,10 +186,16 @@ export function ProjectCreateDialog() {
                                                     Active
                                                 </div>
                                             </SelectItem>
-                                            <SelectItem value="inactive">
+                                            <SelectItem value="archived">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="bg-gray-500 rounded-full w-2 h-2" />
-                                                    Inactive
+                                                    <span className="bg-gray-400 rounded-full w-2 h-2" />
+                                                    Archived
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="deleted">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="bg-red-500 rounded-full w-2 h-2" />
+                                                    Deleted
                                                 </div>
                                             </SelectItem>
                                         </SelectContent>

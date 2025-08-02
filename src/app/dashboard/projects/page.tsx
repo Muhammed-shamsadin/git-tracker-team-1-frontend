@@ -83,7 +83,7 @@ export default function Projects() {
     const statusConfig: StatusConfig = {
         active: { icon: "🟢", label: "Active", color: "green" },
         archived: { icon: "🔒", label: "Archived", color: "gray" },
-        completed: { icon: "✅", label: "Completed", color: "blue" },
+        deleted: { icon: "🗑️", label: "Deleted", color: "red" },
     };
 
     const filters: FilterConfig[] = [
@@ -93,7 +93,8 @@ export default function Projects() {
             type: "select",
             options: [
                 { label: "Active", value: "active" },
-                { label: "Inactive", value: "inactive" },
+                { label: "Archived", value: "archived" },
+                { label: "Deleted", value: "deleted" },
             ],
         },
     ];
@@ -113,7 +114,11 @@ export default function Projects() {
                         Manage and monitor all your development projects
                     </p>
                 </div>
-                <ProjectCreateDialog />
+                {user &&
+                    (user.userType === "client" ||
+                        user.userType === "superadmin") && (
+                        <ProjectCreateDialog />
+                    )}
             </div>
             {/* Confirmation Dialog for Delete */}
             <ConfirmationDialog

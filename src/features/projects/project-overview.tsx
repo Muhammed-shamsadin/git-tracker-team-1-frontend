@@ -13,9 +13,11 @@ import { ProjectSettingsDialog } from "@/features/projects/project-settings-dial
 import { useProjectStore } from "@/stores/projectStore";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useAuthStore } from "@/stores/authStore";
 export function ProjectOverview() {
     const router = useRouter();
     const params = useParams();
+    const { user } = useAuthStore();
     const projectId = params.id as string;
     const {
         currentProject,
@@ -34,7 +36,7 @@ export function ProjectOverview() {
         };
     }, [projectId, fetchProjectById, clearCurrentProject]);
 
-    if (isLoading) {
+    if (isLoading || !user) {
         return <div>Loading project details...</div>;
     }
 
@@ -71,7 +73,11 @@ export function ProjectOverview() {
                         </p>
                     </div>
                 </div>
-                <ProjectSettingsDialog project={currentProject} />
+                {user &&
+                    (user.userType === "client" ||
+                        user.userType === "superadmin") && (
+                        <ProjectSettingsDialog project={currentProject} />
+                    )}
             </div>
 
             <Tabs defaultValue="overview" className="w-full">

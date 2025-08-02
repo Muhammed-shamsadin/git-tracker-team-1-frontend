@@ -1,10 +1,10 @@
-import { optional, z } from "zod";
+import { z } from "zod";
 
 export const ProjectSchema = z.object({
     _id: z.string(),
     name: z.string(),
     description: z.string(),
-    status: z.enum(["active", "inactive"]),
+    status: z.enum(["active", "archived", "deleted"]),
     repoLimit: z.number().optional(),
     clientId: z.string(),
     developers: z.array(z.string()),
@@ -18,7 +18,7 @@ export type Project = z.infer<typeof ProjectSchema>;
 export const CreateProjectSchema = z.object({
     name: z.string().min(1, "Project name is required"),
     description: z.string().min(1, "Description is required"),
-    status: z.enum(["active", "inactive"]),
+    status: z.enum(["active", "archived", "deleted"]),
     repoLimit: z
         .number()
         .int()
