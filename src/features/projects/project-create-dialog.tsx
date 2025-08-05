@@ -52,6 +52,7 @@ export function ProjectCreateDialog() {
             name: "",
             description: "",
             status: "active",
+            repoLimit: 10,
         },
     });
 
@@ -60,18 +61,18 @@ export function ProjectCreateDialog() {
     const onSubmit = async (data: CreateProjectData) => {
         try {
             const newProject = await createProject(data);
-
             if (newProject) {
                 toast.success(
                     `Project ${newProject.name} was created successfully!`
                 );
                 setOpen(false);
-                reset(); // Reset the form
+                reset();
                 router.refresh();
             }
-        } catch (error) {
-            console.error("Error creating project:", error);
-            toast.error("Failed to create project. Please try again.");
+        } catch (error: any) {
+            toast.error(
+                error?.message || "Failed to create project. Please try again."
+            );
         }
     };
 
@@ -108,6 +109,7 @@ export function ProjectCreateDialog() {
 
                         <div className="space-y-6">
                             <div className="space-y-4">
+                                {/* Project Name */}
                                 <div className="space-y-2">
                                     <div className="flex justify-between items-center">
                                         <Label htmlFor="name">
@@ -130,7 +132,7 @@ export function ProjectCreateDialog() {
                                         {...register("name")}
                                     />
                                 </div>
-
+                                {/* Description */}
                                 <div className="space-y-2">
                                     <div className="flex justify-between items-center">
                                         <Label htmlFor="description">
@@ -154,7 +156,7 @@ export function ProjectCreateDialog() {
                                         {...register("description")}
                                     />
                                 </div>
-
+                                {/* Status */}
                                 <div className="space-y-2">
                                     <div className="flex justify-between items-center">
                                         <Label>Status</Label>
@@ -200,6 +202,33 @@ export function ProjectCreateDialog() {
                                             </SelectItem>
                                         </SelectContent>
                                     </Select>
+                                </div>
+                                {/* Repo Limit */}
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                        <Label htmlFor="repoLimit">
+                                            Repository Limit
+                                        </Label>
+                                        {errors.repoLimit && (
+                                            <span className="flex items-center gap-1 text-destructive text-xs">
+                                                <AlertCircle className="w-3.5 h-3.5" />
+                                                {errors.repoLimit.message}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <Input
+                                        id="repoLimit"
+                                        type="number"
+                                        min={1}
+                                        placeholder="Enter repository limit"
+                                        className={cn("w-full", {
+                                            "border-destructive focus-visible:ring-destructive/50":
+                                                errors.repoLimit,
+                                        })}
+                                        {...register("repoLimit", {
+                                            valueAsNumber: true,
+                                        })}
+                                    />
                                 </div>
                             </div>
                         </div>

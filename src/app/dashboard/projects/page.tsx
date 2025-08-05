@@ -20,9 +20,11 @@ import { useAuthStore } from "@/stores/authStore";
 export default function Projects() {
     const router = useRouter();
     const {
-        fetchClientsProjects,
         fetchAllProjects,
+        fetchClientsProjects,
+        fetchDeveloperProjects,
         projects,
+        paginatedProjects,
         isLoading,
         error,
         deleteProject,
@@ -40,8 +42,15 @@ export default function Projects() {
             fetchAllProjects();
         } else if (user?.userType === "client") {
             fetchClientsProjects();
+        } else if (user?.userType === "developer") {
+            fetchDeveloperProjects();
         }
-    }, [user?.userType, fetchAllProjects, fetchClientsProjects]);
+    }, [
+        user?.userType,
+        fetchAllProjects,
+        fetchClientsProjects,
+        fetchDeveloperProjects,
+    ]);
 
     const handleDeleteClick = (row: Project) => {
         setProjectToDelete(row);
@@ -102,6 +111,11 @@ export default function Projects() {
         setSelectedRows(rows);
     }, []);
 
+    // Use paginated data if available
+    const tableData = paginatedProjects?.projects?.length
+        ? paginatedProjects.projects
+        : projects;
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -140,15 +154,15 @@ export default function Projects() {
             {/* Data Table */}
             {!isLoading && !error && (
                 <DataTable
-                    data={projects}
+                    data={tableData}
                     columns={projectColomns}
                     rowActions={rowActions}
-                    searchableFields={["name"]}
+                    searchableFields={["name", "clientId"]}
                     filters={filters}
                     statusConfig={statusConfig}
                     enableRowSelection={true}
                     onRowSelectionChange={handleRowSelectionChange}
-                    pageSize={10}
+                    pageSize={paginatedProjects?.limit || 10}
                     rowIdAccessor="_id"
                     initialSort={[{ id: "updatedAt", desc: true }]}
                 />

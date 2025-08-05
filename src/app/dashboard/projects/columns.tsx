@@ -4,7 +4,7 @@ import { Project } from "@/types/Project";
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
-import { timeAgo } from "@/lib/timeAgo";
+import { timeAgo } from "@/lib/utils";
 import Link from "next/link";
 
 export const projectColomns: ColumnDef<Project>[] = [
@@ -23,11 +23,20 @@ export const projectColomns: ColumnDef<Project>[] = [
             );
         },
     },
-
     // {
-    //     accessorKey: "owner",
-    //     header: "Owner",
-    //     cell: ({ row }) => row.getValue("owner"),
+    //     header: "Client",
+    //     accessorFn: (row) =>
+    //         typeof row.clientId === "object"
+    //             ? row.clientId?.name
+    //             : row.clientId,
+    //     cell: ({ row }) => {
+    //         const client = row.original.clientId;
+    //         return (
+    //             <span>
+    //                 {typeof client === "object" ? client?.name : client}
+    //             </span>
+    //         );
+    //     },
     // },
     {
         header: "Repository Count",
@@ -37,13 +46,22 @@ export const projectColomns: ColumnDef<Project>[] = [
             return <Badge variant="secondary">{repositories.length}</Badge>;
         },
     },
+    // {
+    //     header: "Developer Count",
+    //     accessorFn: (row) =>
+    //         Array.isArray(row.projectDevelopers)
+    //             ? row.projectDevelopers.length
+    //             : row.developers?.length ?? 0,
+    //     cell: ({ row }) => {
+    //         const devs =
+    //             row.original.projectDevelopers || row.original.developers || [];
+    //         return <Badge variant="secondary">{devs.length}</Badge>;
+    //     },
+    // },
     {
-        header: "Developers Count",
-        accessorFn: (row) => row.developers?.length ?? 0,
-        cell: ({ row }) => {
-            const developers = row.original.developers || [];
-            return <Badge variant="secondary">{developers.length}</Badge>;
-        },
+        header: "Repo Limit",
+        accessorFn: (row) => row.repoLimit ?? 1,
+        cell: ({ row }) => <span>{row.original.repoLimit ?? 1}</span>,
     },
     {
         accessorKey: "createdAt",
@@ -75,7 +93,9 @@ export const projectColomns: ColumnDef<Project>[] = [
                         ? "default"
                         : row.getValue("status") === "archived"
                         ? "secondary"
-                        : "destructive"
+                        : row.getValue("status") === "deleted"
+                        ? "destructive"
+                        : "outline"
                 }
             >
                 {row.getValue("status")}

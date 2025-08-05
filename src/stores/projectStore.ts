@@ -49,6 +49,7 @@ interface ProjectState {
         projectId: string,
         developerId: string
     ) => Promise<any[]>;
+    fetchDeveloperProjects: () => Promise<void>;
     clearCurrentProject: () => void;
 }
 
@@ -329,6 +330,22 @@ export const useProjectStore = create<ProjectState>()(
                 }
             },
 
+            fetchDeveloperProjects: async () => {
+                set({ isLoading: true, error: null });
+                try {
+                    const response = await api.get(
+                        `/users/developers/me/projects`
+                    );
+                    set({ projects: response.data.data, isLoading: false });
+                } catch (error: any) {
+                    set({
+                        error:
+                            error.message ||
+                            "Failed to fetch developer projects",
+                        isLoading: false,
+                    });
+                }
+            },
             clearCurrentProject: () => {
                 set({ currentProject: null });
             },
