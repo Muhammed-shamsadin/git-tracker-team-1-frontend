@@ -92,7 +92,7 @@ export default function Projects() {
     const statusConfig: StatusConfig = {
         active: { icon: "🟢", label: "Active", color: "green" },
         archived: { icon: "🔒", label: "Archived", color: "gray" },
-        deleted: { icon: "🗑️", label: "Deleted", color: "red" },
+        completed: { icon: "✅", label: "Completed", color: "blue" },
     };
 
     const filters: FilterConfig[] = [
@@ -103,7 +103,7 @@ export default function Projects() {
             options: [
                 { label: "Active", value: "active" },
                 { label: "Archived", value: "archived" },
-                { label: "Deleted", value: "deleted" },
+                { label: "Completed", value: "completed" },
             ],
         },
     ];

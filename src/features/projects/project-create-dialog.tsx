@@ -66,7 +66,6 @@ export function ProjectCreateDialog() {
                     `Project ${newProject.name} was created successfully!`
                 );
                 setOpen(false);
-                reset();
                 router.refresh();
             }
         } catch (error: any) {
