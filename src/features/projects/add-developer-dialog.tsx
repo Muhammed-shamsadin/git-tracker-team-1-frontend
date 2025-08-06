@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -13,12 +12,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Loader2, Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import {
     Command,
     CommandEmpty,
@@ -31,24 +25,22 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
+import { Check, ChevronsUpDown, Loader2, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import api from "@/lib/axios";
 
-// Mock data - replace with actual API call
 type Developer = {
-    id: string;
-    name: string;
+    _id: string;
+    fullName: string;
     email: string;
-    avatar?: string;
 };
 
-// Mock developers data - replace with API call
-const mockDevelopers: Developer[] = [
-    { id: "1", name: "John Doe", email: "john@example.com" },
-    { id: "2", name: "Jane Smith", email: "jane@example.com" },
-    { id: "3", name: "Bob Johnson", email: "bob@example.com" },
-    { id: "4", name: "Alice Williams", email: "alice@example.com" },
-];
+interface Props {
+    projectId: string;
+}
 
-export function AddDeveloperDialog() {
+export function AddDeveloperDialog({ projectId }: Props) {
     const router = useRouter();
     const [open, setOpen] = React.useState(false);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -56,47 +48,52 @@ export function AddDeveloperDialog() {
     const [selectedDeveloper, setSelectedDeveloper] =
         React.useState<Developer | null>(null);
     const [isComboboxOpen, setIsComboboxOpen] = React.useState(false);
+    const [developers, setDevelopers] = React.useState<Developer[]>([]);
+    const [loading, setLoading] = React.useState(false);
 
-    // Filter developers based on search query (name or email)
+    // Fetch real developers
+    React.useEffect(() => {
+        const fetchDevelopers = async () => {
+            setLoading(true);
+            try {
+                const res = await api.get("/users/developers");
+                const devs = res.data?.data || [];
+                setDevelopers(devs);
+            } catch (err) {
+                toast.error("Failed to load developers");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (open) fetchDevelopers();
+    }, [open]);
+
     const filteredDevelopers = React.useMemo(() => {
-        if (!searchQuery) return mockDevelopers;
         const query = searchQuery.toLowerCase();
-        return mockDevelopers.filter(
+        return developers.filter(
             (dev) =>
-                dev.name.toLowerCase().includes(query) ||
+                dev.fullName.toLowerCase().includes(query) ||
                 dev.email.toLowerCase().includes(query)
         );
-    }, [searchQuery]);
+    }, [searchQuery, developers]);
 
     const handleAddDeveloper = async () => {
         if (!selectedDeveloper) return;
 
         try {
             setIsSubmitting(true);
+            await api.patch(`/projects/${projectId}/developers`, {
+                developerIds: [selectedDeveloper._id],
+                action: "assign",
+            });
 
-            // TODO: Replace with actual API endpoint to add developer to project
-            // const response = await fetch(`/api/projects/${projectId}/developers`, {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //     },
-            //     body: JSON.stringify({
-            //         developerId: selectedDeveloper.id,
-            //         role: 'developer', // or get role from a role selector
-            //     }),
-            // });
-
-            // if (!response.ok) {
-            //     throw new Error('Failed to add developer to project');
-            // }
-
-            toast.success(`Added ${selectedDeveloper.name} to the project`);
+            toast.success(`Added ${selectedDeveloper.fullName} to the project`);
             setSelectedDeveloper(null);
             setSearchQuery("");
             setOpen(false);
             router.refresh();
         } catch (error) {
-            console.error("Error adding developer:", error);
             toast.error("Failed to add developer. Please try again.");
         } finally {
             setIsSubmitting(false);
@@ -123,59 +120,64 @@ export function AddDeveloperDialog() {
                 </DialogHeader>
 
                 <div className="space-y-6">
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label>Search Developer</Label>
-                            <Popover
-                                open={isComboboxOpen}
-                                onOpenChange={setIsComboboxOpen}
+                    <div className="space-y-2">
+                        <Label>Search Developer</Label>
+                        <Popover
+                            open={isComboboxOpen}
+                            onOpenChange={setIsComboboxOpen}
+                        >
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={isComboboxOpen}
+                                    className="justify-between w-full"
+                                >
+                                    {selectedDeveloper ? (
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex justify-center items-center bg-muted rounded-full w-6 h-6">
+                                                {selectedDeveloper.fullName.charAt(
+                                                    0
+                                                )}
+                                            </div>
+                                            <span>
+                                                {selectedDeveloper.fullName}
+                                            </span>
+                                            <span className="text-muted-foreground">
+                                                ({selectedDeveloper.email})
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        "Select developer..."
+                                    )}
+                                    <ChevronsUpDown className="opacity-50 ml-2 w-4 h-4 shrink-0" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                                className="p-0 w-full"
+                                align="start"
                             >
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        role="combobox"
-                                        aria-expanded={isComboboxOpen}
-                                        className="justify-between w-full"
-                                    >
-                                        {selectedDeveloper ? (
-                                            <div className="flex items-center gap-2">
-                                                <div className="flex justify-center items-center bg-muted rounded-full w-6 h-6">
-                                                    {selectedDeveloper.name.charAt(
-                                                        0
-                                                    )}
-                                                </div>
-                                                <span>
-                                                    {selectedDeveloper.name}
-                                                </span>
-                                                <span className="text-muted-foreground">
-                                                    ({selectedDeveloper.email})
-                                                </span>
+                                <Command>
+                                    <CommandInput
+                                        placeholder="Search by name or email..."
+                                        value={searchQuery}
+                                        onValueChange={setSearchQuery}
+                                    />
+                                    <CommandEmpty>
+                                        No developers found.
+                                    </CommandEmpty>
+                                    <CommandGroup className="max-h-[300px] overflow-y-auto">
+                                        {loading ? (
+                                            <div className="flex justify-center items-center p-3 text-muted-foreground text-sm">
+                                                <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                                                Loading...
                                             </div>
                                         ) : (
-                                            "Select developer..."
-                                        )}
-                                        <ChevronsUpDown className="opacity-50 ml-2 w-4 h-4 shrink-0" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent
-                                    className="p-0 w-full"
-                                    align="start"
-                                >
-                                    <Command>
-                                        <CommandInput
-                                            placeholder="Search by name or email..."
-                                            value={searchQuery}
-                                            onValueChange={setSearchQuery}
-                                        />
-                                        <CommandEmpty>
-                                            No developers found.
-                                        </CommandEmpty>
-                                        <CommandGroup className="max-h-[300px] overflow-y-auto">
-                                            {filteredDevelopers.map(
+                                            filteredDevelopers.map(
                                                 (developer) => (
                                                     <CommandItem
-                                                        key={developer.id}
-                                                        value={`${developer.name} ${developer.email}`}
+                                                        key={developer._id}
+                                                        value={`${developer.fullName} ${developer.email}`}
                                                         onSelect={() => {
                                                             setSelectedDeveloper(
                                                                 developer
@@ -189,22 +191,22 @@ export function AddDeveloperDialog() {
                                                         <Check
                                                             className={cn(
                                                                 "mr-2 w-4 h-4",
-                                                                selectedDeveloper?.id ===
-                                                                    developer.id
+                                                                selectedDeveloper?._id ===
+                                                                    developer._id
                                                                     ? "opacity-100"
                                                                     : "opacity-0"
                                                             )}
                                                         />
                                                         <div className="flex items-center gap-3">
                                                             <div className="flex justify-center items-center bg-muted rounded-full w-8 h-8">
-                                                                {developer.name.charAt(
+                                                                {developer.fullName.charAt(
                                                                     0
                                                                 )}
                                                             </div>
                                                             <div className="flex flex-col">
                                                                 <span>
                                                                     {
-                                                                        developer.name
+                                                                        developer.fullName
                                                                     }
                                                                 </span>
                                                                 <span className="text-muted-foreground text-xs">
@@ -216,26 +218,12 @@ export function AddDeveloperDialog() {
                                                         </div>
                                                     </CommandItem>
                                                 )
-                                            )}
-                                        </CommandGroup>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-                        </div>
-
-                        {/* Role selection can be added here */}
-                        {/* <div className="space-y-2">
-                            <Label>Role</Label>
-                            <Select>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="developer">Developer</SelectItem>
-                                    <SelectItem value="admin">Admin</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div> */}
+                                            )
+                                        )}
+                                    </CommandGroup>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
                 </div>
 

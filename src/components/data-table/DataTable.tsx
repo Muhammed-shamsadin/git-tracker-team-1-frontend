@@ -66,8 +66,9 @@ export function DataTable<T extends Record<string, any>>({
     pageSize = 10,
     enableRowSelection = true,
     onRowSelectionChange,
+    initialSort = [],
 }: DataTableProps<T>) {
-    const [sorting, setSorting] = useState<SortingState>([]);
+    const [sorting, setSorting] = useState<SortingState>(initialSort);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [globalFilter, setGlobalFilter] = useState<string>("");
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});

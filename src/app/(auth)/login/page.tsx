@@ -2,8 +2,6 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { set, z } from "zod";
-import { loginSchema } from "@/lib/validations/authValidations";
 import Link from "next/link";
 import { toast } from "sonner";
 import { GitFork } from "lucide-react";
@@ -47,6 +45,7 @@ export default function LoginPage() {
     const onSubmit = async (values: LoginData) => {
         try {
             setError("");
+            toast(`values: ${JSON.stringify(values)}`);
             await login(values);
             toast.success("Login successful!");
             window.location.href = "/dashboard";

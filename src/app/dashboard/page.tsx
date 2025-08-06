@@ -1,3 +1,5 @@
+"use client";
+
 import {
     FolderKanban,
     GitBranch,
@@ -17,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { QuickActionsMenu } from "@/features/dashboard/components/quick-action-menu";
+import { useAuthStore } from "@/stores/authStore";
 
 const recentProjects = [
     {
@@ -94,6 +97,7 @@ const stats = [
 ];
 
 export default function Dashboard() {
+    const { user } = useAuthStore();
     return (
         <div className="space-y-6">
             {/* Quick Actions */}
@@ -103,8 +107,11 @@ export default function Dashboard() {
                         Dashboard
                     </h1>
                     <p className="text-muted-foreground">
-                        Welcome back! Here's what's happening with your
-                        repositories.
+                        Welcome back,{" "}
+                        <span className="font-bold text-foreground">
+                            {`${user?.fullName.split(" ")[0]} ! `}
+                        </span>
+                        Here's what's happening with your repositories.
                     </p>
                 </div>
                 <QuickActionsMenu />

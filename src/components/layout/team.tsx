@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,6 +21,9 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { AddDeveloperDialog } from "@/features/projects/add-developer-dialog";
+import { Project } from "@/types/Project";
+import api from "@/lib/axios";
+import { useAuthStore } from "@/stores/authStore";
 
 interface TeamMember {
     id: string;
@@ -55,9 +58,38 @@ const teamMembers: TeamMember[] = [
     },
 ];
 
-export default function TeamPage() {
+export default function TeamPage(currentProject: Project) {
     const [members, setMembers] = useState<TeamMember[]>(teamMembers);
+    const [loading, setLoading] = useState(false);
+    const { user } = useAuthStore();
+    useEffect(() => {
+        const fetchTeamMembers = async () => {
+            setLoading(true);
+            try {
+                // Adjust endpoint as needed, e.g. `/projects/${currentProject._id}/developers`
+                const res = await api.get(
+                    `/projects/${currentProject._id}/developers`
+                );
+                const devs = res.data?.data || [];
+                // Map backend data to TeamMember type
+                const mappedMembers: TeamMember[] = devs.map((dev: any) => ({
+                    id: dev._id,
+                    name: dev.fullName,
+                    role: dev.role || "Intern",
+                    email: dev.email,
+                    joined: dev.joined || "Unknown",
+                    avatar: dev.avatar,
+                }));
+                setMembers(mappedMembers);
+            } catch (err) {
+                // Optionally handle error
+            } finally {
+                setLoading(false);
+            }
+        };
 
+        if (currentProject?._id) fetchTeamMembers();
+    }, [currentProject?._id]);
     const getInitials = (name: string) => {
         return name
             .split(" ")
@@ -78,7 +110,9 @@ export default function TeamPage() {
                 return "bg-gray-100 text-gray-800 hover:bg-gray-100";
         }
     };
-
+    if (!user) {
+        return <div>Loading...</div>;
+    }
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -90,7 +124,11 @@ export default function TeamPage() {
                         Manage your project team and their roles
                     </p>
                 </div>
-                <AddDeveloperDialog />
+                {user &&
+                    (user.userType === "client" ||
+                        user.userType === "superadmin") && (
+                        <AddDeveloperDialog projectId={currentProject._id} />
+                    )}
             </div>
 
             <Card>

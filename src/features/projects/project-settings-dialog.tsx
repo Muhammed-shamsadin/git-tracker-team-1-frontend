@@ -26,100 +26,66 @@ import {
 import { Settings, Trash2, Loader2, AlertCircle } from "lucide-react";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import {
-    projectSettingsSchema,
-    type ProjectSettingsFormData,
-} from "@/lib/validations/projectValidations";
+    Project,
+    UpdateProjectSchema,
+    UpdateProjectData,
+} from "@/types/Project";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useProjectStore } from "@/stores/projectStore";
 
 interface ProjectSettingsDialogProps {
-    project: {
-        id: string | string[];
-        name: string;
-        description: string;
-        status: string;
-    };
+    project: Project;
 }
 
 export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
     const router = useRouter();
-    const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const { updateProject, deleteProject, isLoading } = useProjectStore();
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
     const [open, setOpen] = React.useState(false);
 
     const {
         register,
         handleSubmit,
-        formState: { errors },
+        formState: { errors, isValid },
         reset,
         setValue,
         watch,
-    } = useForm<ProjectSettingsFormData>({
-        resolver: zodResolver(projectSettingsSchema),
+    } = useForm<UpdateProjectData>({
+        resolver: zodResolver(UpdateProjectSchema),
+        mode: "onChange",
         defaultValues: {
             name: project.name,
             description: project.description || "",
-            status: project.status as "active" | "maintenance" | "archived",
+            status: project.status,
         },
     });
 
     const currentStatus = watch("status");
 
-    const onSubmit = async (data: ProjectSettingsFormData) => {
+    const onSubmit = async (data: UpdateProjectData) => {
         try {
-            setIsSubmitting(true);
-            const projectId = Array.isArray(project.id)
-                ? project.id[0]
-                : project.id;
-            // TODO: Replace with actual API endpoint for updating project settings
-            // const response = await fetch(`/api/projects/${projectId}`, {
-            //     method: "PATCH",
-            //     headers: {
-            //         "Content-Type": "application/json",
-            //     },
-            //     body: JSON.stringify(data),
-            // });
-
-            // if (!response.ok) {
-            //     throw new Error("Failed to update project settings");
-            // }
-
-            // Simulate successful update
+            await updateProject(project._id, data);
             toast.success("Project settings updated successfully");
-            toast.info(`Submitted Data: ${JSON.stringify(data, null, 2)}`);
             setOpen(false);
             router.refresh();
         } catch (error) {
             console.error("Error updating project settings:", error);
             toast.error("Failed to update project settings. Please try again.");
-        } finally {
-            setIsSubmitting(false);
         }
     };
 
     const onDelete = async () => {
         try {
-            // TODO: Replace with actual API endpoint for deleting project
-
-            // const projectId = Array.isArray(project.id)
-            //     ? project.id[0]
-            //     : project.id;
-            // const response = await fetch(`/api/projects/${projectId}`, {
-            //     method: "DELETE",
-            // });
-
-            // if (!response.ok) {
-            //     throw new Error("Failed to delete project");
-            // }
-
-            toast.success("Project deleted successfully");
+            await deleteProject(project._id);
+            toast.success(`Project ${project.name} was deleted successfully`);
             router.push("/dashboard/projects");
             router.refresh();
         } catch (error) {
             console.error("Error deleting project:", error);
             toast.error("Failed to delete project. Please try again.");
-            throw error; // Re-throw to allow the confirmation dialog to handle the error
+            throw error;
         }
     };
 
@@ -128,7 +94,7 @@ export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
             reset({
                 name: project.name,
                 description: project.description || "",
-                status: project.status as "active" | "maintenance" | "archived",
+                status: project.status,
             });
         }
     }, [open, project, reset]);
@@ -136,11 +102,11 @@ export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
     const statusVariant =
         {
             active: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-            maintenance:
-                "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
             archived:
                 "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400",
-        }[currentStatus as "active" | "maintenance" | "archived"] ||
+            deleted:
+                "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+        }[currentStatus as "active" | "archived" | "deleted"] ||
         "bg-gray-100 text-gray-800";
 
     return (
@@ -242,16 +208,16 @@ export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
                                                 Active
                                             </div>
                                         </SelectItem>
-                                        <SelectItem value="maintenance">
-                                            <div className="flex items-center gap-2">
-                                                <span className="bg-amber-500 rounded-full w-2 h-2" />
-                                                Maintenance
-                                            </div>
-                                        </SelectItem>
                                         <SelectItem value="archived">
                                             <div className="flex items-center gap-2">
-                                                <span className="bg-gray-500 rounded-full w-2 h-2" />
+                                                <span className="bg-gray-400 rounded-full w-2 h-2" />
                                                 Archived
+                                            </div>
+                                        </SelectItem>
+                                        <SelectItem value="deleted">
+                                            <div className="flex items-center gap-2">
+                                                <span className="bg-red-500 rounded-full w-2 h-2" />
+                                                Deleted
                                             </div>
                                         </SelectItem>
                                     </SelectContent>
@@ -290,7 +256,7 @@ export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
                                         confirmText="Delete Project"
                                         variant="destructive"
                                         onConfirm={onDelete}
-                                        isLoading={isSubmitting}
+                                        isLoading={isLoading}
                                     />
                                 </div>
                             </div>
@@ -302,17 +268,17 @@ export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
                             type="button"
                             variant="outline"
                             onClick={() => setOpen(false)}
-                            disabled={isSubmitting}
+                            disabled={isLoading}
                             className="w-full sm:w-auto"
                         >
                             Cancel
                         </Button>
                         <Button
                             type="submit"
-                            disabled={isSubmitting}
+                            disabled={isLoading || !isValid}
                             className="w-full sm:w-auto"
                         >
-                            {isSubmitting ? (
+                            {isLoading ? (
                                 <>
                                     <Loader2 className="mr-2 w-4 h-4 animate-spin" />
                                     Saving...
