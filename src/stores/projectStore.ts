@@ -24,6 +24,7 @@ interface ProjectState {
     currentProject: Project | null;
     isLoading: boolean;
     error: string | null;
+    message: string | null;
     fetchAllProjects: (page?: number, limit?: number) => Promise<void>;
     fetchClientsProjects: () => Promise<void>;
     fetchProjectById: (id: string) => Promise<void>;
@@ -60,6 +61,7 @@ export const useProjectStore = create<ProjectState>()(
             currentProject: null,
             isLoading: false,
             error: null,
+            message: null,
 
             fetchAllProjects: async (page = 1, limit = 10) => {
                 set({ isLoading: true, error: null });
