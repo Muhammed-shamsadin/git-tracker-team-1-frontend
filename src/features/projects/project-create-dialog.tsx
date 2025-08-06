@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -85,6 +85,12 @@ export function ProjectCreateDialog() {
                 "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
         }[currentStatus as "active" | "archived" | "completed"] ||
         "bg-gray-100 text-gray-800";
+
+    useEffect(() => {
+        if (!open) {
+            reset();
+        }
+    }, [open, reset]);
     return (
         <>
             <Button className="gap-2" onClick={() => setOpen(true)}>

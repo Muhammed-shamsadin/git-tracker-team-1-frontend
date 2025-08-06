@@ -134,12 +134,23 @@ export const useProjectStore = create<ProjectState>()(
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.post("/projects", data);
-                    const newProject = response.data;
-                    set((state) => ({
-                        projects: [...state.projects, newProject],
-                        isLoading: false,
-                    }));
-                    return newProject;
+                    // Extract the actual project object from response
+                    const newProject = response.data?.data || response.data;
+                    // Only add to state if valid
+                    if (
+                        newProject &&
+                        newProject.name &&
+                        (newProject._id || newProject.id)
+                    ) {
+                        set((state) => ({
+                            projects: [...state.projects, newProject],
+                            isLoading: false,
+                        }));
+                        return newProject;
+                    } else {
+                        set({ isLoading: false });
+                        return undefined;
+                    }
                 } catch (error: any) {
                     set({
                         error: error.message || "Failed to create project",
