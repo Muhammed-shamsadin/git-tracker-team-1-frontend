@@ -8,7 +8,6 @@ import {
     UpdateProjectData,
     AssignRemoveDevelopersData,
 } from "@/types/Project";
-import { json, z } from "zod";
 import { useAuthStore } from "./authStore";
 
 interface PaginatedProjects {

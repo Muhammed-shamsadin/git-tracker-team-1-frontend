@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,7 @@ export function ProjectCreateDialog() {
     const { user } = useAuthStore();
     const { createProject, isLoading } = useProjectStore();
     const router = useRouter();
-    const [open, setOpen] = React.useState(false);
+    const [open, setOpen] = useState(false);
 
     const {
         register,
@@ -81,9 +81,9 @@ export function ProjectCreateDialog() {
             active: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
             archived:
                 "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400",
-            deleted:
-                "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-        }[currentStatus as "active" | "archived" | "deleted"] ||
+            completed:
+                "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+        }[currentStatus as "active" | "archived" | "completed"] ||
         "bg-gray-100 text-gray-800";
     return (
         <>
@@ -194,10 +194,10 @@ export function ProjectCreateDialog() {
                                                     Archived
                                                 </div>
                                             </SelectItem>
-                                            <SelectItem value="deleted">
+                                            <SelectItem value="completed">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="bg-red-500 rounded-full w-2 h-2" />
-                                                    Deleted
+                                                    <span className="bg-blue-500 rounded-full w-2 h-2" />
+                                                    Completed
                                                 </div>
                                             </SelectItem>
                                         </SelectContent>
