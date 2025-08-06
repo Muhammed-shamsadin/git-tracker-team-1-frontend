@@ -91,8 +91,8 @@ export default function Projects() {
 
     const statusConfig: StatusConfig = {
         active: { icon: "🟢", label: "Active", color: "green" },
-        archived: { icon: "🔒", label: "Archived", color: "gray" },
-        completed: { icon: "✅", label: "Completed", color: "blue" },
+        archived: { icon: "🗃️", label: "Archived", color: "gray" },
+        completed: { icon: "🏁", label: "Completed", color: "blue" },
     };
 
     const filters: FilterConfig[] = [
@@ -157,7 +157,7 @@ export default function Projects() {
                     data={tableData}
                     columns={projectColomns}
                     rowActions={rowActions}
-                    searchableFields={["name", "clientId"]}
+                    searchableFields={["name"]}
                     filters={filters}
                     statusConfig={statusConfig}
                     enableRowSelection={true}
