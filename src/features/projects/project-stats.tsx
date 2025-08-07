@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { timeAgo } from "@/lib/utils";
-import { Project } from "@/types/Project";
+import { ProjectDetail } from "@/types/Project";
 import {
     GitBranch,
     Users,
@@ -14,12 +14,17 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMemo } from "react";
 
-interface ProjectStatsProps extends Project {
+interface ProjectStatsProps {
+    project: ProjectDetail;
     isLoading?: boolean;
     error?: string | null;
 }
 
-export function ProjectStats(project: ProjectStatsProps) {
+export function ProjectStats({
+    project,
+    isLoading = false,
+    error,
+}: ProjectStatsProps) {
     const stats = useMemo(() => {
         if (!project) return [];
 
@@ -32,21 +37,27 @@ export function ProjectStats(project: ProjectStatsProps) {
             },
             {
                 title: "Team Members",
-                value: project.developers?.length ?? 0,
+                value: project.members?.length ?? 0,
                 icon: Users,
                 description: "Active team members",
+            },
+            {
+                title: "Commits",
+                value: project.commitsCount ?? 0,
+                icon: GitCommit,
+                description: "Total commits across repositories",
             },
             {
                 title: "Last Updated",
                 value: project.updatedAt ? timeAgo(project.updatedAt) : "Never",
                 icon: Clock,
                 description: "Last project update",
+                isString: true,
             },
-            // Add more stats as needed
         ];
     }, [project]);
 
-    if (project.error) {
+    if (error) {
         return (
             <Card className="bg-destructive/5 border-destructive/20">
                 <CardHeader className="pb-2">
@@ -56,9 +67,7 @@ export function ProjectStats(project: ProjectStatsProps) {
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-destructive/80 text-sm">
-                        {project.error}
-                    </p>
+                    <p className="text-destructive/80 text-sm">{error}</p>
                 </CardContent>
             </Card>
         );
@@ -66,7 +75,7 @@ export function ProjectStats(project: ProjectStatsProps) {
 
     return (
         <div className="gap-4 grid md:grid-cols-2 lg:grid-cols-4">
-            {project.isLoading
+            {isLoading
                 ? Array(4)
                       .fill(0)
                       .map((_, i) => (

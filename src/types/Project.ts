@@ -77,6 +77,10 @@ export const ProjectDetailSchema = ProjectSchema.extend({
                 name: z.string(),
                 email: z.string(),
             }),
+            url: z.string().url().optional(),
+            description: z.string().optional(),
+            commits: z.number().default(0),
+            contributors: z.string().optional(),
             status: z.string(),
             registeredAt: z.string(),
             lastUpdated: z.string(),
@@ -86,6 +90,10 @@ export const ProjectDetailSchema = ProjectSchema.extend({
     members: z.array(
         z.object({
             user_id: z.string(),
+            avatar: z.string().optional(),
+            location: z.string().optional(),
+            last_active: z.string().optional(),
+            commits: z.number().optional(),
             name: z.string(),
             email: z.string(),
             role: z.string(),

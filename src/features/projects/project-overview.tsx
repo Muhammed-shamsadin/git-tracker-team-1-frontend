@@ -13,6 +13,9 @@ import { ProjectHealth } from "./project_health";
 import { ProjectSettingsDialog } from "./project-settings-dialog";
 import { useProjectStore } from "@/stores/projectStore";
 import { useAuthStore } from "@/stores/authStore";
+import type { ProjectDetail } from "@/types/Project";
+import TeamPage from "@/components/layout/team";
+import RepositoriesPage from "@/components/layout/repositories";
 
 export function ProjectOverview() {
     const projectId = useParams().id as string;
@@ -58,7 +61,21 @@ export function ProjectOverview() {
     }
 
     if (!currentProject) {
-        return <div>Project not found.</div>;
+        return (
+            <div className="flex flex-col justify-center items-center space-y-4 min-h-[400px] text-center">
+                <AlertCircle className="w-12 h-12 text-muted-foreground" />
+                <div>
+                    <h3 className="font-semibold text-lg">Project not found</h3>
+                    <p className="text-muted-foreground">
+                        The project you're looking for doesn't exist or you
+                        don't have access to it.
+                    </p>
+                </div>
+                <Button onClick={() => router.push("/dashboard/projects")}>
+                    Back to Projects
+                </Button>
+            </div>
+        );
     }
 
     const { name, description, status } = currentProject;
@@ -100,7 +117,7 @@ export function ProjectOverview() {
                 </div>
                 {user?.userType &&
                     ["client", "superadmin"].includes(user.userType) && (
-                        <ProjectSettingsDialog project={currentProject} />
+                        <ProjectSettingsDialog />
                     )}
             </div>
 
@@ -111,19 +128,34 @@ export function ProjectOverview() {
                     <TabsTrigger value="team">Team</TabsTrigger>
                 </TabsList>
                 <TabsContent value="overview" className="space-y-6 pt-6">
-                    <ProjectStats {...currentProject} />
+                    <ProjectStats
+                        project={currentProject}
+                        isLoading={isLoading}
+                        error={error}
+                    />
                     <div className="gap-6 grid md:grid-cols-2">
-                        <ProjectHealth />
-                        <RecentActivity />
+                        <ProjectHealth
+                            project={currentProject}
+                            isLoading={isLoading}
+                        />
+                        <RecentActivity
+                            project={currentProject}
+                            isLoading={isLoading}
+                        />
                     </div>
                 </TabsContent>
                 <TabsContent value="repositories" className="pt-6">
-                    {/* <RepositoriesPage /> */}
-                    <h1>repo tab</h1>
+                    <RepositoriesPage />
                 </TabsContent>
                 <TabsContent value="team" className="pt-6">
-                    <h1>team tab</h1>
-                    {/* <TeamPage project={currentProject} /> */}
+                    <TeamPage
+                        {...{
+                            ...currentProject,
+                            repositories: currentProject.repositories.map(
+                                (repo: any) => repo.id
+                            ),
+                        }}
+                    />
                 </TabsContent>
             </Tabs>
         </div>
