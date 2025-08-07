@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { ArrowLeft, Settings, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,11 +14,8 @@ import { ProjectSettingsDialog } from "./project-settings-dialog";
 import { useProjectStore } from "@/stores/projectStore";
 import { useAuthStore } from "@/stores/authStore";
 
-interface ProjectOverviewProps {
-    projectId: string;
-}
-
-export function ProjectOverview({ projectId }: ProjectOverviewProps) {
+export function ProjectOverview() {
+    const projectId = useParams().id as string;
     const router = useRouter();
     const { user } = useAuthStore();
     const {

@@ -1,4 +1,11 @@
 import { ProjectOverview } from "@/features/projects/project-overview";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Project Details",
+    description:
+        "View and manage project details, repositories, and team members.",
+};
 
 export default function ProjectDetailPage() {
     return (
