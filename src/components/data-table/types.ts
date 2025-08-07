@@ -28,6 +28,7 @@ export interface RowAction<T> {
     icon?: ReactNode;
     onClick: (row: T) => void;
     variant?: "default" | "destructive";
+    visible?: (row: T) => boolean; // Optional visibility function
 }
 
 export interface SortingState {

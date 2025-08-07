@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { DataTable } from "@/components/data-table/DataTable";
 import { projectColomns } from "./columns";
 import { Project } from "@/types/Project";
@@ -16,41 +16,24 @@ import { ProjectCreateDialog } from "@/features/projects/project-create-dialog";
 import { useRouter } from "next/navigation";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useAuthStore } from "@/stores/authStore";
+import {
+    useRoleBasedProjects,
+    useProjectPermissions,
+} from "@/hooks/use-projects";
 
 export default function Projects() {
     const router = useRouter();
-    const {
-        fetchAllProjects,
-        fetchClientsProjects,
-        fetchDeveloperProjects,
-        projects,
-        paginatedProjects,
-        isLoading,
-        error,
-        deleteProject,
-    } = useProjectStore();
     const { user } = useAuthStore();
+    const { deleteProject } = useProjectStore();
+
+    // Use the new role-based hook for automatic project fetching
+    const { projects, isLoading, error } = useRoleBasedProjects();
+
     const [selectedRows, setSelectedRows] = useState<Project[]>([]);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(
         null
     );
-
-    // Fetch projects on mount based on userType
-    useEffect(() => {
-        if (user?.userType === "superadmin") {
-            fetchAllProjects();
-        } else if (user?.userType === "client") {
-            fetchClientsProjects();
-        } else if (user?.userType === "developer") {
-            fetchDeveloperProjects();
-        }
-    }, [
-        user?.userType,
-        fetchAllProjects,
-        fetchClientsProjects,
-        fetchDeveloperProjects,
-    ]);
 
     const handleDeleteClick = (row: Project) => {
         setProjectToDelete(row);
@@ -59,13 +42,35 @@ export default function Projects() {
 
     const handleConfirmDelete = async () => {
         if (projectToDelete) {
-            await deleteProject(projectToDelete._id);
-            toast.success(`Deleted project: ${projectToDelete.name}`);
+            const success = await deleteProject(projectToDelete._id);
+            if (success) {
+                toast.success(`Deleted project: ${projectToDelete.name}`);
+            } else {
+                toast.error("Failed to delete project");
+            }
             setProjectToDelete(null);
             setDeleteDialogOpen(false);
         }
     };
 
+    // Helper function to check permissions
+    const canEditProject = (project: Project) => {
+        if (!user) return false;
+        if (user.userType === "superadmin") return true;
+        if (user.userType === "client" && project.clientId === user._id)
+            return true;
+        return false;
+    };
+
+    const canDeleteProject = (project: Project) => {
+        if (!user) return false;
+        if (user.userType === "superadmin") return true;
+        if (user.userType === "client" && project.clientId === user._id)
+            return true;
+        return false;
+    };
+
+    // Create row actions based on permissions
     const rowActions: RowAction<Project>[] = [
         {
             icon: <Eye className="w-4 h-4" />,
@@ -79,13 +84,16 @@ export default function Projects() {
             label: "Edit",
             onClick: (row) => {
                 toast.success(`Editing project: ${row.name}`);
+                // TODO: Open edit dialog or navigate to edit page
             },
+            visible: (row) => canEditProject(row),
         },
         {
             icon: <Trash2 className="w-4 h-4" />,
             label: "Delete",
             variant: "destructive",
             onClick: handleDeleteClick,
+            visible: (row) => canDeleteProject(row),
         },
     ];
 
@@ -111,10 +119,9 @@ export default function Projects() {
         setSelectedRows(rows);
     }, []);
 
-    // Use paginated data if available
-    const tableData = paginatedProjects?.projects?.length
-        ? paginatedProjects.projects
-        : projects;
+    // Show create button only for clients and superadmins
+    const canCreateProject =
+        user && (user.userType === "client" || user.userType === "superadmin");
 
     return (
         <div className="space-y-6">
@@ -125,15 +132,17 @@ export default function Projects() {
                         Projects
                     </h1>
                     <p className="text-muted-foreground">
-                        Manage and monitor all your development projects
+                        {user?.userType === "superadmin" &&
+                            "Manage and monitor all development projects"}
+                        {user?.userType === "client" &&
+                            "Manage and monitor your projects"}
+                        {user?.userType === "developer" &&
+                            "View projects you're assigned to"}
                     </p>
                 </div>
-                {user &&
-                    (user.userType === "client" ||
-                        user.userType === "superadmin") && (
-                        <ProjectCreateDialog />
-                    )}
+                {canCreateProject && <ProjectCreateDialog />}
             </div>
+
             {/* Confirmation Dialog for Delete */}
             <ConfirmationDialog
                 open={deleteDialogOpen}
@@ -144,6 +153,7 @@ export default function Projects() {
                 confirmText="Delete"
                 variant="destructive"
             />
+
             {/* Loading/Error States */}
             {isLoading && (
                 <div className="py-8 text-center">Loading projects...</div>
@@ -151,18 +161,19 @@ export default function Projects() {
             {error && (
                 <div className="py-4 text-red-500 text-center">{error}</div>
             )}
+
             {/* Data Table */}
             {!isLoading && !error && (
                 <DataTable
-                    data={tableData}
+                    data={projects}
                     columns={projectColomns}
                     rowActions={rowActions}
                     searchableFields={["name"]}
                     filters={filters}
                     statusConfig={statusConfig}
-                    enableRowSelection={true}
+                    enableRowSelection={user?.userType === "superadmin"} // Only superadmins can bulk select
                     onRowSelectionChange={handleRowSelectionChange}
-                    pageSize={paginatedProjects?.limit || 10}
+                    pageSize={10}
                     rowIdAccessor="_id"
                     initialSort={[{ id: "updatedAt", desc: true }]}
                 />
