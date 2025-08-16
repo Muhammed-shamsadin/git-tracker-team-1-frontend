@@ -16,12 +16,15 @@ import { CommitGraphPlaceholder } from "@/features/projects/CommitGraphPlacehold
 import { RepositoriesTable } from "@/features/projects/RepositoriesTable";
 import { MembersTable } from "@/features/projects/MembersTable";
 import { useAuthStore } from "@/stores/authStore";
+import { useProjectPermissions } from "@/hooks/use-projects";
 
 export default function ProjectDetailsPage() {
     const { id } = useParams();
     const { user } = useAuthStore();
     const { currentProject, fetchProjectById, isLoading, error } =
         useProjectStore();
+    const { canManageMembers, isMember } =
+        useProjectPermissions(currentProject);
 
     useEffect(() => {
         if (id) fetchProjectById(id as string);
@@ -104,7 +107,7 @@ export default function ProjectDetailsPage() {
                                 Manage repositories associated with this project
                             </p>
                         </div>
-                        {user?.userType && (
+                        {isMember && (
                             <Button>
                                 <Plus className="mr-2 w-4 h-4" />
                                 Add Repository
@@ -125,7 +128,7 @@ export default function ProjectDetailsPage() {
                                 Manage team members and their roles
                             </p>
                         </div>
-                        {user?.userType && (
+                        {canManageMembers && (
                             <Button>
                                 <Plus className="mr-2 w-4 h-4" />
                                 Add Member
