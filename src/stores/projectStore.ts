@@ -109,6 +109,13 @@ export const useProjectStore = create<ProjectState>()(
             fetchProjectById: async (id: string) => {
                 set({ isLoading: true, error: null });
                 try {
+                    if (!id) {
+                        set({
+                            error: "Project ID is required",
+                            isLoading: false,
+                        });
+                        return;
+                    }
                     const response = await api.get(`/projects/${id}`);
                     set({
                         currentProject: response.data.data || response.data,

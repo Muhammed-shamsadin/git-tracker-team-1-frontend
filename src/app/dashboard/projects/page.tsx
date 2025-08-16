@@ -27,7 +27,7 @@ export default function Projects() {
     const { deleteProject } = useProjectStore();
 
     // Use the new role-based hook for automatic project fetching
-    const { projects, isLoading, error } = useRoleBasedProjects();
+    const { projects, isLoading, error, userRole } = useRoleBasedProjects();
 
     const [selectedRows, setSelectedRows] = useState<Project[]>([]);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

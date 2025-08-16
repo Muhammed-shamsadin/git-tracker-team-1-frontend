@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Activity } from "lucide-react";
 import { ProjectDetail } from "@/types/Project";
 
-interface ActivityItem {
+export interface ActivityItem {
     id: string | number;
     type: string;
     message: string;
