@@ -81,7 +81,6 @@ export default function ProjectDetailsPage() {
     return (
         <div className="space-y-6">
             <ProjectHeader project={currentProject} />
-            <ProjectStatsGrid project={currentProject} />
             <Tabs defaultValue="overview" className="space-y-6">
                 <TabsList>
                     <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -89,6 +88,7 @@ export default function ProjectDetailsPage() {
                     <TabsTrigger value="members">Members</TabsTrigger>
                 </TabsList>
                 <TabsContent value="overview" className="space-y-6">
+                    <ProjectStatsGrid project={currentProject} />
                     <div className="gap-6 grid md:grid-cols-2">
                         <RecentActivityList activities={dummyActivityItems} />
                         <CommitGraphPlaceholder />
@@ -125,10 +125,12 @@ export default function ProjectDetailsPage() {
                                 Manage team members and their roles
                             </p>
                         </div>
-                        <Button>
-                            <Plus className="mr-2 w-4 h-4" />
-                            Add Member
-                        </Button>
+                        {user?.userType && (
+                            <Button>
+                                <Plus className="mr-2 w-4 h-4" />
+                                Add Member
+                            </Button>
+                        )}
                     </div>
                     <MembersTable
                         members={currentProject.members}

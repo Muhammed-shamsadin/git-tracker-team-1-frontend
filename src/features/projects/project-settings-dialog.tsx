@@ -32,14 +32,20 @@ import {
 } from "@/types/Project";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useProjectStore } from "@/stores/projectStore";
 import { useEffect, useState } from "react";
 
 export function ProjectSettingsDialog() {
     const router = useRouter();
-    const { currentProject, updateProject, deleteProject, isLoading } =
-        useProjectStore();
+    const { id } = useParams();
+    const {
+        currentProject,
+        updateProject,
+        deleteProject,
+        isLoading,
+        fetchProjectById,
+    } = useProjectStore();
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [open, setOpen] = useState(false);
 
@@ -65,16 +71,14 @@ export function ProjectSettingsDialog() {
     const currentTags = watch("tags") || [];
 
     const onSubmit = async (data: UpdateProjectData) => {
-        if (!currentProject?._id) {
+        const projectId = currentProject?.id ?? (id as string | undefined);
+        if (!projectId) {
             toast.error("Project ID is missing. Cannot update project.");
             return;
         }
         try {
             console.log("Updating project with data:", data);
-            const result = await updateProject(
-                currentProject?._id as string,
-                data
-            );
+            const result = await updateProject(projectId, data);
             if (result) {
                 toast.success("Project settings updated successfully");
                 setOpen(false);
@@ -86,12 +90,13 @@ export function ProjectSettingsDialog() {
     };
 
     const onDelete = async () => {
-        if (!currentProject?._id) {
+        const projectId = currentProject?.id ?? (id as string | undefined);
+        if (!projectId) {
             toast.error("Project ID is missing. Cannot delete project.");
             return;
         }
         try {
-            const result = await deleteProject(currentProject._id);
+            const result = await deleteProject(projectId);
             if (result) {
                 toast.success(
                     `Project ${currentProject?.name} was deleted successfully`
@@ -107,15 +112,24 @@ export function ProjectSettingsDialog() {
 
     useEffect(() => {
         if (open) {
+            // if we don't have the project in store, try to fetch by route id
+            if (!currentProject?.id && id) {
+                fetchProjectById(id as string).catch((e) =>
+                    console.error(
+                        "Failed to fetch project for settings dialog",
+                        e
+                    )
+                );
+            }
+
             reset({
                 name: currentProject?.name,
                 description: currentProject?.description || "",
                 status: currentProject?.status,
                 tags: currentProject?.tags || [],
-                repoLimit: currentProject?.repoLimit || 10,
             });
         }
-    }, [open, currentProject, reset]);
+    }, [open, currentProject, reset, id, fetchProjectById]);
 
     const statusVariant =
         {

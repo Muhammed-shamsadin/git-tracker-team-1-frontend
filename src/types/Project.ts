@@ -101,6 +101,7 @@ export const ProjectDetailSchema = ProjectSchema.extend({
         })
     ),
     message: z.string().optional(),
+    id: z.string().optional(), // For compatibility with frontend
 });
 
 export type ProjectDetail = z.infer<typeof ProjectDetailSchema>;

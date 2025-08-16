@@ -30,7 +30,7 @@ export function MembersTable({
 }) {
     if (members.length === 0) {
         return (
-            <div className="p-4 text-muted-foreground">
+            <div className="p-4 text-muted-foreground text-center">
                 No members found in this project.
             </div>
         );

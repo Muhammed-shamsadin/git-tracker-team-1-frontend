@@ -26,7 +26,7 @@ export function RepositoriesTable({
 }) {
     if (repositories.length === 0) {
         return (
-            <div className="p-4 text-muted-foreground">
+            <div className="p-4 text-muted-foreground text-center">
                 No repositories found for this project.
             </div>
         );
