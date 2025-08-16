@@ -28,6 +28,13 @@ export function MembersTable({
     members: ProjectDetail["members"];
     projectId: string;
 }) {
+    if (members.length === 0) {
+        return (
+            <div className="p-4 text-muted-foreground">
+                No members found in this project.
+            </div>
+        );
+    }
     return (
         <Card>
             <CardContent className="p-0">

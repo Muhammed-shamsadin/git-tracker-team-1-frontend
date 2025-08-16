@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -35,13 +34,14 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useProjectStore } from "@/stores/projectStore";
+import { useEffect, useState } from "react";
 
 export function ProjectSettingsDialog() {
     const router = useRouter();
     const { currentProject, updateProject, deleteProject, isLoading } =
         useProjectStore();
-    const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
-    const [open, setOpen] = React.useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [open, setOpen] = useState(false);
 
     const {
         register,
@@ -105,7 +105,7 @@ export function ProjectSettingsDialog() {
         }
     };
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (open) {
             reset({
                 name: currentProject?.name,

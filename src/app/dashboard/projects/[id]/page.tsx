@@ -4,7 +4,7 @@ import { ActivityProps, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, User } from "lucide-react";
 import { useProjectStore } from "@/stores/projectStore";
 import { ProjectHeader } from "@/features/projects/ProjectHeader";
 import { ProjectStatsGrid } from "@/features/projects/ProjectStatsGrid";
@@ -15,15 +15,17 @@ import {
 import { CommitGraphPlaceholder } from "@/features/projects/CommitGraphPlaceholder";
 import { RepositoriesTable } from "@/features/projects/RepositoriesTable";
 import { MembersTable } from "@/features/projects/MembersTable";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function ProjectDetailsPage() {
     const { id } = useParams();
+    const { user } = useAuthStore();
     const { currentProject, fetchProjectById, isLoading, error } =
         useProjectStore();
 
     useEffect(() => {
         if (id) fetchProjectById(id as string);
-    }, [id, fetchProjectById]);
+    }, [id, fetchProjectById, user?.userType]);
 
     if (isLoading || !currentProject) {
         return (
@@ -45,7 +47,7 @@ export default function ProjectDetailsPage() {
             author: "Alice Johnson",
             repository: "auth-service",
             timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-            avatar: null,
+            avatar: "https://i.pravatar.cc/40?img=1",
         },
         {
             id: 2,
@@ -54,7 +56,7 @@ export default function ProjectDetailsPage() {
             author: "Bob Smith",
             repository: "web-client",
             timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-            avatar: null,
+            avatar: "https://i.pravatar.cc/40?img=2",
         },
         {
             id: 3,
@@ -102,10 +104,12 @@ export default function ProjectDetailsPage() {
                                 Manage repositories associated with this project
                             </p>
                         </div>
-                        <Button>
-                            <Plus className="mr-2 w-4 h-4" />
-                            Add Repository
-                        </Button>
+                        {user?.userType && (
+                            <Button>
+                                <Plus className="mr-2 w-4 h-4" />
+                                Add Repository
+                            </Button>
+                        )}
                     </div>
                     <RepositoriesTable
                         repositories={currentProject.repositories}

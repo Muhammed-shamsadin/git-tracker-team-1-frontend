@@ -24,6 +24,14 @@ export function RepositoriesTable({
 }: {
     repositories: ProjectDetail["repositories"];
 }) {
+    if (repositories.length === 0) {
+        return (
+            <div className="p-4 text-muted-foreground">
+                No repositories found for this project.
+            </div>
+        );
+    }
+
     return (
         <Card>
             <CardContent className="p-0">
