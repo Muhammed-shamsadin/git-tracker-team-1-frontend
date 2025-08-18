@@ -1,5 +1,5 @@
 import ProjectDetailsLoading from "@/features/projects/project-details-skeleton";
 
-export default function Loading() {
+export default function ProjectDetailLoading() {
     return <ProjectDetailsLoading />;
 }
