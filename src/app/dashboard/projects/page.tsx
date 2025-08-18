@@ -16,10 +16,8 @@ import { ProjectCreateDialog } from "@/features/projects/project-create-dialog";
 import { useRouter } from "next/navigation";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useAuthStore } from "@/stores/authStore";
-import {
-    useRoleBasedProjects,
-    useProjectPermissions,
-} from "@/hooks/use-projects";
+import { useRoleBasedProjects } from "@/hooks/use-projects";
+import ProjectsListSkeleton from "@/features/projects/project-list-skeleton";
 
 export default function Projects() {
     const router = useRouter();
@@ -155,9 +153,7 @@ export default function Projects() {
             />
 
             {/* Loading/Error States */}
-            {isLoading && (
-                <div className="py-8 text-center">Loading projects...</div>
-            )}
+            {isLoading && <ProjectsListSkeleton />}
             {error && (
                 <div className="py-4 text-red-500 text-center">{error}</div>
             )}

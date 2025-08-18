@@ -33,7 +33,6 @@ import { useProjectStore } from "@/stores/projectStore";
 import { CreateProjectData, CreateProjectSchema } from "@/types/Project";
 
 export function ProjectCreateDialog() {
-    const { user } = useAuthStore();
     const { createProject, isLoading } = useProjectStore();
     const router = useRouter();
     const [open, setOpen] = useState(false);
