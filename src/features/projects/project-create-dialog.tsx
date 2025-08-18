@@ -62,11 +62,11 @@ export function ProjectCreateDialog() {
         try {
             const newProject = await createProject(data);
             if (newProject) {
+                setOpen(false);
                 toast.success(
                     `Project ${newProject.name} was created successfully!`
                 );
-                setOpen(false);
-                router.refresh();
+                await router.refresh();
             }
         } catch (error: any) {
             toast.error(
