@@ -69,7 +69,7 @@ export function AddDeveloperDialog({ projectId }: Props) {
     const [selectedRole, setSelectedRole] = React.useState<DeveloperRole>(
         DeveloperRole.DEVELOPER
     );
-    const { assignDevelopers } = useProjectStore();
+    const { assignDevelopers, currentProject } = useProjectStore();
     const { developers, fetchDevelopers, isLoading } = useUserStore();
 
     React.useEffect(() => {
@@ -77,6 +77,12 @@ export function AddDeveloperDialog({ projectId }: Props) {
             fetchDevelopers();
         }
     }, [open, fetchDevelopers]);
+
+    // Get member user_ids from currentProject
+    const memberIds = React.useMemo(() => {
+        if (!currentProject || !currentProject.members) return [];
+        return currentProject.members.map((m: any) => m.user_id);
+    }, [currentProject]);
 
     const filteredDevelopers = React.useMemo(() => {
         const query = searchQuery.toLowerCase();
@@ -227,16 +233,26 @@ export function AddDeveloperDialog({ projectId }: Props) {
                                                                 dev._id ===
                                                                 developer._id
                                                         );
+                                                    const isMember =
+                                                        memberIds.includes(
+                                                            developer._id
+                                                        );
                                                     return (
                                                         <CommandItem
                                                             key={developer._id}
                                                             value={`${developer.fullName} ${developer.email}`}
                                                             onSelect={() => {
-                                                                handleDeveloperToggle(
-                                                                    developer
-                                                                );
+                                                                if (!isMember)
+                                                                    handleDeveloperToggle(
+                                                                        developer
+                                                                    );
                                                             }}
-                                                            className="cursor-pointer"
+                                                            className={cn(
+                                                                "cursor-pointer",
+                                                                isMember &&
+                                                                    "opacity-50 pointer-events-none"
+                                                            )}
+                                                            disabled={isMember}
                                                         >
                                                             <Check
                                                                 className={cn(
@@ -263,6 +279,13 @@ export function AddDeveloperDialog({ projectId }: Props) {
                                                                             developer.email
                                                                         }
                                                                     </span>
+                                                                    {isMember && (
+                                                                        <span className="text-muted-foreground text-xs">
+                                                                            Already
+                                                                            a
+                                                                            member
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         </CommandItem>
