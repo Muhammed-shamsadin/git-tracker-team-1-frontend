@@ -35,6 +35,23 @@ export function MembersTable({
             </div>
         );
     }
+    // Role color mapping
+    const roleVariant: Record<string, string> = {
+        owner: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+        frontend:
+            "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+        backend:
+            "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
+        fullstack:
+            "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+        qa: "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400",
+        devops: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+        designer:
+            "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400",
+        developer:
+            "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400",
+    };
+
     return (
         <Card>
             <CardContent className="p-0">
@@ -87,10 +104,9 @@ export function MembersTable({
                                 </TableCell>
                                 <TableCell>
                                     <Badge
-                                        variant={
-                                            member.role === "owner"
-                                                ? "default"
-                                                : "secondary"
+                                        className={
+                                            roleVariant[member.role] ||
+                                            "bg-gray-100 text-gray-800"
                                         }
                                     >
                                         {member.role}
