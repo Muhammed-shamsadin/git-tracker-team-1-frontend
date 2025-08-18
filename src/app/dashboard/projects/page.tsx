@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useAuthStore } from "@/stores/authStore";
 import { useRoleBasedProjects } from "@/hooks/use-projects";
-import ProjectsListSkeleton from "@/features/projects/project-list-skeleton";
+import ListSkeleton from "@/components/skeletons/list-page-skeleton";
 
 export default function Projects() {
     const router = useRouter();
@@ -153,7 +153,7 @@ export default function Projects() {
             />
 
             {/* Loading/Error States */}
-            {isLoading && <ProjectsListSkeleton />}
+            {isLoading && <ListSkeleton />}
             {error && (
                 <div className="py-4 text-red-500 text-center">{error}</div>
             )}

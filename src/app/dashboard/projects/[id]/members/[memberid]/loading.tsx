@@ -1,5 +1,5 @@
-import React from "react";
+import MemberDetailsLoading from "@/features/projects/members-detail-skeleton";
 
-export default function MemberDetailsLoading() {
-    return <div>MemberDetailsLoading</div>;
+export default function Loading() {
+    return <MemberDetailsLoading />;
 }

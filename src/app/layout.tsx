@@ -1,6 +1,7 @@
 import { ThemeProvider } from "@/hooks/themes/theme-provider";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 const geistSans = Geist({
@@ -12,6 +13,7 @@ const geistMono = Geist_Mono({
     variable: "--font-geist-mono",
     subsets: ["latin"],
 });
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
     title: "GitTracker - Repository Management Platform",
@@ -27,7 +29,7 @@ export default function RootLayout({
     return (
         <html lang="en" suppressHydrationWarning className="h-full">
             <body
-                className={`${geistSans.variable} ${geistMono.variable} antialiased h-full min-h-screen flex flex-col`}
+                className={`${inter.className} antialiased h-full min-h-screen flex flex-col`}
             >
                 <ThemeProvider
                     attribute="class"

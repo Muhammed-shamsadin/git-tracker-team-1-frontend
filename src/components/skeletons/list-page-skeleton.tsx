@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function ProjectsListSkeleton() {
+export default function ListSkeleton() {
     return (
         <div className="space-y-6">
             {/* Header skeleton */}

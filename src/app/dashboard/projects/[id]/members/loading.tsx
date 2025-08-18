@@ -1,3 +1,3 @@
-export default function MemberListLoading() {
-    return <div>MemberListLoading</div>;
+export default function Loading() {
+    return <div>MemberListLoaid</div>;
 }
