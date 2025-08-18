@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (!ready) {
         return (
-            <div className="flex justify-center items-center bg-background p-6 min-h-screen text-foreground">
+            <div className="flex justify-center items-center bg-background p-6 h-full min-h-screen text-foreground">
                 <div className="flex flex-col items-center gap-6 p-8 w-full text-card-foreground">
                     <div className="flex justify-center items-center bg-gradient-to-br from-sidebar-primary to-primary shadow-md rounded-full w-24 h-24">
                         <span className="font-extrabold text-white text-xl">
