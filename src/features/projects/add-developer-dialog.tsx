@@ -28,7 +28,15 @@ import {
 import { Check, ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import api from "@/lib/axios";
+import { useProjectStore } from "@/stores/projectStore";
+import { useUserStore } from "@/stores/userStore";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 type Developer = {
     _id: string;
@@ -36,10 +44,19 @@ type Developer = {
     email: string;
 };
 
-interface Props {
-    projectId: string;
+enum DeveloperRole {
+    FRONTEND = "frontend",
+    BACKEND = "backend",
+    FULLSTACK = "fullstack",
+    QA = "qa",
+    DEVOPS = "devops",
+    DESIGNER = "designer",
+    DEVELOPER = "developer",
 }
 
+interface Props {
+    projectId: string | undefined;
+}
 export function AddDeveloperDialog({ projectId }: Props) {
     const router = useRouter();
     const [open, setOpen] = React.useState(false);
@@ -48,47 +65,42 @@ export function AddDeveloperDialog({ projectId }: Props) {
     const [selectedDeveloper, setSelectedDeveloper] =
         React.useState<Developer | null>(null);
     const [isComboboxOpen, setIsComboboxOpen] = React.useState(false);
-    const [developers, setDevelopers] = React.useState<Developer[]>([]);
-    const [loading, setLoading] = React.useState(false);
+    const [selectedRole, setSelectedRole] = React.useState<DeveloperRole>(
+        DeveloperRole.DEVELOPER
+    );
+    const { assignDevelopers } = useProjectStore();
+    const { developers, fetchDevelopers, isLoading } = useUserStore();
 
-    // Fetch real developers
     React.useEffect(() => {
-        const fetchDevelopers = async () => {
-            setLoading(true);
-            try {
-                const res = await api.get("/users/developers");
-                const devs = res.data?.data || [];
-                setDevelopers(devs);
-            } catch (err) {
-                toast.error("Failed to load developers");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (open) fetchDevelopers();
-    }, [open]);
+        if (open) {
+            fetchDevelopers();
+        }
+    }, [open, fetchDevelopers]);
 
     const filteredDevelopers = React.useMemo(() => {
         const query = searchQuery.toLowerCase();
         return developers.filter(
-            (dev) =>
+            (dev: Developer) =>
                 dev.fullName.toLowerCase().includes(query) ||
                 dev.email.toLowerCase().includes(query)
         );
     }, [searchQuery, developers]);
 
     const handleAddDeveloper = async () => {
-        if (!selectedDeveloper) return;
-
+        if (!selectedDeveloper || !selectedRole || !projectId) return;
+        const data = {
+            projectId,
+            developers: [selectedDeveloper._id],
+            role: selectedRole,
+        };
+        console.log("Adding developer:", data);
         try {
             setIsSubmitting(true);
-            await api.patch(`/projects/${projectId}/developers`, {
-                developerIds: [selectedDeveloper._id],
-                action: "assign",
-            });
+            await assignDevelopers(data);
 
-            toast.success(`Added ${selectedDeveloper.fullName} to the project`);
+            toast.success(
+                `Added ${selectedDeveloper.fullName} as ${selectedRole} to the project`
+            );
             setSelectedDeveloper(null);
             setSearchQuery("");
             setOpen(false);
@@ -103,7 +115,7 @@ export function AddDeveloperDialog({ projectId }: Props) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" className="gap-2">
+                <Button className="gap-2">
                     <Plus className="w-4 h-4" />
                     <span className="hidden sm:inline">Add Developer</span>
                 </Button>
@@ -167,14 +179,14 @@ export function AddDeveloperDialog({ projectId }: Props) {
                                         No developers found.
                                     </CommandEmpty>
                                     <CommandGroup className="max-h-[300px] overflow-y-auto">
-                                        {loading ? (
+                                        {isLoading ? (
                                             <div className="flex justify-center items-center p-3 text-muted-foreground text-sm">
                                                 <Loader2 className="mr-2 w-4 h-4 animate-spin" />
                                                 Loading...
                                             </div>
                                         ) : (
                                             filteredDevelopers.map(
-                                                (developer) => (
+                                                (developer: Developer) => (
                                                     <CommandItem
                                                         key={developer._id}
                                                         value={`${developer.fullName} ${developer.email}`}
@@ -224,6 +236,42 @@ export function AddDeveloperDialog({ projectId }: Props) {
                                 </Command>
                             </PopoverContent>
                         </Popover>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="role">Role</Label>
+                        <Select
+                            value={selectedRole}
+                            onValueChange={(v) =>
+                                setSelectedRole(v as DeveloperRole)
+                            }
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={DeveloperRole.FRONTEND}>
+                                    Frontend
+                                </SelectItem>
+                                <SelectItem value={DeveloperRole.BACKEND}>
+                                    Backend
+                                </SelectItem>
+                                <SelectItem value={DeveloperRole.FULLSTACK}>
+                                    Fullstack
+                                </SelectItem>
+                                <SelectItem value={DeveloperRole.QA}>
+                                    QA
+                                </SelectItem>
+                                <SelectItem value={DeveloperRole.DEVOPS}>
+                                    DevOps
+                                </SelectItem>
+                                <SelectItem value={DeveloperRole.DESIGNER}>
+                                    Designer
+                                </SelectItem>
+                                <SelectItem value={DeveloperRole.DEVELOPER}>
+                                    Developer
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
 

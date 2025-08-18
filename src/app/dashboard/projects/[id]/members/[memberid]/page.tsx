@@ -1,34 +1,5 @@
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-    ArrowLeft,
-    Mail,
-    MapPin,
-    Calendar,
-    Activity,
-    GitCommit,
-    TrendingUp,
-    Clock,
-    FileText,
-    GitBranch,
-} from "lucide-react";
 import Link from "next/link";
 import { MemberHeader } from "@/features/projects/members/MemberHeader";
 import { MemberStatsGrid } from "@/features/projects/members/MemberStatsGrid";
@@ -36,6 +7,7 @@ import { ContributionGraphPlaceholder } from "@/features/projects/members/Contri
 import { RecentActivitySummary } from "@/features/projects/members/RecentActivitySummary";
 import { MemberCommitsTable } from "@/features/projects/members/MemberCommitsTable";
 import { RepositoryContributionsTable } from "@/features/projects/members/RepositoryContributionsTable";
+import { ArrowLeft } from "lucide-react";
 
 // Mock data - replace with API calls
 const memberData = {

@@ -18,6 +18,7 @@ import { MembersTable } from "@/features/projects/MembersTable";
 import { useAuthStore } from "@/stores/authStore";
 import { useProjectPermissions } from "@/hooks/use-projects";
 import ProjectDetailsLoading from "@/features/projects/project-details-skeleton";
+import { AddDeveloperDialog } from "@/features/projects/add-developer-dialog";
 
 export default function ProjectDetailsPage() {
     const { id } = useParams();
@@ -130,10 +131,9 @@ export default function ProjectDetailsPage() {
                             </p>
                         </div>
                         {canManageMembers && (
-                            <Button>
-                                <Plus className="mr-2 w-4 h-4" />
-                                Add Member
-                            </Button>
+                            <AddDeveloperDialog
+                                projectId={currentProject?.id}
+                            />
                         )}
                     </div>
                     <MembersTable
