@@ -80,6 +80,7 @@ export function ProjectSettingsDialog() {
             console.log("Updating project with data:", data);
             const result = await updateProject(projectId, data);
             if (result) {
+                await router.refresh();
                 toast.success("Project settings updated successfully");
                 setOpen(false);
             }

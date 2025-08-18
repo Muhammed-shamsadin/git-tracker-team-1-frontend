@@ -17,6 +17,7 @@ import { RepositoriesTable } from "@/features/projects/RepositoriesTable";
 import { MembersTable } from "@/features/projects/MembersTable";
 import { useAuthStore } from "@/stores/authStore";
 import { useProjectPermissions } from "@/hooks/use-projects";
+import ProjectDetailsLoading from "@/features/projects/project-details-skeleton";
 
 export default function ProjectDetailsPage() {
     const { id } = useParams();
@@ -33,7 +34,7 @@ export default function ProjectDetailsPage() {
     if (isLoading || !currentProject) {
         return (
             <div className="p-8 text-muted-foreground text-center">
-                Loading project details...
+                <ProjectDetailsLoading />
             </div>
         );
     }
