@@ -148,14 +148,13 @@ export const useRepositoryStore = create<RepositoryState>()(
             createRepository: async (data: CreateRepositoryData) => {
                 set({ isLoading: true, error: null });
                 try {
-                    const response = await api.post("/repositories", data);
+                    // Use new backend endpoint for registration
+                    const response = await api.post("/repositories/register", data);
                     const newRepository = response.data.data || response.data;
 
-                    if (
-                        newRepository &&
-                        newRepository.name &&
-                        (newRepository._id || newRepository.id)
-                    ) {
+                    // Accept either _id or id for new repositories
+                    const repoId = newRepository._id || newRepository.id;
+                    if (newRepository && repoId) {
                         set((state) => ({
                             repositories: [
                                 ...state.repositories,
@@ -214,7 +213,8 @@ export const useRepositoryStore = create<RepositoryState>()(
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.delete(`/repositories/${id}`);
-                    if (response.data.deleted || response.status === 200) {
+                    const result = response.data.data || response.data;
+                    if (result.deleted || response.status === 200) {
                         set((state) => ({
                             repositories: state.repositories.filter(
                                 (r) => r._id !== id
