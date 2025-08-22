@@ -9,8 +9,14 @@ import {
     LoginResponseSchema,
     RegisterResponse,
     RegisterResponseSchema,
+    RefreshResponse,
     RefreshResponseSchema,
+    RefreshTokenRequest,
+    CheckTokenRequest,
+    CheckTokenResponse,
+    CheckTokenResponseSchema,
 } from "@/types/Auth";
+import { UserProfileResponse, UserProfileResponseSchema } from "@/types/User";
 import {
     setAuthTokenCookie,
     removeAuthTokenCookie,
@@ -26,6 +32,7 @@ interface AuthState {
     logout: () => void;
     checkAuth: () => Promise<void>;
     refreshToken: () => Promise<void>;
+    checkTokenExpiry: (token: string) => Promise<CheckTokenResponse>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -40,8 +47,11 @@ export const useAuthStore = create<AuthState>()(
                 set({ isLoading: true });
                 try {
                     const response = await api.post("/auth/login", data);
-                    const parsed = LoginResponseSchema.parse(response.data);
-                    const { access_token, refresh_token, user } = parsed.data;
+                    const raw = response.data.data
+                        ? response.data.data
+                        : response.data;
+                    const parsed = LoginResponseSchema.parse(raw);
+                    const { access_token, refresh_token, user } = parsed;
 
                     localStorage.setItem("auth-token", access_token);
                     localStorage.setItem("refresh-token", refresh_token);
@@ -62,11 +72,13 @@ export const useAuthStore = create<AuthState>()(
                 set({ isLoading: true });
                 try {
                     const response = await api.post("/auth/register", data);
-                    const parsed = RegisterResponseSchema.parse(response.data);
-                    const user = parsed.data.user;
+                    const parsed = RegisterResponseSchema.parse(
+                        response.data.data
+                    );
+
+                    const { user } = parsed;
 
                     // Registration does not return tokens, so require login after registration
-                    // TODO: Consider auto-login after registration if desired or just redirect to login
                     set({
                         user,
                         token: null,
@@ -99,7 +111,12 @@ export const useAuthStore = create<AuthState>()(
 
                 try {
                     const response = await api.get("/users/profile");
-                    const user = UserSchema.parse(response.data.data.user);
+                    const parsed = UserProfileResponseSchema.parse(
+                        response.data.data
+                    );
+
+                    const { user } = parsed;
+
                     set({
                         user,
                         token,
@@ -107,25 +124,44 @@ export const useAuthStore = create<AuthState>()(
                     });
                 } catch (error) {
                     console.error("Error checking auth:", error);
+                    // If profile check fails, clear authentication
+                    set({
+                        user: null,
+                        token: null,
+                        isAuthenticated: false,
+                    });
+                    localStorage.removeItem("auth-token");
+                    localStorage.removeItem("refresh-token");
+                    removeAuthTokenCookie();
                 }
             },
 
             refreshToken: async () => {
-                const refreshToken = localStorage.getItem("refresh-token");
-                console.log(`Refreshing token with: ${refreshToken}`);
-                if (!refreshToken) throw new Error("No refresh token");
+                const refreshTokenValue = localStorage.getItem("refresh-token");
+                if (!refreshTokenValue) throw new Error("No refresh token");
 
-                const response = await api.post("/auth/refresh", {
-                    refreshToken,
-                });
-                console.log("Refresh response:", response);
-                const parsed = RefreshResponseSchema.parse(response.data);
-                console.log("Parsed refresh response:", parsed);
-                const { access_token } = parsed.data;
-                console.log(`New access token: ${access_token}`);
-                localStorage.setItem("auth-token", access_token);
-                setAuthTokenCookie(access_token);
-                set({ token: access_token });
+                try {
+                    const response = await api.post("/auth/refresh", {
+                        refreshToken: refreshTokenValue,
+                    });
+                    const parsed = RefreshResponseSchema.parse(
+                        response.data.data
+                    );
+                    const { access_token } = parsed;
+
+                    localStorage.setItem("auth-token", access_token);
+                    setAuthTokenCookie(access_token);
+                    set({ token: access_token });
+                } catch (error) {
+                    // If refresh fails, logout user
+                    get().logout();
+                    throw error;
+                }
+            },
+
+            checkTokenExpiry: async (token: string) => {
+                const response = await api.post("/auth/check-token", { token });
+                return CheckTokenResponseSchema.parse(response.data.data);
             },
         }),
         {

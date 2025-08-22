@@ -2,7 +2,9 @@ import { setAuthTokenCookie } from "@/stores/cookieUtils";
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL,
+    baseURL:
+        process.env.NEXT_PUBLIC_API_URL ||
+        "https://git-online-production.up.railway.app/api",
     headers: {
         "Content-Type": "application/json",
     },
@@ -32,7 +34,10 @@ api.interceptors.response.use(
             try {
                 const refreshToken = localStorage.getItem("refresh-token");
                 const response = await axios.post(
-                    `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
+                    `${
+                        process.env.NEXT_PUBLIC_API_URL ||
+                        "https://git-online-production.up.railway.app/api"
+                    }/auth/refresh`,
                     {
                         refreshToken,
                     }

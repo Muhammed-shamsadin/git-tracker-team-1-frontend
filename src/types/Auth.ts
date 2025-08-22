@@ -21,8 +21,7 @@ export const RegisterSchema = z.object({
     email: z.string().email("Invalid email address"),
     fullName: z.string().min(1, "Full name is required"),
     password: z.string().min(8, "Password must be at least 8 characters"),
-    userType: z.enum(["CLIENT", "DEVELOPER"]),
-    userName: z.string().min(1, "Username is required"),
+    userType: z.enum(["client", "developer"]),
 });
 
 // Register response

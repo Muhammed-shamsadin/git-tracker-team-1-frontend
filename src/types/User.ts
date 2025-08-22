@@ -12,9 +12,10 @@ export const UserSchema = z.object({
     id: z.string().optional(),
     email: z.string().email(),
     fullName: z.string(),
-    userType: z.enum(["CLIENT", "DEVELOPER", "SUPERADMIN"]),
+    userType: z.enum(["client", "developer", "superadmin"]),
     profileImage: z.string().nullable(),
     companyName: z.string().optional(),
+    workspaces: z.array(z.string()).optional(),
     lastLogin: z.string().nullable().optional(),
     createdAt: z.string(),
     updatedAt: z.string(),
@@ -30,7 +31,7 @@ export const CreateUserSchema = z.object({
     fullName: z.string().min(1, "Full name is required"),
     email: z.string().email("Invalid email address"),
     password: z.string().min(8, "Password must be at least 8 characters"),
-    userType: z.enum(["CLIENT", "DEVELOPER", "SUPERADMIN"]),
+    userType: z.enum(["client", "developer", "superadmin"]),
     companyName: z.string().optional(),
 });
 
