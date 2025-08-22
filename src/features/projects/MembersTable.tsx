@@ -60,45 +60,39 @@ export function MembersTable({
                         <TableRow>
                             <TableHead>Member</TableHead>
                             <TableHead>Role</TableHead>
-                            <TableHead>Commits</TableHead>
                             <TableHead>Joined</TableHead>
-                            <TableHead>Last Active</TableHead>
+                            {/* <TableHead>Last Active</TableHead> */}
                             <TableHead>Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {members.map((member) => (
-                            <TableRow key={member.user_id}>
+                            <TableRow key={member.userId}>
                                 <TableCell>
                                     <div className="flex items-center gap-3">
                                         <Avatar>
-                                            <AvatarImage
-                                                src={
-                                                    member?.avatar ||
-                                                    "/placeholder.svg"
-                                                }
-                                            />
                                             <AvatarFallback>
                                                 {member.name
                                                     .split(" ")
-                                                    .map((n) => n[0])
+                                                    .map((n) =>
+                                                        n[0].toUpperCase()
+                                                    )
                                                     .join("")}
                                             </AvatarFallback>
                                         </Avatar>
                                         <div>
                                             <div className="font-medium">
-                                                {member.name}
+                                                <Link
+                                                    href={`/dashboard/projects/${projectId}/members/${member.userId}`}
+                                                    className="hover:underline"
+                                                >
+                                                    {member.name}
+                                                </Link>
                                             </div>
                                             <div className="flex items-center gap-1 text-muted-foreground text-xs">
                                                 <Mail className="w-3 h-3" />
                                                 {member.email}
                                             </div>
-                                            {member?.location && (
-                                                <div className="flex items-center gap-1 text-muted-foreground text-xs">
-                                                    <MapPin className="w-3 h-3" />
-                                                    {member?.location}
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
                                 </TableCell>
@@ -112,30 +106,19 @@ export function MembersTable({
                                         {member.role}
                                     </Badge>
                                 </TableCell>
-                                <TableCell>{member?.commits ?? 0}</TableCell>
+
                                 <TableCell>
-                                    {member.joined_at
+                                    {member.joinedAt
                                         ? new Date(
-                                              member.joined_at
+                                              member.joinedAt
                                           ).toLocaleDateString()
                                         : "-"}
                                 </TableCell>
-                                <TableCell>
-                                    {member?.last_active ?? "-"}
-                                </TableCell>
+                                {/* <TableCell>
+                                    {member?.lastActive ?? "-"}
+                                </TableCell> */}
                                 <TableCell>
                                     <div className="flex items-center gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            asChild
-                                        >
-                                            <Link
-                                                href={`/dashboard/projects/${projectId}/members/${member.user_id}`}
-                                            >
-                                                View Details
-                                            </Link>
-                                        </Button>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button
