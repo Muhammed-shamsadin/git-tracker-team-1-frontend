@@ -99,7 +99,7 @@ export const useAuthStore = create<AuthState>()(
 
                 try {
                     const response = await api.get("/users/profile");
-                    const user = UserSchema.parse(response.data.data);
+                    const user = UserSchema.parse(response.data.data.user);
                     set({
                         user,
                         token,

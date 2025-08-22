@@ -3,7 +3,7 @@ import { UserSchema } from "./User";
 
 // Login request
 export const LoginSchema = z.object({
-    email: z.string().email("Invalid email address"),
+    email: z.email("Invalid email address"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     rememberMe: z.boolean().optional(),
 });
@@ -20,7 +20,7 @@ export const LoginResponseSchema = z.object({
 
 // Register request
 export const RegisterSchema = z.object({
-    email: z.string().email("Invalid email address"),
+    email: z.email("Invalid email address"),
     fullName: z.string().min(1, "Full name is required"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     userType: z.enum(["client", "developer", "superadmin"]),

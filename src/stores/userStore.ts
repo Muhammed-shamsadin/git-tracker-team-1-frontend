@@ -109,7 +109,7 @@ export const useUserStore = create<UserState>()(
                 try {
                     const response = await api.get("/users/developers");
                     set({
-                        developers: response.data.data || response.data,
+                        developers: response.data.data.users || response.data,
                         isLoading: false,
                     });
                 } catch (error: any) {
