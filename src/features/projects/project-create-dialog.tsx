@@ -65,7 +65,7 @@ export function ProjectCreateDialog() {
                 toast.success(
                     `Project ${newProject.name} was created successfully!`
                 );
-                await router.refresh();
+                window.location.reload();
             }
         } catch (error: any) {
             toast.error(

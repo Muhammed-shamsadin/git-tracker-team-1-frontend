@@ -19,6 +19,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useProjectPermissions } from "@/hooks/use-projects";
 import ProjectDetailsLoading from "@/features/projects/project-details-skeleton";
 import { AddDeveloperDialog } from "@/features/projects/add-developer-dialog";
+import { timeAgo } from "@/lib/utils";
 
 export default function ProjectDetailsPage() {
     const { id } = useParams();
@@ -51,7 +52,9 @@ export default function ProjectDetailsPage() {
             message: "Fix: resolve null pointer in auth flow",
             author: "Alice Johnson",
             repository: "auth-service",
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+            timestamp: timeAgo(
+                new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString()
+            ),
             avatar: "https://i.pravatar.cc/40?img=1",
         },
         {
@@ -60,7 +63,9 @@ export default function ProjectDetailsPage() {
             message: "UI: dashboard charts not rendering on mobile",
             author: "Bob Smith",
             repository: "web-client",
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+            timestamp: timeAgo(
+                new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString()
+            ),
             avatar: "https://i.pravatar.cc/40?img=2",
         },
         {
@@ -69,7 +74,9 @@ export default function ProjectDetailsPage() {
             message: "Merge: feature/login -> main",
             author: "Carol Peters",
             repository: "auth-service",
-            timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+            timestamp: timeAgo(
+                new Date(Date.now() - 1000 * 60 * 30).toISOString()
+            ),
             avatar: "https://i.pravatar.cc/40?img=3",
         },
         {
@@ -78,7 +85,9 @@ export default function ProjectDetailsPage() {
             message: "Comment: left feedback on PR #42",
             author: "Dave Lee",
             repository: "api",
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+            timestamp: timeAgo(
+                new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString()
+            ),
             avatar: "https://i.pravatar.cc/40?img=5",
         },
     ];
@@ -132,7 +141,7 @@ export default function ProjectDetailsPage() {
                         </div>
                         {canManageMembers && (
                             <AddDeveloperDialog
-                                projectId={currentProject?.id}
+                                projectId={currentProject?._id}
                             />
                         )}
                     </div>

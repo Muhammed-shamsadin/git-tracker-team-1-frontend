@@ -148,14 +148,14 @@ export function ProjectOverview() {
                     <RepositoriesPage />
                 </TabsContent>
                 <TabsContent value="team" className="pt-6">
-                    <TeamPage
+                    {/* <TeamPage
                         {...{
                             ...currentProject,
                             repositories: currentProject.repositories.map(
                                 (repo: any) => repo.id
                             ),
                         }}
-                    />
+                    /> */}
                 </TabsContent>
             </Tabs>
         </div>

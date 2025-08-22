@@ -5,11 +5,12 @@ export const ProjectSchema = z.object({
     _id: z.string(),
     name: z.string(),
     description: z.string(),
-    status: z.enum(["active", "archived", "completed"]).or(z.string()),
+    status: z.enum(["active", "archived", "completed"]),
     tags: z.array(z.string()).optional(),
     repoLimit: z.number().optional(),
     clientId: z.string(),
     repositories: z.array(z.any()).optional(),
+    projectDevelopers: z.array(z.any()).optional(),
     createdAt: z.string(),
     updatedAt: z.string(),
 });
@@ -138,7 +139,7 @@ export const ProjectDetailSchema = z.object({
     name: z.string(),
     clientId: z.string(),
     description: z.string(),
-    status: z.string(),
+    status: z.enum(["active", "archived", "completed"]),
     tags: z.array(z.string()),
     repoLimit: z.number(),
     repositories: z.array(
@@ -150,7 +151,7 @@ export const ProjectDetailSchema = z.object({
                 name: z.string(),
                 email: z.string(),
             }),
-            status: z.string(),
+            status: z.enum(["active", "archived", "completed"]),
             registeredAt: z.string(),
             lastUpdated: z.string(),
         })
