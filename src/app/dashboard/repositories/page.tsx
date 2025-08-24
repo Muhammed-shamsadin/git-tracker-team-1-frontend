@@ -39,9 +39,6 @@ export default function Repositories() {
             icon: <Trash2 className="w-4 h-4" />,
             label: "Delete",
             onClick: (row) => {
-                setRepositories((prev) =>
-                    prev.filter((repository) => repository.id !== row.id)
-                );
                 toast.success(`Deleted repository: ${row.name}`);
             },
         },
@@ -92,7 +89,7 @@ export default function Repositories() {
                 columns={repositoryColumns}
                 initialSort={[{ id: "updatedDate", desc: true }]}
                 rowActions={rowActions}
-                searchableFields={["name", "owner", "projectId"]}
+                searchableFields={["name"]}
                 filters={filters}
                 statusConfig={statusConfig}
                 enableRowSelection={true}
