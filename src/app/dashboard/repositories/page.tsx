@@ -17,6 +17,7 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
 import { useRoleBasedRepositories } from "@/hooks/use-repositories";
+import ListSkeleton from "@/components/skeletons/list-page-skeleton";
 
 export default function Repositories() {
     const router = useRouter();
@@ -50,9 +51,10 @@ export default function Repositories() {
     ];
 
     const statusConfig: StatusConfig = {
-        active: { icon: "🟢", label: "Active", color: "green" },
-        archived: { icon: "🔒", label: "Archived", color: "gray" },
-        completed: { icon: "✅", label: "Completed", color: "blue" },
+        active: { icon: "●", label: "Active", color: "green" },
+        moved: { icon: "→", label: "Moved", color: "orange" },
+        archived: { icon: "⏸", label: "Archived", color: "gray" },
+        deleted: { icon: "–", label: "Deleted", color: "red" },
     };
 
     const filters: FilterConfig[] = [
@@ -62,8 +64,9 @@ export default function Repositories() {
             type: "select",
             options: [
                 { label: "Active", value: "active" },
+                { label: "Moved", value: "moved" },
                 { label: "Archived", value: "archived" },
-                { label: "Completed", value: "completed" },
+                { label: "Deleted", value: "deleted" },
             ],
         },
     ];
@@ -90,17 +93,26 @@ export default function Repositories() {
                     </Button>
                 )}
             </div>
+            {/* Loading/Error States */}
+            {isLoading && <ListSkeleton />}
+            {error && (
+                <div className="py-4 text-red-500 text-center">{error}</div>
+            )}
+
             {/* Data Table */}
-            <DataTable
-                data={repositories}
-                columns={repositoryColumns}
-                initialSort={[{ id: "updatedDate", desc: true }]}
-                rowActions={rowActions}
-                searchableFields={["name"]}
-                filters={filters}
-                statusConfig={statusConfig}
-                pageSize={10}
-            />
+            {!isLoading && !error && (
+                <DataTable
+                    data={repositories}
+                    columns={repositoryColumns}
+                    rowActions={rowActions}
+                    searchableFields={["name"]}
+                    filters={filters}
+                    statusConfig={statusConfig}
+                    pageSize={10}
+                    rowIdAccessor="_id"
+                    initialSort={[{ id: "updatedAt", desc: true }]}
+                />
+            )}
         </div>
     );
 }

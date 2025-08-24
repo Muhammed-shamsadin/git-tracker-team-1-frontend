@@ -8,11 +8,12 @@ export const RepositorySchema = z.object({
     path: z.string(),
     developerId: z.string(),
     projectId: z.string(),
-    repoFingerprint: z.string(), // New field for repository identification
-    status: z.enum(["active", "moved", "archived", "deleted"]), // Updated status options
+    permission: z.string().optional(),
+    repoFingerprint: z.string(),
+    status: z.enum(["active", "moved", "archived", "deleted"]),
     createdAt: z.string(),
     updatedAt: z.string(),
-    commits: z.array(z.any()).optional(), // For responses that include commits
+    commits: z.array(z.any()).optional(),
     commitsCount: z.number().optional(), // For summary views
 });
 
