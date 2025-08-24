@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/select";
 
 type Developer = {
-    userId: string;
+    _id: string;
     fullName: string;
     email: string;
 };
@@ -86,8 +86,7 @@ export function AddDeveloperDialog({ projectId }: Props) {
 
     const filteredDevelopers = React.useMemo(() => {
         const query = searchQuery.toLowerCase();
-        const devs = Array.isArray(developers) ? developers : [];
-        return devs.filter(
+        return developers.filter(
             (dev: Developer) =>
                 dev.fullName.toLowerCase().includes(query) ||
                 dev.email.toLowerCase().includes(query)
@@ -98,35 +97,26 @@ export function AddDeveloperDialog({ projectId }: Props) {
         if (!selectedDevelopers.length || !selectedRole || !projectId) return;
         const data = {
             projectId,
-            developers: selectedDevelopers.map((dev) => dev.userId),
+            developers: selectedDevelopers.map((dev) => dev._id),
             role: selectedRole,
         };
         console.log("Adding developers:", data);
         try {
             setIsSubmitting(true);
-            const result = await assignDevelopers(data);
-            console.log("Assign developers result:", result);
+            await assignDevelopers(data);
 
-            if (result && result.success) {
-                const developerNames = selectedDevelopers
-                    .map((dev) => dev.fullName)
-                    .join(", ");
-                toast.success(
-                    `Added ${developerNames} as ${selectedRole} to the project`
-                );
-                setSelectedDevelopers([]);
-                setSearchQuery("");
-                setOpen(false);
-                router.refresh();
-            } else {
-                toast.error(
-                    result?.message ||
-                        "Failed to add developers. Please try again."
-                );
-            }
+            const developerNames = selectedDevelopers
+                .map((dev) => dev.fullName)
+                .join(", ");
+            toast.success(
+                `Added ${developerNames} as ${selectedRole} to the project`
+            );
+            setSelectedDevelopers([]);
+            setSearchQuery("");
+            setOpen(false);
+            router.refresh();
         } catch (error) {
             toast.error("Failed to add developers. Please try again.");
-            console.error("Assign developers error:", error);
         } finally {
             setIsSubmitting(false);
         }
@@ -134,11 +124,9 @@ export function AddDeveloperDialog({ projectId }: Props) {
 
     const handleDeveloperToggle = (developer: Developer) => {
         setSelectedDevelopers((prev) => {
-            const isSelected = prev.some(
-                (dev) => dev.userId === developer.userId
-            );
+            const isSelected = prev.some((dev) => dev._id === developer._id);
             if (isSelected) {
-                return prev.filter((dev) => dev.userId !== developer.userId);
+                return prev.filter((dev) => dev._id !== developer._id);
             } else {
                 return [...prev, developer];
             }
@@ -169,30 +157,26 @@ export function AddDeveloperDialog({ projectId }: Props) {
                         <Label>Search & Select Developers</Label>
                         {selectedDevelopers.length > 0 && (
                             <div className="flex flex-wrap gap-2 bg-muted/50 p-2 rounded-md">
-                                {selectedDevelopers.map(
-                                    (developer: Developer) => (
-                                        <div
-                                            key={developer.userId}
-                                            className="flex items-center gap-1 bg-primary px-2 py-1 rounded-md text-primary-foreground text-sm"
-                                        >
-                                            <div className="flex justify-center items-center bg-primary-foreground/20 rounded-full w-4 h-4 text-xs">
-                                                {developer.fullName.charAt(0)}
-                                            </div>
-                                            <span>{developer.fullName}</span>
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    handleDeveloperToggle(
-                                                        developer
-                                                    )
-                                                }
-                                                className="hover:bg-primary-foreground/20 ml-1 p-0.5 rounded-full"
-                                            >
-                                                ×
-                                            </button>
+                                {selectedDevelopers.map((developer) => (
+                                    <div
+                                        key={developer._id}
+                                        className="flex items-center gap-1 bg-primary px-2 py-1 rounded-md text-primary-foreground text-sm"
+                                    >
+                                        <div className="flex justify-center items-center bg-primary-foreground/20 rounded-full w-4 h-4 text-xs">
+                                            {developer.fullName.charAt(0)}
                                         </div>
-                                    )
-                                )}
+                                        <span>{developer.fullName}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleDeveloperToggle(developer)
+                                            }
+                                            className="hover:bg-primary-foreground/20 ml-1 p-0.5 rounded-full"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                ))}
                             </div>
                         )}
                         <Popover
@@ -246,18 +230,16 @@ export function AddDeveloperDialog({ projectId }: Props) {
                                                     const isSelected =
                                                         selectedDevelopers.some(
                                                             (dev) =>
-                                                                dev.userId ===
-                                                                developer.userId
+                                                                dev._id ===
+                                                                developer._id
                                                         );
                                                     const isMember =
                                                         memberIds.includes(
-                                                            developer.userId
+                                                            developer._id
                                                         );
                                                     return (
                                                         <CommandItem
-                                                            key={
-                                                                developer.userId
-                                                            }
+                                                            key={developer._id}
                                                             value={`${developer.fullName} ${developer.email}`}
                                                             onSelect={() => {
                                                                 if (!isMember)
