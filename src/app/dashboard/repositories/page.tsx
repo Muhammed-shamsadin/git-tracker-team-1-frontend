@@ -11,18 +11,13 @@ import type {
 } from "@/components/data-table/types";
 import { Eye, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { mockRepositories } from "@/data/repositories";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/stores/authStore";
 import { useRoleBasedRepositories } from "@/hooks/use-repositories";
 import ListSkeleton from "@/components/skeletons/list-page-skeleton";
 
 export default function Repositories() {
-    const router = useRouter();
-    const { user } = useAuthStore();
-    const { repositories, paginatedRepositories, isLoading, error, userRole } =
+    const { repositories, isLoading, error, userRole } =
         useRoleBasedRepositories();
     const [selectedRows, setSelectedRows] = useState<Repository[]>([]);
 

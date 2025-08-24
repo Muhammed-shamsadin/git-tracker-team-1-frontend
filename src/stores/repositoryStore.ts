@@ -93,10 +93,16 @@ export const useRepositoryStore = create<RepositoryState>()(
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.get(
-                        "/users/developers/me/repositories"
+                        "/repositories/me/developer"
+                    );
+                    const fetchedRepos =
+                        response.data.data.repositories || response.data;
+                    console.log(
+                        "Fetched developer repositories:",
+                        fetchedRepos
                     );
                     set({
-                        repositories: response.data.data || response.data,
+                        repositories: fetchedRepos,
                         isLoading: false,
                     });
                 } catch (error: any) {

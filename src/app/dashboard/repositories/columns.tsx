@@ -68,6 +68,8 @@ export const repositoryColumns: ColumnDef<Repository>[] = [
                         ? "default"
                         : row.getValue("status") === "archived"
                         ? "secondary"
+                        : row.getValue("status") === "moved"
+                        ? "outline"
                         : "destructive"
                 }
             >
