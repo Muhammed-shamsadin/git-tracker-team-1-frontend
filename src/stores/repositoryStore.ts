@@ -24,7 +24,7 @@ interface RepositoryState {
 
     // Fetch operations
     fetchAllRepositories: (page?: number, limit?: number) => Promise<void>;
-    fetchUserRepositories: () => Promise<void>;
+    fetchDeveloperRepositories: () => Promise<void>;
     fetchProjectRepositories: (projectId: string) => Promise<void>;
     fetchRepositoryById: (id: string) => Promise<void>;
 
@@ -89,7 +89,7 @@ export const useRepositoryStore = create<RepositoryState>()(
                 }
             },
 
-            fetchUserRepositories: async () => {
+            fetchDeveloperRepositories: async () => {
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.get(
@@ -149,7 +149,10 @@ export const useRepositoryStore = create<RepositoryState>()(
                 set({ isLoading: true, error: null });
                 try {
                     // Use new backend endpoint for registration
-                    const response = await api.post("/repositories/register", data);
+                    const response = await api.post(
+                        "/repositories/register",
+                        data
+                    );
                     const newRepository = response.data.data || response.data;
 
                     // Accept either _id or id for new repositories

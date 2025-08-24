@@ -25,25 +25,26 @@ export const repositoryColumns: ColumnDef<Repository>[] = [
     },
 
     {
-        accessorKey: "commitCount",
+        accessorKey: "commitsCount",
         header: "Commit Count",
+        accessorFn: (row) => row.commitsCount ?? 0,
         cell: ({ row }) => (
-            <Badge variant="secondary">{row.getValue("commitCount")}</Badge>
+            <Badge variant="secondary">{row.getValue("commitsCount")}</Badge>
         ),
     },
     {
-        accessorKey: "createdDate",
+        accessorKey: "createdAt",
         header: "Created Date",
         cell: ({ row }) => (
             <div className="text-center">
-                {new Date(row.getValue("createdDate")).toLocaleDateString()}
+                {new Date(row.getValue("createdAt")).toLocaleDateString()}
             </div>
         ),
     },
     {
-        accessorKey: "updatedDate",
+        accessorKey: "updatedAt",
         header: "Last Updated",
-        accessorFn: (row: any) => new Date(row.updatedDate),
+        accessorFn: (row: any) => new Date(row.updatedAt),
         sortingFn: (rowA: any, rowB: any, columnId: string) => {
             const dateA = rowA.getValue(columnId) as Date;
             const dateB = rowB.getValue(columnId) as Date;
@@ -52,7 +53,7 @@ export const repositoryColumns: ColumnDef<Repository>[] = [
         cell: ({ row }) => {
             return (
                 <div className="text-center">
-                    {timeAgo(row.getValue("updatedDate") as Date)}
+                    {timeAgo(row.getValue("updatedAt") as Date)}
                 </div>
             );
         },

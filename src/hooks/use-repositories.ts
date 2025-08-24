@@ -16,8 +16,7 @@ export const useRoleBasedRepositories = (page?: number, limit?: number) => {
         isLoading,
         error,
         fetchAllRepositories,
-        fetchUserRepositories,
-        fetchProjectRepositories,
+        fetchDeveloperRepositories,
     } = useRepositoryStore();
 
     useEffect(() => {
@@ -28,10 +27,10 @@ export const useRoleBasedRepositories = (page?: number, limit?: number) => {
                 fetchAllRepositories(page, limit);
                 break;
             case "client":
-                fetchUserRepositories();
+                fetchAllRepositories();
                 break;
             case "developer":
-                fetchUserRepositories();
+                fetchDeveloperRepositories();
                 break;
         }
     }, [user?.userType, page, limit]);

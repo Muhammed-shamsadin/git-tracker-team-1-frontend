@@ -14,10 +14,15 @@ import { toast } from "sonner";
 import { mockRepositories } from "@/data/repositories";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/stores/authStore";
+import { useRoleBasedRepositories } from "@/hooks/use-repositories";
 
 export default function Repositories() {
-    const [repositories, setRepositories] =
-        useState<Repository[]>(mockRepositories);
+    const router = useRouter();
+    const { user } = useAuthStore();
+    const { repositories, paginatedRepositories, isLoading, error, userRole } =
+        useRoleBasedRepositories();
     const [selectedRows, setSelectedRows] = useState<Repository[]>([]);
 
     const rowActions: RowAction<Repository>[] = [
@@ -78,10 +83,12 @@ export default function Repositories() {
                         Manage your repositories and their settings.
                     </p>
                 </div>
-                <Button>
-                    <Plus className="mr-2 w-4 h-4" />
-                    New Repository
-                </Button>
+                {userRole === "developer" && (
+                    <Button>
+                        <Plus className="mr-2 w-4 h-4" />
+                        New Repository
+                    </Button>
+                )}
             </div>
             {/* Data Table */}
             <DataTable
@@ -92,8 +99,6 @@ export default function Repositories() {
                 searchableFields={["name"]}
                 filters={filters}
                 statusConfig={statusConfig}
-                enableRowSelection={true}
-                onRowSelectionChange={handleRowSelectionChange}
                 pageSize={10}
             />
         </div>
