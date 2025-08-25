@@ -46,18 +46,17 @@ export const projectColomns: ColumnDef<Project>[] = [
             return <Badge variant="secondary">{repositories.length}</Badge>;
         },
     },
-    // {
-    //     header: "Developer Count",
-    //     accessorFn: (row) =>
-    //         Array.isArray(row.projectDevelopers)
-    //             ? row.projectDevelopers.length
-    //             : row.developers?.length ?? 0,
-    //     cell: ({ row }) => {
-    //         const devs =
-    //             row.original.projectDevelopers || row.original.developers || [];
-    //         return <Badge variant="secondary">{devs.length}</Badge>;
-    //     },
-    // },
+    {
+        header: "Developer Count",
+        accessorFn: (row) =>
+            Array.isArray(row.projectDevelopers)
+                ? row.projectDevelopers.length
+                : 0,
+        cell: ({ row }) => {
+            const devs = row.original.projectDevelopers || [];
+            return <Badge variant="secondary">{devs.length}</Badge>;
+        },
+    },
     {
         header: "Repo Limit",
         accessorFn: (row) => row.repoLimit ?? 1,

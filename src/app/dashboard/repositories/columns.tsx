@@ -14,7 +14,7 @@ export const repositoryColumns: ColumnDef<Repository>[] = [
             const repository = row.original;
             return (
                 <Link
-                    href={`/dashboard/repositories/${repository.id}`}
+                    href={`/dashboard/repositories/${repository._id}`}
                     className="hover:underline"
                 >
                     {repository.name}

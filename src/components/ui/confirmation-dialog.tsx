@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useState } from "react";
 import { Button } from "./button";
 import {
     Dialog,
@@ -35,7 +35,7 @@ export function ConfirmationDialog({
     onConfirm,
     isLoading = false,
 }: ConfirmationDialogProps) {
-    const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleConfirm = async () => {
         try {

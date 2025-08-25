@@ -90,6 +90,7 @@ export default function Repositories() {
             <DataTable
                 data={repositories}
                 columns={repositoryColumns}
+                initialSort={[{ id: "updatedDate", desc: true }]}
                 rowActions={rowActions}
                 searchableFields={["name", "owner", "projectId"]}
                 filters={filters}

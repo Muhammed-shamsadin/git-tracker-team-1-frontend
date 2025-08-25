@@ -1,18 +1,95 @@
-export interface Repository {
-    id: string; // Unique identifier for the repository
-    name: string; // Name of the repository
-    description?: string; // Optional description of the repository
-    owner: string; // User ID of the repository owner
-    projectId: string; // ID of the project this repository belongs to
-    path: string; // Path to the repository on the server or local filesystem
-    remoteUrl?: string; // Optional remote URL for the repository
-    branchCount: number; // Number of branches in the repository
-    commitCount: number; // Number of commits in the repository
-    lastCommit?: string; // Optional date of the last commit in ISO format
-    commits: []; // Array of commit objects (if needed, define a Commit interface)
-    status: "active" | "archived" | "completed"; // Status of the repository
-    tags?: string[]; // Optional array of tags associated with the repository
-    lastActivityDate?: string; // Optional date of the last activity in ISO format
-    createdDate: string; // ISO date string
-    updatedDate: string; // ISO date string
-}
+import { z } from "zod";
+
+export const RepositorySchema = z.object({
+    _id: z.string(),
+    name: z.string(),
+    description: z.string(),
+    url: z.string().url(),
+    status: z.enum(["active", "archived", "deleted"]),
+    projectId: z.string(),
+    ownerId: z.string(), // Developer who owns the repository
+    contributors: z.array(z.string()), // Array of developer IDs
+    lastCommitAt: z.string().nullable(),
+    commitsCount: z.number().default(0),
+    branchCount: z.number().default(0),
+    tags: z.array(z.string()).optional(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+});
+
+export type Repository = z.infer<typeof RepositorySchema>;
+
+export const CreateRepositorySchema = z.object({
+    name: z.string().min(1, "Repository name is required"),
+    description: z.string().min(1, "Description is required"),
+    url: z.string().url("Invalid repository URL"),
+    projectId: z.string().min(1, "Project ID is required"),
+    status: z.enum(["active", "archived"]).default("active"),
+});
+
+export type CreateRepositoryData = z.infer<typeof CreateRepositorySchema>;
+
+export const UpdateRepositorySchema = CreateRepositorySchema.partial().omit({
+    projectId: true,
+});
+
+export type UpdateRepositoryData = z.infer<typeof UpdateRepositorySchema>;
+
+// Commit related schemas
+export const CommitSchema = z.object({
+    _id: z.string(),
+    sha: z.string(),
+    message: z.string(),
+    authorId: z.string(),
+    authorName: z.string(),
+    authorEmail: z.string(),
+    repositoryId: z.string(),
+    projectId: z.string(),
+    timestamp: z.string(),
+    stats: z.object({
+        additions: z.number(),
+        deletions: z.number(),
+        changes: z.array(
+            z.object({
+                filename: z.string(),
+                additions: z.number(),
+                deletions: z.number(),
+                status: z.enum(["added", "modified", "deleted", "renamed"]),
+            })
+        ),
+    }),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+});
+
+export type Commit = z.infer<typeof CommitSchema>;
+
+// Analytics schemas
+export const RepositoryAnalyticsSchema = z.object({
+    totalCommits: z.number(),
+    totalContributors: z.number(),
+    commitsByDay: z.array(
+        z.object({
+            date: z.string(),
+            count: z.number(),
+        })
+    ),
+    topContributors: z.array(
+        z.object({
+            developerId: z.string(),
+            name: z.string(),
+            commits: z.number(),
+            additions: z.number(),
+            deletions: z.number(),
+        })
+    ),
+    languageStats: z.array(
+        z.object({
+            language: z.string(),
+            percentage: z.number(),
+            lines: z.number(),
+        })
+    ),
+});
+
+export type RepositoryAnalytics = z.infer<typeof RepositoryAnalyticsSchema>;

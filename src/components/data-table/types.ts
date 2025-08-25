@@ -28,11 +28,67 @@ export interface RowAction<T> {
     icon?: ReactNode;
     onClick: (row: T) => void;
     variant?: "default" | "destructive";
+    visible?: (row: T) => boolean; // Optional visibility function
+}
+
+export interface SortingState {
+    id: string;
+    desc: boolean;
+}
+
+export interface PaginationState {
+    pageIndex: number;
+    pageSize: number;
+}
+
+export interface FilterState {
+    id: string;
+    value: any;
+}
+
+// API-related types
+export interface ApiResponse<T> {
+    data: T[];
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+}
+
+export interface ApiError {
+    message: string;
+    code?: string;
+    details?: any;
+}
+
+export interface ApiParams {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    filters?: Record<string, any>;
 }
 
 export interface DataTableProps<T> {
+    // Data props
     data: T[];
     columns: ColumnDef<T>[];
+
+    // API props
+    isLoading?: boolean;
+    error?: ApiError | null;
+    total?: number;
+    serverSide?: boolean;
+
+    // Event handlers for server-side operations
+    onPaginationChange?: (pagination: PaginationState) => void;
+    onSortingChange?: (sorting: SortingState[]) => void;
+    onGlobalFilterChange?: (search: string) => void;
+    onFiltersChange?: (filters: FilterState[]) => void;
+    onRefresh?: () => void;
+
+    // UI props
     rowActions?: RowAction<T>[];
     searchableFields?: (keyof T)[];
     filters?: FilterConfig[];
@@ -45,16 +101,36 @@ export interface DataTableProps<T> {
     pageSize?: number;
     enableRowSelection?: boolean;
     onRowSelectionChange?: (selectedRows: T[]) => void;
-    initialSort?: SortingState[];
+
+    // Loading states
+    emptyStateMessage?: string;
+    emptyStateIcon?: ReactNode;
 }
 
-export interface PaginationState {
-    pageIndex: number;
-    pageSize: number;
+// Hook types
+export interface UseDataTableOptions<T> {
+    apiEndpoint: string;
+    initialPageSize?: number;
+    searchableFields?: (keyof T)[];
+    defaultFilters?: Record<string, any>;
+    defaultSort?: { field: keyof T; order: "asc" | "desc" };
+    refetchInterval?: number;
 }
 
-export interface SortingState {
-    id: string;
-    desc: boolean;
+export interface UseDataTableReturn<T> {
+    data: T[];
+    isLoading: boolean;
+    error: ApiError | null;
+    total: number;
+    pagination: PaginationState;
+    sorting: SortingState[];
+    globalFilter: string;
+    filters: FilterState[];
+
+    // Actions
+    setPagination: (pagination: PaginationState) => void;
+    setSorting: (sorting: SortingState[]) => void;
+    setGlobalFilter: (search: string) => void;
+    setFilters: (filters: FilterState[]) => void;
+    refresh: () => void;
 }
-[];
