@@ -257,8 +257,24 @@ export const useRepositoryStore = create<RepositoryState>()(
                     const response = await api.get(
                         `/repositories/${repositoryId}/commits?page=${page}&limit=${limit}`
                     );
+                    const commits =
+                        response.data.data?.commits || response.data;
+
+                    // Map author info from developer data if needed
+                    // This would be enhanced with real user data from the API
+                    const commitsWithAuthor = commits.map((commit: any) => ({
+                        ...commit,
+                        author: {
+                            name: `Developer ${commit.developerId.substring(
+                                0,
+                                5
+                            )}`,
+                            avatar: `/placeholder.svg?id=${commit.developerId}`,
+                        },
+                    }));
+
                     set({ isLoading: false });
-                    return response.data.data || response.data;
+                    return commitsWithAuthor;
                 } catch (error: any) {
                     set({
                         error:

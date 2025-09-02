@@ -14,7 +14,10 @@ export const RepositorySchema = z.object({
     createdAt: z.string(),
     updatedAt: z.string(),
     commits: z.array(z.any()).optional(),
-    commitsCount: z.number().optional(), // For summary views
+    commitsCount: z.number().optional(),
+    contributorsCount: z.number().optional(),
+    filesCount: z.number().optional(),
+    linesOfCode: z.number().optional(),
 });
 
 export type Repository = z.infer<typeof RepositorySchema>;
@@ -135,11 +138,35 @@ export type SimpleRepositoryList = z.infer<typeof SimpleRepositoryListSchema>;
 // Commit schema (updated to match backend)
 export const CommitSchema = z.object({
     _id: z.string(),
+    repoId: z.string(),
+    developerId: z.string(),
+    projectId: z.string(),
     commitHash: z.string(),
     message: z.string(),
     branch: z.string(),
     timestamp: z.string(),
-    // Can be extended with more fields as needed
+    stats: z
+        .object({
+            files_changed: z.number(),
+            files_added: z.number().optional(),
+            files_removed: z.number().optional(),
+            lines_added: z.number().optional(),
+            lines_removed: z.number().optional(),
+        })
+        .optional(),
+    changes: z
+        .array(
+            z.object({
+                fileName: z.string(),
+                added: z.number(),
+                removed: z.number(),
+            })
+        )
+        .optional(),
+    parentCommit: z.string().optional(),
+    desktopSyncedAt: z.string().optional(),
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
 });
 
 export type Commit = z.infer<typeof CommitSchema>;

@@ -75,7 +75,7 @@ export const useProjectStore = create<ProjectState>()(
                         `/projects?page=${page}&limit=${limit}`
                     );
                     // Backend returns array directly, not paginated for this endpoint
-                    const projects = response.data.data || response.data;
+                    const projects = response.data.projects || response.data;
 
                     set({
                         projects: Array.isArray(projects) ? projects : [],
@@ -138,10 +138,9 @@ export const useProjectStore = create<ProjectState>()(
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.post("/projects", data);
-                    // Use flexible parsing, don't enforce strict schema
+
                     const newProject = response.data.data || response.data;
 
-                    // Accept either _id or id for new projects
                     const projectId = newProject._id || newProject.id;
                     if (newProject && projectId) {
                         set((state) => ({
@@ -170,7 +169,7 @@ export const useProjectStore = create<ProjectState>()(
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.patch(`/projects/${id}`, data);
-                    // Use flexible parsing, don't enforce strict schema
+
                     const updatedProject = response.data.data || response.data;
 
                     set((state) => ({
