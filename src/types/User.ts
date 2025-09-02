@@ -16,6 +16,7 @@ export const UserSchema = z.object({
     profileImage: z.string().nullable(),
     companyName: z.string().optional(),
     workspaces: z.array(z.string()).optional(),
+    registeredRepos: z.array(z.string()).optional(),
     lastLogin: z.string().nullable().optional(),
     createdAt: z.string(),
     updatedAt: z.string(),
