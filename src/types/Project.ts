@@ -172,7 +172,7 @@ export const ProjectDetailSchema = z.object({
 });
 
 export type ProjectDetail = z.infer<typeof ProjectDetailSchema>;
-
+export type MemberType = z.infer<typeof ProjectDetailSchema>["members"][0];
 // Project delete response
 export const ProjectDeleteResponseSchema = z.object({
     deleted: z.boolean(),

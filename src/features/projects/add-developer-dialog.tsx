@@ -37,6 +37,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { MemberType } from "@/types/Project";
 
 type Developer = {
     _id: string;
@@ -81,7 +82,7 @@ export function AddDeveloperDialog({ projectId }: Props) {
     // Get member user_ids from currentProject
     const memberIds = React.useMemo(() => {
         if (!currentProject || !currentProject.members) return [];
-        return currentProject.members.map((m: any) => m.userId);
+        return currentProject.members.map((m: MemberType) => m.userId);
     }, [currentProject]);
 
     const filteredDevelopers = React.useMemo(() => {
