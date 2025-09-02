@@ -23,7 +23,7 @@ export const developerColumns: ColumnDef<User>[] = [
                 </Avatar>
                 <Link
                     href={`/dashboard/developers/${row.original._id}`}
-                    className="text-primary hover:underline"
+                    className="hover:underline"
                 >
                     {row.original.fullName}
                 </Link>

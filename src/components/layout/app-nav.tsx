@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Search, User } from "lucide-react";
+import { Bell, LogOut, Search, Settings, User } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -28,10 +28,12 @@ import {
 import React from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { useProjectStore } from "@/stores/projectStore";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import Link from "next/link";
 
 export default function AppNavbar() {
     const pathname = usePathname();
-    const logout = useAuthStore((state) => state.logout);
+    const { logout, user } = useAuthStore();
     const { currentProject, isLoading } = useProjectStore();
 
     const breadcrumbs = React.useMemo(() => {
@@ -117,18 +119,47 @@ export default function AppNavbar() {
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                                <User className="w-4 h-4" />
+                            <Button
+                                variant="ghost"
+                                className="relative rounded-full w-8 h-8"
+                            >
+                                <Avatar className="w-8 h-8">
+                                    <AvatarImage
+                                        src={user?.profileImage ?? undefined}
+                                        alt="Profile"
+                                    />
+                                    <AvatarFallback>
+                                        {user?.fullName[0].toUpperCase()}
+                                    </AvatarFallback>
+                                </Avatar>
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                        <DropdownMenuContent
+                            className="w-56"
+                            align="end"
+                            forceMount
+                        >
+                            <DropdownMenuLabel className="font-normal">
+                                <div className="flex flex-col space-y-1">
+                                    <p className="font-medium text-sm leading-none">
+                                        {user?.fullName}
+                                    </p>
+                                    <p className="text-muted-foreground text-xs leading-none">
+                                        {user?.email}
+                                    </p>
+                                </div>
+                            </DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>Profile</DropdownMenuItem>
-                            <DropdownMenuItem>Settings</DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link href="/dashboard/settings">
+                                    <Settings className="mr-2 w-4 h-4" />
+                                    <span>Settings</span>
+                                </Link>
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={handleLogout}>
-                                Sign out
+                                <LogOut className="mr-2 w-4 h-4" />
+                                <span>Log out</span>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
