@@ -36,6 +36,7 @@ import api from "@/lib/axios";
 import { Commit } from "@/types/Repository";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRepositoryStore } from "@/stores/repositoryStore";
+import { toast } from "sonner";
 
 interface CommitResponse {
     success: boolean;
@@ -125,32 +126,21 @@ export default function CommitDetailsPage() {
 
                     // Get repository name
                     try {
-                        const repoResponse = await api.get<RepositoryResponse>(
-                            `/repositories/${commit.repoId}`
-                        );
+                        const repoName =
+                            currentRepository?.name || "Unknown Repository";
+                        setRepoName(repoName);
 
-                        if (
-                            repoResponse.data.success &&
-                            repoResponse.data.data.repository
-                        ) {
-                            const repoName =
-                                currentRepository?.name || "Unknown Repository";
-                            setRepoName(repoName);
-
-                            // Add repository info to commit data
-                            setCommitData({
-                                ...commit,
-                                repository: {
-                                    id: commit.repoId,
-                                    name: repoName,
-                                },
-                                short_id: commit.commitHash
-                                    ? commit.commitHash.substring(0, 7)
-                                    : "",
-                            });
-                        } else {
-                            throw new Error("Repository data not available");
-                        }
+                        // Add repository info to commit data
+                        setCommitData({
+                            ...commit,
+                            repository: {
+                                id: commit.repoId,
+                                name: repoName,
+                            },
+                            short_id: commit.commitHash
+                                ? commit.commitHash.substring(0, 7)
+                                : "",
+                        });
                     } catch (repoError) {
                         console.error("Error fetching repository:", repoError);
                         // If repo fetch fails, still set commit data
@@ -257,6 +247,9 @@ export default function CommitDetailsPage() {
                                 if (commitData.commitHash) {
                                     navigator.clipboard.writeText(
                                         commitData.commitHash
+                                    );
+                                    toast.success(
+                                        "Commit SHA copied to clipboard"
                                     );
                                 }
                             }}
