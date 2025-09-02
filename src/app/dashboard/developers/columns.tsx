@@ -3,6 +3,7 @@ import { User } from "@/types/User";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { timeAgo } from "@/lib/utils";
+import Link from "next/link";
 
 export const developerColumns: ColumnDef<User>[] = [
     {
@@ -20,7 +21,12 @@ export const developerColumns: ColumnDef<User>[] = [
                         {row.original.fullName.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
                 </Avatar>
-                <span>{row.original.fullName}</span>
+                <Link
+                    href={`/dashboard/developers/${row.original._id}`}
+                    className="text-primary hover:underline"
+                >
+                    {row.original.fullName}
+                </Link>
             </div>
         ),
     },
