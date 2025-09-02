@@ -11,14 +11,11 @@ import type {
 } from "@/components/data-table/types";
 import { Eye, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { useRoleBasedRepositories } from "@/hooks/use-repositories";
 import ListSkeleton from "@/components/skeletons/list-page-skeleton";
 
 export default function Repositories() {
-    const { repositories, isLoading, error, userRole } =
-        useRoleBasedRepositories();
+    const { repositories, isLoading, error } = useRoleBasedRepositories();
     const [selectedRows, setSelectedRows] = useState<Repository[]>([]);
 
     const rowActions: RowAction<Repository>[] = [
@@ -81,12 +78,6 @@ export default function Repositories() {
                         Manage your repositories and their settings.
                     </p>
                 </div>
-                {userRole === "developer" && (
-                    <Button>
-                        <Plus className="mr-2 w-4 h-4" />
-                        New Repository
-                    </Button>
-                )}
             </div>
             {/* Loading/Error States */}
             {isLoading && <ListSkeleton />}

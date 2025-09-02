@@ -33,8 +33,6 @@ interface UserState {
     updateMe: (data: any) => Promise<any | undefined>;
     fetchProfile: () => Promise<void>;
 
-    // Removed user-specific repository operations
-
     // Utilities
     clearCurrentUser: () => void;
     clearError: () => void;

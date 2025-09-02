@@ -60,7 +60,7 @@ export const useRepositoryStore = create<RepositoryState>()(
             isLoading: false,
             error: null,
 
-            fetchAllRepositories: async (page = 1, limit = 10) => {
+            fetchAllRepositories: async (page = 1, limit = 100) => {
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.get(
