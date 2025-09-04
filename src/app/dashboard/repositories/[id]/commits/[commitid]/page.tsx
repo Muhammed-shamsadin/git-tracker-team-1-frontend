@@ -37,6 +37,7 @@ import { Commit } from "@/types/Repository";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRepositoryStore } from "@/stores/repositoryStore";
 import { toast } from "sonner";
+import CommitDetailsSkeleton from "@/features/repositories/commits/commit-details-skeleton";
 
 interface CommitResponse {
     success: boolean;
@@ -165,7 +166,6 @@ export default function CommitDetailsPage() {
     const [commitData, setCommitData] = useState<CommitWithRepository | null>(
         null
     );
-    const { currentRepository } = useRepositoryStore();
     useEffect(() => {
         const fetchCommitData = async () => {
             try {
@@ -202,23 +202,7 @@ export default function CommitDetailsPage() {
     }, [commitId, repoId]);
 
     if (loading) {
-        return (
-            <div className="space-y-6">
-                <div className="flex items-center gap-2">
-                    <Skeleton className="w-32 h-9" />
-                </div>
-                <div className="space-y-4">
-                    <Skeleton className="w-full h-12" />
-                    <Skeleton className="w-full h-48" />
-                </div>
-                <div className="gap-4 grid md:grid-cols-4">
-                    {[...Array(4)].map((_, i) => (
-                        <Skeleton key={i} className="w-full h-24" />
-                    ))}
-                </div>
-                <Skeleton className="w-full h-96" />
-            </div>
-        );
+        return <CommitDetailsSkeleton />;
     }
 
     if (error || !commitData) {
@@ -305,7 +289,7 @@ export default function CommitDetailsPage() {
                             <div className="space-y-4">
                                 <div className="flex items-center gap-3">
                                     <Avatar className="w-10 h-10">
-                                        <AvatarImage src="/placeholder.svg" />
+                                        {/* <AvatarImage src="/placeholder.svg" /> */}
                                         <AvatarFallback>
                                             {commitData.developerId?.fullName
                                                 ?.split(" ")
