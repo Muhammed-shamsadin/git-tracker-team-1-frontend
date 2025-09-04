@@ -42,6 +42,20 @@ export default function AppNavbar() {
         fetchRepositoryById,
     } = useRepositoryStore();
 
+    // Effect to fetch repository data when on repository pages
+    React.useEffect(() => {
+        const parts = pathname.split("/").filter(Boolean);
+        const repoIndex = parts.indexOf("repositories");
+
+        if (repoIndex !== -1 && parts[repoIndex + 1]) {
+            const repoId = parts[repoIndex + 1];
+            // Only fetch if we don't have the current repository or it's a different one
+            if (!currentRepository || currentRepository._id !== repoId) {
+                fetchRepositoryById(repoId);
+            }
+        }
+    }, [pathname, currentRepository, fetchRepositoryById]);
+
     const breadcrumbs = React.useMemo(() => {
         const parts = pathname.split("/").filter(Boolean);
 
@@ -77,9 +91,29 @@ export default function AppNavbar() {
                 label,
                 href,
                 isLast: index === parts.length - 1,
+                isFirst: index === 0,
             };
         });
     }, [pathname, currentProject, isLoading, currentRepository, repoLoading]);
+
+    // For mobile, show only the last 2 breadcrumbs or just the current page if very small
+    const mobileBreadcrumbs = React.useMemo(() => {
+        if (breadcrumbs.length <= 2) return breadcrumbs;
+        return [
+            breadcrumbs[breadcrumbs.length - 2],
+            breadcrumbs[breadcrumbs.length - 1],
+        ];
+    }, [breadcrumbs]);
+
+    // For tablets/medium screens, show only the last 3 breadcrumbs
+    const tabletBreadcrumbs = React.useMemo(() => {
+        if (breadcrumbs.length <= 3) return breadcrumbs;
+        return [
+            breadcrumbs[breadcrumbs.length - 3],
+            breadcrumbs[breadcrumbs.length - 2],
+            breadcrumbs[breadcrumbs.length - 1],
+        ];
+    }, [breadcrumbs]);
 
     const handleLogout = () => {
         logout();
@@ -88,24 +122,71 @@ export default function AppNavbar() {
 
     return (
         <header className="top-0 z-50 sticky bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur border-b w-full">
-            <div className="flex flex-wrap justify-between items-center gap-4 px-4 sm:px-6 py-2 h-auto sm:h-14">
+            <div className="flex justify-between items-center gap-2 sm:gap-4 px-4 sm:px-6 py-2 h-14">
                 <div className="flex flex-1 items-center gap-2 min-w-0">
                     <SidebarTrigger className="-ml-1" />
-                    <div className="min-w-0 overflow-x-auto whitespace-nowrap">
+                    <div className="flex-1 min-w-0">
                         <Breadcrumb>
-                            <BreadcrumbList className="flex items-center gap-1 text-sm">
+                            {/* Desktop breadcrumbs - full navigation for large screens */}
+                            <BreadcrumbList className="hidden lg:flex items-center gap-1 text-sm">
                                 {breadcrumbs.map((crumb, index) => (
                                     <React.Fragment key={crumb.href}>
                                         {index > 0 && <BreadcrumbSeparator />}
                                         <BreadcrumbItem>
                                             {crumb.isLast ? (
-                                                <BreadcrumbPage className="max-w-[140px] sm:max-w-none truncate">
+                                                <BreadcrumbPage className="max-w-[200px] truncate">
                                                     {crumb.label}
                                                 </BreadcrumbPage>
                                             ) : (
                                                 <BreadcrumbLink
                                                     href={crumb.href}
-                                                    className="max-w-[140px] sm:max-w-none truncate"
+                                                    className="max-w-[160px] truncate"
+                                                >
+                                                    {crumb.label}
+                                                </BreadcrumbLink>
+                                            )}
+                                        </BreadcrumbItem>
+                                    </React.Fragment>
+                                ))}
+                            </BreadcrumbList>
+
+                            {/* Tablet breadcrumbs - show only last 3 items for medium screens */}
+                            <BreadcrumbList className="hidden lg:hidden sm:flex items-center gap-1 text-sm">
+                                {tabletBreadcrumbs.map((crumb, index) => (
+                                    <React.Fragment key={crumb.href}>
+                                        {index > 0 && <BreadcrumbSeparator />}
+                                        <BreadcrumbItem>
+                                            {crumb.isLast ? (
+                                                <BreadcrumbPage className="max-w-[120px] truncate">
+                                                    {crumb.label}
+                                                </BreadcrumbPage>
+                                            ) : (
+                                                <BreadcrumbLink
+                                                    href={crumb.href}
+                                                    className="max-w-[100px] truncate"
+                                                >
+                                                    {crumb.label}
+                                                </BreadcrumbLink>
+                                            )}
+                                        </BreadcrumbItem>
+                                    </React.Fragment>
+                                ))}
+                            </BreadcrumbList>
+
+                            {/* Mobile breadcrumbs - show only last 2 items */}
+                            <BreadcrumbList className="sm:hidden flex items-center gap-1 text-sm">
+                                {mobileBreadcrumbs.map((crumb, index) => (
+                                    <React.Fragment key={crumb.href}>
+                                        {index > 0 && <BreadcrumbSeparator />}
+                                        <BreadcrumbItem>
+                                            {crumb.isLast ? (
+                                                <BreadcrumbPage className="max-w-[100px] truncate">
+                                                    {crumb.label}
+                                                </BreadcrumbPage>
+                                            ) : (
+                                                <BreadcrumbLink
+                                                    href={crumb.href}
+                                                    className="max-w-[80px] truncate"
                                                 >
                                                     {crumb.label}
                                                 </BreadcrumbLink>
@@ -118,8 +199,8 @@ export default function AppNavbar() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                    {/* Collapsible Search */}
+                <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                    {/* Search - hidden on mobile, shown on medium+ screens */}
                     <div className="hidden md:block relative">
                         <Search className="top-2.5 left-2.5 absolute w-4 h-4 text-muted-foreground" />
                         <Input
@@ -131,7 +212,12 @@ export default function AppNavbar() {
 
                     <ThemeToggle />
 
-                    <Button variant="ghost" size="icon">
+                    {/* Notifications - hidden on mobile */}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="hidden sm:flex"
+                    >
                         <Bell className="w-4 h-4" />
                     </Button>
 
