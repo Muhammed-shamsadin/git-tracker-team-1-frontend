@@ -85,7 +85,7 @@ export const useUserStore = create<UserState>()(
                 try {
                     const response = await api.get("/users/clients");
                     set({
-                        clients: response.data.data || response.data,
+                        clients: response.data.data.users || response.data,
                         isLoading: false,
                     });
                 } catch (error: any) {
