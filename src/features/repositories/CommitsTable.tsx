@@ -29,10 +29,10 @@ interface CommitChange {
 
 interface CommitStats {
     files_changed: number;
-    files_added: number;
-    files_removed: number;
-    lines_added: number;
-    lines_removed: number;
+    files_added?: number;
+    files_removed?: number;
+    lines_added?: number;
+    lines_removed?: number;
 }
 
 interface Commit {

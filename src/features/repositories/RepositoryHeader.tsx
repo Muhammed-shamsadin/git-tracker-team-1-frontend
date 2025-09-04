@@ -26,9 +26,26 @@ export function RepositoryHeader({ repository }: RepositoryHeaderProps) {
     const [developerName, setDeveloperName] = useState<string>("");
 
     useEffect(() => {
-        setProjectName(currentRepository?.projectId as string);
-        setDeveloperName(currentRepository?.developerId as string);
-    }, [currentRepository]);
+        // Handle populated projectId object or string
+        if (
+            typeof repository.projectId === "object" &&
+            repository.projectId !== null
+        ) {
+            setProjectName(repository.projectId.name);
+        } else {
+            setProjectName(repository.projectId as string);
+        }
+
+        // Handle populated developerId object or string
+        if (
+            typeof repository.developerId === "object" &&
+            repository.developerId !== null
+        ) {
+            setDeveloperName(repository.developerId.fullName);
+        } else {
+            setDeveloperName(repository.developerId as string);
+        }
+    }, [repository]);
 
     return (
         <>
@@ -77,7 +94,7 @@ export function RepositoryHeader({ repository }: RepositoryHeaderProps) {
                             </Badge>
                         )}
                         {developerName && (
-                            <Badge variant="outline">
+                            <Badge variant="outline" className="font-medium">
                                 Owner: {developerName}
                             </Badge>
                         )}

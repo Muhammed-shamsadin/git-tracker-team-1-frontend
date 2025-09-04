@@ -139,8 +139,12 @@ export const useRepositoryStore = create<RepositoryState>()(
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.get(`/repositories/${id}`);
+                    const repositoryData = response.data.data || response.data;
+                    
+                    // The API now returns populated developerId and projectId objects
+                    // No need to transform as the schema handles both string and object types
                     set({
-                        currentRepository: response.data.data || response.data,
+                        currentRepository: repositoryData,
                         isLoading: false,
                     });
                 } catch (error: any) {
@@ -261,15 +265,20 @@ export const useRepositoryStore = create<RepositoryState>()(
                         response.data.data?.commits || response.data;
 
                     // Map author info from developer data if needed
-                    // This would be enhanced with real user data from the API
+                    // Enhanced to work with the new commit structure including stats
                     const commitsWithAuthor = commits.map((commit: any) => ({
                         ...commit,
                         author: {
-                            name: `Developer ${commit.developerId.substring(
-                                0,
-                                5
-                            )}`,
+                            name: `Developer ${commit.developerId?.substring(0, 5) || 'Unknown'}`,
                             avatar: `/placeholder.svg?id=${commit.developerId}`,
+                        },
+                        // Ensure stats are properly structured
+                        stats: commit.stats || {
+                            files_changed: 0,
+                            files_added: 0,
+                            files_removed: 0,
+                            lines_added: 0,
+                            lines_removed: 0,
                         },
                     }));
 
