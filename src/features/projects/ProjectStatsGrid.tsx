@@ -22,13 +22,13 @@ export function ProjectStatsGrid({ project }: { project: ProjectDetail }) {
             <Card>
                 <CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
                     <CardTitle className="font-medium text-sm">
-                        Contributors
+                        Team Members
                     </CardTitle>
                     <Users className="w-4 h-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                     <div className="font-bold text-2xl">
-                        {project.members?.length ?? 0}
+                        {project.membersCount ?? project.members?.length ?? 0}
                     </div>
                 </CardContent>
             </Card>
@@ -48,13 +48,13 @@ export function ProjectStatsGrid({ project }: { project: ProjectDetail }) {
             <Card>
                 <CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
                     <CardTitle className="font-medium text-sm">
-                        Team Members
+                        Repository Limit
                     </CardTitle>
-                    <Users className="w-4 h-4 text-muted-foreground" />
+                    <GitBranch className="w-4 h-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                     <div className="font-bold text-2xl">
-                        {project.members?.length ?? 0}
+                        {project.repoLimit ?? 0}
                     </div>
                 </CardContent>
             </Card>
