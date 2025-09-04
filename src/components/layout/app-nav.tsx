@@ -28,6 +28,7 @@ import {
 import React from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { useProjectStore } from "@/stores/projectStore";
+import { useRepositoryStore } from "@/stores/repositoryStore";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import Link from "next/link";
 
@@ -35,6 +36,11 @@ export default function AppNavbar() {
     const pathname = usePathname();
     const { logout, user } = useAuthStore();
     const { currentProject, isLoading } = useProjectStore();
+    const {
+        currentRepository,
+        isLoading: repoLoading,
+        fetchRepositoryById,
+    } = useRepositoryStore();
 
     const breadcrumbs = React.useMemo(() => {
         const parts = pathname.split("/").filter(Boolean);
@@ -45,10 +51,22 @@ export default function AppNavbar() {
                 .replace(/-/g, " ")
                 .replace(/\b\w/g, (c) => c.toUpperCase());
 
+            // Handle project breadcrumbs
             if (index > 0 && parts[index - 1] === "projects") {
                 if (currentProject && part === currentProject._id) {
                     label = currentProject.name;
                 } else if (isLoading) {
+                    label = "Loading...";
+                } else {
+                    label = part;
+                }
+            }
+
+            // Handle repository breadcrumbs
+            if (index > 0 && parts[index - 1] === "repositories") {
+                if (currentRepository && part === currentRepository._id) {
+                    label = currentRepository.name;
+                } else if (repoLoading) {
                     label = "Loading...";
                 } else {
                     label = part;
@@ -61,7 +79,7 @@ export default function AppNavbar() {
                 isLast: index === parts.length - 1,
             };
         });
-    }, [pathname, currentProject, isLoading]);
+    }, [pathname, currentProject, isLoading, currentRepository, repoLoading]);
 
     const handleLogout = () => {
         logout();
