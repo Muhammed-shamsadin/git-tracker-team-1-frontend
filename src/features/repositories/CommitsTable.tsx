@@ -178,6 +178,7 @@ export function CommitsTable({
                                         <div>
                                             <Link
                                                 href={`/dashboard/repositories/${
+                                                    repositoryId ||
                                                     commit.repoId ||
                                                     "placeholder"
                                                 }/commits/${commit._id}`}
@@ -232,7 +233,10 @@ export function CommitsTable({
                                             asChild
                                         >
                                             <Link
-                                                href={`/dashboard/repositories/${commit.repoId}/commits/${commit._id}`}
+                                                href={`/dashboard/repositories/${
+                                                    repositoryId ||
+                                                    commit.repoId
+                                                }/commits/${commit._id}`}
                                             >
                                                 View
                                             </Link>
