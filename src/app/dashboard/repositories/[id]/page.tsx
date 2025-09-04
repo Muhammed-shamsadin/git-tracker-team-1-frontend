@@ -1,76 +1,89 @@
 "use client";
 
-import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Repository } from "@/types/Repository";
-import { mockRepositories } from "@/data/repositories";
-import { Loader2 } from "lucide-react";
+import { useParams } from "next/navigation";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useRepositoryStore } from "@/stores/repositoryStore";
+import { RepositoryHeader } from "@/features/repositories/RepositoryHeader";
+import { RepositoryStatsGrid } from "@/features/repositories/RepositoryStatsGrid";
+import { CommitActivityChart } from "@/features/repositories/CommitActivityChart";
+import { RepositoryInfoCard } from "@/features/repositories/RepositoryInfoCard";
+import { CommitsTable } from "@/features/repositories/CommitsTable";
+import RepositoryDetailsLoading from "@/features/repositories/repository-details-skeleton";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function RepositoryDetailsPage() {
     const { id } = useParams();
-    const [repository, setRepository] = useState<Repository | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { user } = useAuthStore();
+    const {
+        currentRepository,
+        fetchRepositoryById,
+        fetchRepositoryCommits,
+        isLoading,
+        error,
+    } = useRepositoryStore();
+
+    const [commits, setCommits] = useState<any[]>([]);
+    const [commitsLoading, setCommitsLoading] = useState(false);
 
     useEffect(() => {
-        const fetchRepository = async () => {
-            const repo = mockRepositories.find((repo) => repo.id === id);
-            setRepository(repo || null);
-            setLoading(false);
-        };
+        if (id) {
+            fetchRepositoryById(id as string);
+        }
+    }, [id, fetchRepositoryById]);
 
-        fetchRepository();
-    }, [id]);
+    // Fetch commits when repository is loaded
+    useEffect(() => {
+        if (currentRepository?._id) {
+            setCommitsLoading(true);
+            fetchRepositoryCommits(currentRepository._id)
+                .then((commitsData) => {
+                    setCommits(commitsData);
+                    setCommitsLoading(false);
+                })
+                .catch(() => {
+                    setCommitsLoading(false);
+                });
+        }
+    }, [currentRepository, fetchRepositoryCommits]);
 
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center h-screen">
-                <Loader2 className="w-6 h-6 animate-spin" />
-            </div>
-        );
+    if (isLoading || !currentRepository) {
+        return <RepositoryDetailsLoading />;
     }
 
-    if (!repository) {
-        return (
-            <div className="flex justify-center items-center h-screen">
-                <p>Repository not found.</p>
-            </div>
-        );
+    if (error) {
+        return <div className="p-8 text-destructive text-center">{error}</div>;
     }
-    const formatedName = repository.name.replace(/-/g, " ").toString();
 
     return (
-        <div className="p-6">
-            <h1 className="font-bold text-3xl capitalize tracking-tight">
-                {formatedName}
-            </h1>
-            <p className="text-muted-foreground">{repository.description}</p>
-            <div className="space-y-4 mt-4">
-                <div>
-                    <strong>Owner:</strong> {repository.owner}
-                </div>
-                <div>
-                    <strong>Project ID:</strong> {repository.projectId}
-                </div>
-                <div>
-                    <strong>Status:</strong> {repository.status}
-                </div>
-                <div>
-                    <strong>Tags:</strong>{" "}
-                    {repository.tags ? repository.tags.join(", ") : "None"}
-                </div>
-                <div>
-                    <strong>Branch Count:</strong> {repository.branchCount}
-                </div>
-                <div>
-                    <strong>Commit Count:</strong> {repository.commitCount}
-                </div>
-                <div>
-                    <strong>Last Commit:</strong>{" "}
-                    {repository.lastCommit
-                        ? new Date(repository.lastCommit).toLocaleString()
-                        : "N/A"}
-                </div>
-            </div>
+        <div className="space-y-6">
+            <RepositoryHeader repository={currentRepository} />
+
+            {/* Tabs */}
+            <Tabs defaultValue="overview" className="space-y-6">
+                <TabsList>
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="commits">Commits</TabsTrigger>
+                </TabsList>
+
+                {/* Overview Tab */}
+                <TabsContent value="overview" className="space-y-6">
+                    <RepositoryStatsGrid repository={currentRepository} />
+                    <div className="gap-6 grid md:grid-cols-2">
+                        <CommitActivityChart repository={currentRepository} />
+                        <RepositoryInfoCard repository={currentRepository} />
+                    </div>
+                </TabsContent>
+
+                {/* Commits Tab */}
+                <TabsContent value="commits" className="space-y-6">
+                    <CommitsTable
+                        commits={commits}
+                        isLoading={commitsLoading}
+                        repositoryId={id as string}
+                    />
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

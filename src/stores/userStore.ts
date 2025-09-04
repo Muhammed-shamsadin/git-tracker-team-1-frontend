@@ -18,6 +18,8 @@ interface UserState {
     developers: any[];
     isLoading: boolean;
     error: string | null;
+
+    // Core user operations
     fetchAllUsers: (
         page?: number,
         limit?: number,
@@ -30,10 +32,10 @@ interface UserState {
     updateUser: (id: string, data: any) => Promise<any | undefined>;
     updateMe: (data: any) => Promise<any | undefined>;
     fetchProfile: () => Promise<void>;
-    fetchDeveloperProjects: () => Promise<void>;
-    fetchDeveloperRepositories: () => Promise<void>;
-    fetchClientProjects: () => Promise<void>;
+
+    // Utilities
     clearCurrentUser: () => void;
+    clearError: () => void;
 }
 
 export const useUserStore = create<UserState>()(
@@ -47,6 +49,7 @@ export const useUserStore = create<UserState>()(
             isLoading: false,
             error: null,
 
+            // GET /api/users?page=1&limit=10&role=CLIENT
             fetchAllUsers: async (page = 1, limit = 10, role?: string) => {
                 set({ isLoading: true, error: null });
                 try {
@@ -67,148 +70,194 @@ export const useUserStore = create<UserState>()(
                     });
                 } catch (error: any) {
                     set({
-                        error: error.message || "Failed to fetch users",
+                        error:
+                            error.response?.data?.message ||
+                            error.message ||
+                            "Failed to fetch users",
                         isLoading: false,
                     });
                 }
             },
 
+            // GET /api/users/clients
             fetchClients: async () => {
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.get("/users/clients");
-                    set({ clients: response.data.data, isLoading: false });
+                    set({
+                        clients: response.data.data || response.data,
+                        isLoading: false,
+                    });
                 } catch (error: any) {
                     set({
-                        error: error.message || "Failed to fetch clients",
+                        error:
+                            error.response?.data?.message ||
+                            error.message ||
+                            "Failed to fetch clients",
                         isLoading: false,
                     });
                 }
             },
 
+            // GET /api/users/developers
             fetchDevelopers: async () => {
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.get("/users/developers");
-                    set({ developers: response.data.data, isLoading: false });
+                    set({
+                        developers: response.data.data.users || response.data,
+                        isLoading: false,
+                    });
                 } catch (error: any) {
                     set({
-                        error: error.message || "Failed to fetch developers",
+                        error:
+                            error.response?.data?.message ||
+                            error.message ||
+                            "Failed to fetch developers",
                         isLoading: false,
                     });
                 }
             },
 
+            // GET /api/users/:id
             fetchUserById: async (id: string) => {
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.get(`/users/${id}`);
-                    set({ currentUser: response.data.data, isLoading: false });
+                    set({
+                        currentUser: response.data.data || response.data,
+                        isLoading: false,
+                    });
                 } catch (error: any) {
                     set({
-                        error: error.message || "Failed to fetch user",
+                        error:
+                            error.response?.data?.message ||
+                            error.message ||
+                            "Failed to fetch user",
                         isLoading: false,
                     });
                 }
             },
 
+            // POST /api/users/create
             createUser: async (data: any) => {
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.post("/users/create", data);
-                    set({ isLoading: false });
-                    return response.data.data;
+                    const newUser = response.data.data || response.data;
+
+                    set((state) => ({
+                        users: [...state.users, newUser],
+                        isLoading: false,
+                    }));
+                    return newUser;
                 } catch (error: any) {
                     set({
-                        error: error.message || "Failed to create user",
+                        error:
+                            error.response?.data?.message ||
+                            error.message ||
+                            "Failed to create user",
                         isLoading: false,
                     });
                     return undefined;
                 }
             },
 
+            // PATCH /api/users/update/:id
             updateUser: async (id: string, data: any) => {
                 set({ isLoading: true, error: null });
                 try {
-                    const response = await api.patch(`/users/${id}`, data);
-                    set({ currentUser: response.data.data, isLoading: false });
-                    return response.data.data;
+                    const response = await api.patch(
+                        `/users/update/${id}`,
+                        data
+                    );
+                    const updatedUser = response.data.data || response.data;
+
+                    set((state) => ({
+                        users: state.users.map((u) =>
+                            u._id === id ? updatedUser : u
+                        ),
+                        currentUser:
+                            state.currentUser?._id === id
+                                ? updatedUser
+                                : state.currentUser,
+                        isLoading: false,
+                    }));
+                    return updatedUser;
                 } catch (error: any) {
                     set({
-                        error: error.message || "Failed to update user",
+                        error:
+                            error.response?.data?.message ||
+                            error.message ||
+                            "Failed to update user",
                         isLoading: false,
                     });
                     return undefined;
                 }
             },
 
+            // PATCH /api/users/update-me
             updateMe: async (data: any) => {
                 set({ isLoading: true, error: null });
                 try {
-                    const response = await api.patch(`/users/update-me`, data);
-                    set({ currentUser: response.data.data, isLoading: false });
-                    return response.data.data;
+                    const response = await api.patch("/users/update-me", data);
+                    const updatedUser = response.data.data || response.data;
+
+                    set({
+                        currentUser: updatedUser,
+                        isLoading: false,
+                    });
+                    return updatedUser;
                 } catch (error: any) {
                     set({
-                        error: error.message || "Failed to update profile",
+                        error:
+                            error.response?.data?.message ||
+                            error.message ||
+                            "Failed to update profile",
                         isLoading: false,
                     });
                     return undefined;
                 }
             },
 
+            // GET /api/users/profile
             fetchProfile: async () => {
                 set({ isLoading: true, error: null });
                 try {
-                    const response = await api.get(`/users/profile`);
-                    set({ currentUser: response.data.data, isLoading: false });
-                } catch (error: any) {
+                    const response = await api.get("/users/profile");
                     set({
-                        error: error.message || "Failed to fetch profile",
-                        isLoading: false,
-                    });
-                }
-            },
-
-            fetchDeveloperProjects: async () => {
-                set({ isLoading: true, error: null });
-                try {
-                    const response = await api.get(
-                        `/users/developers/me/projects`
-                    );
-                    set({
-                        currentUser: {
-                            ...get().currentUser,
-                            projects: response.data.data,
-                        },
+                        currentUser: response.data.data || response.data,
                         isLoading: false,
                     });
                 } catch (error: any) {
                     set({
                         error:
+                            error.response?.data?.message ||
                             error.message ||
-                            "Failed to fetch developer projects",
+                            "Failed to fetch profile",
                         isLoading: false,
                     });
                 }
             },
 
+            // GET /api/users/developers/me/repositories
             fetchDeveloperRepositories: async () => {
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.get(
-                        `/users/developers/me/repositories`
+                        "/users/developers/me/repositories"
                     );
                     set({
                         currentUser: {
                             ...get().currentUser,
-                            repositories: response.data.data,
+                            repositories: response.data.data || response.data,
                         },
                         isLoading: false,
                     });
                 } catch (error: any) {
                     set({
                         error:
+                            error.response?.data?.message ||
                             error.message ||
                             "Failed to fetch developer repositories",
                         isLoading: false,
@@ -216,30 +265,33 @@ export const useUserStore = create<UserState>()(
                 }
             },
 
-            fetchClientProjects: async () => {
+            // GET /api/users/developers/:developerId/repositories
+            fetchSpecificDeveloperRepositories: async (developerId: string) => {
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.get(
-                        `/users/clients/me/projects`
+                        `/users/developers/${developerId}/repositories`
                     );
-                    set({
-                        currentUser: {
-                            ...get().currentUser,
-                            projects: response.data.data,
-                        },
-                        isLoading: false,
-                    });
+                    set({ isLoading: false });
+                    return response.data.data || response.data;
                 } catch (error: any) {
                     set({
                         error:
-                            error.message || "Failed to fetch client projects",
+                            error.response?.data?.message ||
+                            error.message ||
+                            "Failed to fetch developer repositories",
                         isLoading: false,
                     });
+                    return [];
                 }
             },
 
             clearCurrentUser: () => {
                 set({ currentUser: null });
+            },
+
+            clearError: () => {
+                set({ error: null });
             },
         }),
         {
@@ -247,6 +299,8 @@ export const useUserStore = create<UserState>()(
             partialize: (state) => ({
                 users: state.users,
                 currentUser: state.currentUser,
+                clients: state.clients,
+                developers: state.developers,
             }),
         }
     )

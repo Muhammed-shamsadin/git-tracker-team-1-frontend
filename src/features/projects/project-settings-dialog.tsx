@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -27,23 +26,28 @@ import { Settings, Trash2, Loader2, AlertCircle } from "lucide-react";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import {
     Project,
+    ProjectDetail,
     UpdateProjectSchema,
     UpdateProjectData,
 } from "@/types/Project";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useProjectStore } from "@/stores/projectStore";
+import { useEffect, useState } from "react";
 
-interface ProjectSettingsDialogProps {
-    project: Project;
-}
-
-export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
+export function ProjectSettingsDialog() {
     const router = useRouter();
-    const { updateProject, deleteProject, isLoading } = useProjectStore();
-    const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
-    const [open, setOpen] = React.useState(false);
+    const { id } = useParams();
+    const {
+        currentProject,
+        updateProject,
+        deleteProject,
+        isLoading,
+        fetchProjectById,
+    } = useProjectStore();
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [open, setOpen] = useState(false);
 
     const {
         register,
@@ -56,20 +60,29 @@ export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
         resolver: zodResolver(UpdateProjectSchema),
         mode: "onChange",
         defaultValues: {
-            name: project.name,
-            description: project.description || "",
-            status: project.status,
+            name: currentProject?.name,
+            description: currentProject?.description || "",
+            status: currentProject?.status,
+            tags: currentProject?.tags || [],
         },
     });
 
     const currentStatus = watch("status");
+    const currentTags = watch("tags") || [];
 
     const onSubmit = async (data: UpdateProjectData) => {
+        const projectId = currentProject?._id;
+        if (!projectId) {
+            toast.error("Project ID is missing. Cannot update project.");
+            return;
+        }
         try {
-            await updateProject(project._id, data);
-            toast.success("Project settings updated successfully");
-            setOpen(false);
-            router.refresh();
+            console.log("Updating project with data:", data);
+            const result = await updateProject(projectId, data);
+            if (result) {
+                toast.success("Project settings updated successfully");
+                setOpen(false);
+            }
         } catch (error) {
             console.error("Error updating project settings:", error);
             toast.error("Failed to update project settings. Please try again.");
@@ -77,11 +90,19 @@ export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
     };
 
     const onDelete = async () => {
+        const projectId = currentProject?._id;
+        if (!projectId) {
+            toast.error("Project ID is missing. Cannot delete project.");
+            return;
+        }
         try {
-            await deleteProject(project._id);
-            toast.success(`Project ${project.name} was deleted successfully`);
-            router.push("/dashboard/projects");
-            router.refresh();
+            const result = await deleteProject(projectId);
+            if (result) {
+                toast.success(
+                    `Project ${currentProject?.name} was deleted successfully`
+                );
+                router.push("/dashboard/projects");
+            }
         } catch (error) {
             console.error("Error deleting project:", error);
             toast.error("Failed to delete project. Please try again.");
@@ -89,24 +110,35 @@ export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
         }
     };
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (open) {
+            // if we don't have the project in store, try to fetch by route id
+            if (!currentProject?._id && id) {
+                fetchProjectById(id as string).catch((e) =>
+                    console.error(
+                        "Failed to fetch project for settings dialog",
+                        e
+                    )
+                );
+            }
+
             reset({
-                name: project.name,
-                description: project.description || "",
-                status: project.status,
+                name: currentProject?.name,
+                description: currentProject?.description || "",
+                status: currentProject?.status,
+                tags: currentProject?.tags || [],
             });
         }
-    }, [open, project, reset]);
+    }, [open, currentProject, reset, id, fetchProjectById]);
 
     const statusVariant =
         {
             active: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
             archived:
                 "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400",
-            deleted:
-                "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-        }[currentStatus as "active" | "archived" | "deleted"] ||
+            completed:
+                "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+        }[currentStatus as "active" | "archived" | "completed"] ||
         "bg-gray-100 text-gray-800";
 
     return (
@@ -214,14 +246,82 @@ export function ProjectSettingsDialog({ project }: ProjectSettingsDialogProps) {
                                                 Archived
                                             </div>
                                         </SelectItem>
-                                        <SelectItem value="deleted">
+                                        <SelectItem value="completed">
                                             <div className="flex items-center gap-2">
-                                                <span className="bg-red-500 rounded-full w-2 h-2" />
-                                                Deleted
+                                                <span className="bg-blue-500 rounded-full w-2 h-2" />
+                                                Completed
                                             </div>
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                    <Label htmlFor="tags">Tags</Label>
+                                    {errors.tags && (
+                                        <span className="flex items-center gap-1 text-destructive text-xs">
+                                            <AlertCircle className="w-3.5 h-3.5" />
+                                            {errors.tags.message}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    <Input
+                                        id="tags"
+                                        placeholder="Add tags (press Enter to add)"
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault();
+                                                const value =
+                                                    e.currentTarget.value.trim();
+                                                if (
+                                                    value &&
+                                                    !currentTags.includes(value)
+                                                ) {
+                                                    setValue("tags", [
+                                                        ...currentTags,
+                                                        value,
+                                                    ]);
+                                                    e.currentTarget.value = "";
+                                                }
+                                            }
+                                        }}
+                                    />
+                                    {currentTags.length > 0 && (
+                                        <div className="flex flex-wrap gap-1">
+                                            {currentTags.map((tag, index) => (
+                                                <span
+                                                    key={index}
+                                                    className="inline-flex items-center gap-1 bg-secondary px-2 py-1 rounded-md text-secondary-foreground text-xs"
+                                                >
+                                                    {tag}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newTags =
+                                                                currentTags.filter(
+                                                                    (_, i) =>
+                                                                        i !==
+                                                                        index
+                                                                );
+                                                            setValue(
+                                                                "tags",
+                                                                newTags
+                                                            );
+                                                        }}
+                                                        className="hover:text-destructive"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <p className="text-muted-foreground text-xs">
+                                    Add tags to categorize your project
+                                </p>
                             </div>
                         </div>
 

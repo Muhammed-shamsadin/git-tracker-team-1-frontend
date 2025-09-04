@@ -1,18 +1,13 @@
 "use client";
+
 import {
-    BarChart3,
-    FolderKanban,
-    GitBranch,
-    LayoutGrid,
+    Home,
     Settings,
     Users,
-    GitFork,
-    Star,
-    Plus,
-    Building,
+    FolderGit2,
+    GitBranch,
+    BarChart3,
 } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 import {
     Sidebar,
@@ -20,24 +15,29 @@ import {
     SidebarGroup,
     SidebarGroupContent,
     SidebarGroupLabel,
-    SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    SidebarRail,
-    SidebarGroupAction,
+    SidebarHeader,
+    SidebarFooter,
 } from "@/components/ui/sidebar";
+import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuthStore } from "@/stores/authStore";
+import { useEffect } from "react";
+import { Badge } from "../ui/badge";
 
-const mainNavigation = [
+// Menu items.
+const items = [
     {
         title: "Dashboard",
         url: "/dashboard",
-        icon: LayoutGrid,
+        icon: Home,
     },
     {
         title: "Projects",
         url: "/dashboard/projects",
-        icon: FolderKanban,
+        icon: FolderGit2,
     },
     {
         title: "Repositories",
@@ -45,23 +45,23 @@ const mainNavigation = [
         icon: GitBranch,
     },
     {
+        title: "Clients",
+        url: "/dashboard/clients",
+        icon: Users,
+    },
+    {
         title: "Developers",
         url: "/dashboard/developers",
         icon: Users,
     },
     {
-        title: "Clients",
-        url: "/dashboard/clients",
-        icon: Building,
-    },
-];
-
-const analyticsNavigation = [
-    {
         title: "Analytics",
         url: "/dashboard/analytics",
         icon: BarChart3,
     },
+];
+
+const bottomItems = [
     {
         title: "Settings",
         url: "/dashboard/settings",
@@ -69,110 +69,136 @@ const analyticsNavigation = [
     },
 ];
 
-const favoriteItems = [
-    {
-        title: "Web Application",
-        url: "/dashboard/projects/1",
-        type: "project",
-    },
-    {
-        title: "mobile-app",
-        url: "/dashboard/repositories/3",
-        type: "repository",
-    },
-];
-
 export function AppSidebar() {
-    const pathname = usePathname();
+    const { user, isLoading } = useAuthStore();
 
+    useEffect(
+        () => {},
+        [user, isLoading] // Re-run effect when user changes
+    );
     return (
-        <Sidebar collapsible="icon">
-            <SidebarHeader className="my-2.5 pb-2 border-sidebar-border border-b">
-                <SidebarMenu>
-                    <SidebarMenuItem className="h-full">
-                        <SidebarMenuButton
-                            asChild
-                            className="data-[slot=sidebar-menu-button]:!p-1.5"
-                        >
-                            <Link href="/dashboard" className="py-1">
-                                <GitFork className="size-4 text-primary" />
-                                <span className="font-semibold text-base">
-                                    GitTracker
-                                </span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
+        <Sidebar>
+            <SidebarHeader className="p-4">
+                <div className="flex items-center gap-3">
+                    <div className="flex justify-center items-center bg-primary rounded-lg w-8 h-8 text-primary-foreground">
+                        <GitBranch className="w-4 h-4" />
+                    </div>
+                    <div>
+                        <h2 className="font-semibold text-lg">Git Tracker</h2>
+                        <p className="text-muted-foreground text-xs">
+                            Development Dashboard
+                        </p>
+                    </div>
+                </div>
             </SidebarHeader>
-            <SidebarContent className="mt-2">
+
+            <SidebarContent>
                 <SidebarGroup>
+                    <SidebarGroupLabel>Main Navigation</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {mainNavigation.map((item) => (
-                                <SidebarMenuItem key={item.title}>
-                                    <SidebarMenuButton
-                                        asChild
-                                        isActive={pathname === item.url}
-                                        tooltip={item.title}
-                                    >
-                                        <Link href={item.url}>
-                                            <item.icon className="size-4" />
-                                            <span>{item.title}</span>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild>
+                                    <Link href="/dashboard">
+                                        <Home />
+                                        <span>Dashboard</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild>
+                                    <Link href="/dashboard/projects">
+                                        <FolderGit2 />
+                                        <span>Projects</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild>
+                                    <Link href="/dashboard/repositories">
+                                        <GitBranch />
+                                        <span>Repositories</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+
+                            {(user?.userType === "superadmin" ||
+                                user?.userType === "client") && (
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton asChild>
+                                        <Link href="/dashboard/clients">
+                                            <Users />
+                                            <span>Clients</span>
                                         </Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
-                            ))}
+                            )}
+
+                            {(user?.userType === "superadmin" ||
+                                user?.userType === "client") && (
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton asChild>
+                                        <Link href="/dashboard/developers">
+                                            <Users />
+                                            <span>Developers</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            )}
+
+                            {(user?.userType === "developer" ||
+                                user?.userType === "client") && (
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton asChild>
+                                        <Link href="/dashboard/analytics">
+                                            <BarChart3 />
+                                            <span>Analytics</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            )}
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
 
                 <SidebarGroup>
-                    <SidebarGroupLabel>Favorites</SidebarGroupLabel>
-                    <SidebarGroupAction>
-                        <Plus className="size-4" />
-                    </SidebarGroupAction>
+                    <SidebarGroupLabel>Account</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {favoriteItems.map((item) => (
-                                <SidebarMenuItem key={item.title}>
-                                    <SidebarMenuButton
-                                        asChild
-                                        tooltip={item.title}
-                                    >
-                                        <Link href={item.url}>
-                                            <Star className="fill-current size-4" />
-                                            <span>{item.title}</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            ))}
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-
-                <SidebarGroup>
-                    <SidebarGroupLabel>Analytics & Settings</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <SidebarMenu>
-                            {analyticsNavigation.map((item) => (
-                                <SidebarMenuItem key={item.title}>
-                                    <SidebarMenuButton
-                                        asChild
-                                        isActive={pathname === item.url}
-                                        tooltip={item.title}
-                                    >
-                                        <Link href={item.url}>
-                                            <item.icon className="size-4" />
-                                            <span>{item.title}</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            ))}
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild>
+                                    <Link href="/dashboard/settings">
+                                        <Settings />
+                                        <span>Settings</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>
-            <SidebarRail />
+
+            <SidebarFooter className="p-4">
+                <div className="flex items-center gap-3">
+                    <Avatar className="w-8 h-8">
+                        <AvatarImage src={user?.profileImage ?? undefined} />
+                        <AvatarFallback>
+                            {user?.fullName?.charAt(0)}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex flex-col justify-center">
+                            <p className="font-medium text-sm truncate">
+                                {user?.fullName}
+                            </p>
+                            <Badge>{user?.userType}</Badge>
+                        </div>
+                        <p className="text-muted-foreground text-xs truncate">
+                            {user?.email}
+                        </p>
+                    </div>
+                </div>
+            </SidebarFooter>
         </Sidebar>
     );
 }

@@ -23,21 +23,6 @@ export const projectColomns: ColumnDef<Project>[] = [
             );
         },
     },
-    // {
-    //     header: "Client",
-    //     accessorFn: (row) =>
-    //         typeof row.clientId === "object"
-    //             ? row.clientId?.name
-    //             : row.clientId,
-    //     cell: ({ row }) => {
-    //         const client = row.original.clientId;
-    //         return (
-    //             <span>
-    //                 {typeof client === "object" ? client?.name : client}
-    //             </span>
-    //         );
-    //     },
-    // },
     {
         header: "Repository Count",
         accessorFn: (row) => row.repositories?.length ?? 0,
@@ -46,18 +31,17 @@ export const projectColomns: ColumnDef<Project>[] = [
             return <Badge variant="secondary">{repositories.length}</Badge>;
         },
     },
-    // {
-    //     header: "Developer Count",
-    //     accessorFn: (row) =>
-    //         Array.isArray(row.projectDevelopers)
-    //             ? row.projectDevelopers.length
-    //             : row.developers?.length ?? 0,
-    //     cell: ({ row }) => {
-    //         const devs =
-    //             row.original.projectDevelopers || row.original.developers || [];
-    //         return <Badge variant="secondary">{devs.length}</Badge>;
-    //     },
-    // },
+    {
+        header: "Developer Count",
+        accessorFn: (row) =>
+            Array.isArray(row.projectDevelopers)
+                ? row.projectDevelopers.length
+                : 0,
+        cell: ({ row }) => {
+            const devs = row.original.projectDevelopers || [];
+            return <Badge variant="secondary">{devs.length}</Badge>;
+        },
+    },
     {
         header: "Repo Limit",
         accessorFn: (row) => row.repoLimit ?? 1,
