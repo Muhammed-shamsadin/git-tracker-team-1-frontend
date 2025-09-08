@@ -120,8 +120,19 @@ export function useMemberDetails({
         (commit) => ({
             id: commit.commitHash,
             message: commit.message,
-            repository: repoMap[commit.repoId] || commit.repoId,
-            repositoryId: commit.repoId,
+            repository:
+                repoMap[
+                    typeof commit.repoId === "string"
+                        ? commit.repoId
+                        : commit.repoId._id
+                ] ||
+                (typeof commit.repoId === "string"
+                    ? commit.repoId
+                    : commit.repoId._id),
+            repositoryId:
+                typeof commit.repoId === "string"
+                    ? commit.repoId
+                    : commit.repoId._id,
             branch: commit.branch,
             files_changed: commit.stats?.files_changed || 0,
             lines_added: commit.stats?.lines_added || 0,

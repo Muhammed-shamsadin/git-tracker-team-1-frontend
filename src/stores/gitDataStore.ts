@@ -4,9 +4,25 @@ import api from "@/lib/axios";
 
 export interface CommitData {
     _id: string;
-    repoId: string;
-    developerId: string;
-    projectId: string;
+    repoId:
+        | string
+        | {
+              _id: string;
+              name: string;
+          };
+    developerId:
+        | string
+        | {
+              _id: string;
+              email: string;
+              fullName: string;
+          };
+    projectId:
+        | string
+        | {
+              _id: string;
+              name: string;
+          };
     commitHash: string;
     message: string;
     branch: string;
@@ -27,6 +43,7 @@ export interface CommitData {
     desktopSyncedAt: string;
     createdAt: string;
     updatedAt: string;
+    __v?: number;
 }
 
 interface GitDataResponse {
@@ -84,6 +101,9 @@ interface GitDataState {
         limit?: number;
         branch?: string;
     }) => Promise<void>;
+
+    // Fetch single commit by ID
+    fetchCommitById: (commitId: string) => Promise<CommitData | undefined>;
 
     // Utilities
     clearCommits: () => void;
@@ -218,7 +238,11 @@ export const useGitDataStore = create<GitDataState>()(
                             0
                         ),
                         uniqueRepositories: new Set(
-                            commits.map((commit: CommitData) => commit.repoId)
+                            commits.map((commit: CommitData) =>
+                                typeof commit.repoId === "string"
+                                    ? commit.repoId
+                                    : commit.repoId._id
+                            )
                         ).size,
                     };
 
@@ -271,6 +295,27 @@ export const useGitDataStore = create<GitDataState>()(
                             "Failed to fetch recent member commits",
                         isLoading: false,
                     });
+                }
+            },
+
+            // Fetch single commit by ID using the new API endpoint
+            fetchCommitById: async (commitId: string) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const response = await api.get(`/git-data/${commitId}`);
+                    const data = response.data.data;
+
+                    set({ isLoading: false });
+                    return data.commit;
+                } catch (error: any) {
+                    set({
+                        error:
+                            error.response?.data?.message ||
+                            error.message ||
+                            "Failed to fetch commit details",
+                        isLoading: false,
+                    });
+                    return undefined;
                 }
             },
 
