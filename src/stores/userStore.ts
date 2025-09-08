@@ -124,8 +124,9 @@ export const useUserStore = create<UserState>()(
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.get(`/users/${id}`);
+                    const userData = response.data.data.user || response.data;
                     set({
-                        currentUser: response.data.data || response.data,
+                        currentUser: userData,
                         isLoading: false,
                     });
                 } catch (error: any) {

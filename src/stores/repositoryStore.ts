@@ -18,6 +18,7 @@ interface PaginatedRepositories {
 interface RepositoryState {
     repositories: Repository[];
     paginatedRepositories: PaginatedRepositories | null;
+    projectRepositories: Repository[];
     currentRepository: Repository | null;
     isLoading: boolean;
     error: string | null;
@@ -55,6 +56,7 @@ export const useRepositoryStore = create<RepositoryState>()(
     persist(
         (set, get) => ({
             repositories: [],
+            projectRepositories: [],
             paginatedRepositories: null,
             currentRepository: null,
             isLoading: false,
@@ -122,7 +124,8 @@ export const useRepositoryStore = create<RepositoryState>()(
                         `/projects/${projectId}/repositories`
                     );
                     set({
-                        repositories: response.data.data || response.data,
+                        projectRepositories:
+                            response.data.data.repositories || response.data,
                         isLoading: false,
                     });
                 } catch (error: any) {
@@ -140,7 +143,7 @@ export const useRepositoryStore = create<RepositoryState>()(
                 try {
                     const response = await api.get(`/repositories/${id}`);
                     const repositoryData = response.data.data || response.data;
-                    
+
                     // The API now returns populated developerId and projectId objects
                     // No need to transform as the schema handles both string and object types
                     set({
@@ -269,7 +272,9 @@ export const useRepositoryStore = create<RepositoryState>()(
                     const commitsWithAuthor = commits.map((commit: any) => ({
                         ...commit,
                         author: {
-                            name: `Developer ${commit.developerId?.substring(0, 5) || 'Unknown'}`,
+                            name: `Developer ${
+                                commit.developerId?.substring(0, 5) || "Unknown"
+                            }`,
                             avatar: `/placeholder.svg?id=${commit.developerId}`,
                         },
                         // Ensure stats are properly structured
@@ -342,6 +347,7 @@ export const useRepositoryStore = create<RepositoryState>()(
             partialize: (state) => ({
                 repositories: state.repositories,
                 currentRepository: state.currentRepository,
+                projectRepositories: state.projectRepositories,
             }),
         }
     )
