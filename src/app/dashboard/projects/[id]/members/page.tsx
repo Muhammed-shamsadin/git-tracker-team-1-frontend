@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/stores/authStore";
 import ListSkeleton from "@/components/skeletons/list-page-skeleton";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { AddDeveloperDialog } from "@/features/projects/add-developer-dialog";
 
 export default function MembersPage() {
     const params = useParams();
@@ -89,7 +90,9 @@ export default function MembersPage() {
             icon: <Eye className="w-4 h-4" />,
             label: "View Profile",
             onClick: (member) => {
-                router.push(`/dashboard/developers/${member.user_id}`);
+                router.push(
+                    `/dashboard/projects/${projectId}/members/${member.user_id}`
+                );
             },
             visible: () => canViewMember(),
         },
@@ -181,7 +184,7 @@ export default function MembersPage() {
                             "View project team members"}
                     </p>
                 </div>
-                {/* Add Member button could go here in the future */}
+                <AddDeveloperDialog projectId={projectId} />
             </div>
 
             {/* Confirmation Dialog for Remove */}
@@ -205,7 +208,7 @@ export default function MembersPage() {
             {!isLoading && !error && (
                 <DataTable
                     data={members}
-                    columns={memberColumns}
+                    columns={memberColumns(projectId)}
                     rowActions={rowActions}
                     searchableFields={["name", "email"]}
                     filters={filters}

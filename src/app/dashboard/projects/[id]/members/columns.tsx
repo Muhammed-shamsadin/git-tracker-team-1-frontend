@@ -19,7 +19,7 @@ const roleVariant: Record<string, string> = {
     developer: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400",
 };
 
-export const memberColumns: ColumnDef<Member>[] = [
+export const memberColumns = (projectId: string): ColumnDef<Member>[] => [
     {
         accessorKey: "name",
         header: "Name",
@@ -27,7 +27,7 @@ export const memberColumns: ColumnDef<Member>[] = [
             const member = row.original;
             return (
                 <Link
-                    href={`/dashboard/developers/${member.user_id}`}
+                    href={`/dashboard/projects/${projectId}/members/${member.user_id}`}
                     className="hover:underline"
                 >
                     {member.name}
