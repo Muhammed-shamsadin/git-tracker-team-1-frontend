@@ -26,8 +26,10 @@ export function useMemberDetails({
         error: userError,
     } = useUserStore();
     const {
-        memberCommits,
-        fetchMemberCommits,
+        memberCommitsForDisplay,
+        memberStatsData,
+        fetchMemberStats,
+        fetchMemberRecentCommits,
         isLoading: commitsLoading,
         error: commitsError,
     } = useGitDataStore();
@@ -55,47 +57,35 @@ export function useMemberDetails({
         }
     }, [projectId, fetchProjectRepositories]);
 
-    // Fetch member commits data
+    // Fetch member stats and recent commits
     useEffect(() => {
         if (memberId && projectId) {
-            fetchMemberCommits({
+            // Fetch stats for calculations (high limit)
+            fetchMemberStats({
                 developerId: memberId,
                 projectId: projectId,
-                page: 1,
+            });
+
+            // Fetch recent commits for display (low limit)
+            fetchMemberRecentCommits({
+                developerId: memberId,
+                projectId: projectId,
+                limit: 10, // Only fetch 10 for display
             });
         }
-    }, [memberId, projectId, fetchMemberCommits]);
-    console.log("Member Commits:", memberCommits);
-    // Calculate member stats from commits
+    }, [memberId, projectId, fetchMemberStats, fetchMemberRecentCommits]);
+
+    // Update local stats when store stats are available
     useEffect(() => {
-        if (memberCommits && memberCommits.length > 0) {
-            const stats = memberCommits.reduce(
-                (acc, commit) => ({
-                    total_commits: acc.total_commits + 1,
-                    total_repositories: acc.total_repositories,
-                    lines_added:
-                        acc.lines_added + (commit.stats?.lines_added || 0),
-                    lines_removed:
-                        acc.lines_removed + (commit.stats?.lines_removed || 0),
-                }),
-                {
-                    total_commits: 0,
-                    total_repositories: 0,
-                    lines_added: 0,
-                    lines_removed: 0,
-                }
-            );
-
-            // Count unique repositories
-            const uniqueRepos = new Set(
-                memberCommits.map((commit) => commit.repoId)
-            );
-            stats.total_repositories = uniqueRepos.size;
-
-            setMemberStats(stats);
+        if (memberStatsData) {
+            setMemberStats({
+                total_commits: memberStatsData.totalCommits,
+                total_repositories: memberStatsData.uniqueRepositories,
+                lines_added: memberStatsData.totalLinesAdded,
+                lines_removed: memberStatsData.totalLinesRemoved,
+            });
         }
-    }, [memberCommits]);
-    console.log("Member Stats before replay:", memberStats);
+    }, [memberStatsData]);
 
     // Create a map of repo IDs to repo names
     const repoMap = (projectRepositories || []).reduce((acc, repo) => {
@@ -126,18 +116,22 @@ export function useMemberDetails({
         : null;
     console.log("Member Data:", memberData);
     // Transform commits data to match component interface
-    const transformedCommits = (memberCommits || []).map((commit) => ({
-        id: commit.commitHash,
-        message: commit.message,
-        repository: repoMap[commit.repoId] || commit.repoId,
-        branch: commit.branch,
-        files_changed: commit.stats?.files_changed || 0,
-        lines_added: commit.stats?.lines_added || 0,
-        lines_removed: commit.stats?.lines_removed || 0,
-        timestamp: commit.timestamp,
-    }));
+    const transformedCommits = (memberCommitsForDisplay || []).map(
+        (commit) => ({
+            id: commit.commitHash,
+            message: commit.message,
+            repository: repoMap[commit.repoId] || commit.repoId,
+            repositoryId: commit.repoId,
+            branch: commit.branch,
+            files_changed: commit.stats?.files_changed || 0,
+            lines_added: commit.stats?.lines_added || 0,
+            lines_removed: commit.stats?.lines_removed || 0,
+            timestamp: commit.timestamp,
+        })
+    );
     console.log("Transformed Commits:", transformedCommits);
     console.log("Member Stats:", memberStats);
+    console.log("Store Stats Data:", memberStatsData);
     return {
         memberData,
         transformedCommits,

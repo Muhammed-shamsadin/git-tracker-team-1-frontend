@@ -13,8 +13,10 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { GitCommit, FileText } from "lucide-react";
+import { GitCommit, FileText, Plus, Minus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { timeAgo } from "@/lib/utils";
 
 export function MemberCommitsTable({
     memberCommits,
@@ -24,6 +26,7 @@ export function MemberCommitsTable({
         id: string;
         message: string;
         repository: string;
+        repositoryId?: string;
         branch: string;
         files_changed: number;
         lines_added: number;
@@ -32,6 +35,25 @@ export function MemberCommitsTable({
     }[];
     memberName: string;
 }) {
+    if (!memberCommits || memberCommits.length === 0) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <GitCommit className="w-5 h-5" />
+                        Recent Commits
+                    </CardTitle>
+                    <CardDescription>
+                        Latest commits by {memberName} in this project
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="p-4 text-center">
+                    <p className="text-muted-foreground">No commits found</p>
+                </CardContent>
+            </Card>
+        );
+    }
+
     return (
         <Card>
             <CardHeader>
@@ -45,7 +67,6 @@ export function MemberCommitsTable({
             </CardHeader>
             <CardContent className="p-0">
                 <Table>
-                    {" "}
                     <TableHeader>
                         <TableRow>
                             <TableHead>Commit Message</TableHead>
@@ -63,11 +84,24 @@ export function MemberCommitsTable({
                                     <div className="flex items-start gap-2">
                                         <FileText className="mt-0.5 w-4 h-4 text-muted-foreground" />
                                         <div>
-                                            <p className="font-medium">
-                                                {commit.message}
-                                            </p>
+                                            <Link
+                                                href={`/dashboard/repositories/${
+                                                    commit.repositoryId ||
+                                                    "placeholder"
+                                                }/commits/${commit.id}`}
+                                                className="font-medium hover:underline"
+                                            >
+                                                {commit.message.split("\n")[0]
+                                                    .length > 50
+                                                    ? commit.message
+                                                          .split("\n")[0]
+                                                          .slice(0, 50) + "..."
+                                                    : commit.message.split(
+                                                          "\n"
+                                                      )[0]}
+                                            </Link>
                                             <p className="text-muted-foreground text-xs">
-                                                #{commit.id}
+                                                #{commit.id.substring(0, 7)}
                                             </p>
                                         </div>
                                     </div>
@@ -85,18 +119,18 @@ export function MemberCommitsTable({
                                 <TableCell>{commit.files_changed}</TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-2 text-xs">
-                                        <span className="text-green-600">
-                                            +{commit.lines_added}
+                                        <span className="flex items-center gap-1 text-green-600">
+                                            <Plus className="w-3 h-3" />
+                                            {commit.lines_added}
                                         </span>
-                                        <span className="text-red-600">
-                                            -{commit.lines_removed}
+                                        <span className="flex items-center gap-1 text-red-600">
+                                            <Minus className="w-3 h-3" />
+                                            {commit.lines_removed}
                                         </span>
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    {new Date(
-                                        commit.timestamp
-                                    ).toLocaleDateString()}
+                                    {timeAgo(commit.timestamp)}
                                 </TableCell>
                             </TableRow>
                         ))}
