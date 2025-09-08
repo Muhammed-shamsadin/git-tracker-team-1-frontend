@@ -37,33 +37,88 @@ import { Commit } from "@/types/Repository";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRepositoryStore } from "@/stores/repositoryStore";
 import { toast } from "sonner";
+import CommitDetailsSkeleton from "@/features/repositories/commits/commit-details-skeleton";
 
 interface CommitResponse {
     success: boolean;
     data: {
-        commit: Commit;
-        message: string;
-    };
-}
-
-// Define a type for the repository response
-interface RepositoryResponse {
-    success: boolean;
-    data: {
-        repository: {
+        commit: {
             _id: string;
-            name: string;
-            [key: string]: any;
+            repoId: {
+                _id: string;
+                name: string;
+            };
+            developerId: {
+                _id: string;
+                email: string;
+                fullName: string;
+            };
+            projectId: {
+                _id: string;
+                name: string;
+            };
+            commitHash: string;
+            message: string;
+            branch: string;
+            timestamp: string;
+            stats: {
+                files_changed: number;
+                files_added: number;
+                files_removed: number;
+                lines_added: number;
+                lines_removed: number;
+            };
+            changes: Array<{
+                fileName: string;
+                added: number;
+                removed: number;
+            }>;
+            parentCommit: string;
+            desktopSyncedAt: string;
+            __v: number;
+            createdAt: string;
+            updatedAt: string;
         };
         message: string;
     };
 }
 
-interface CommitWithRepository extends Commit {
-    repository?: {
-        id: string;
+interface CommitWithRepository {
+    _id: string;
+    repoId: {
+        _id: string;
         name: string;
     };
+    developerId: {
+        _id: string;
+        email: string;
+        fullName: string;
+    };
+    projectId: {
+        _id: string;
+        name: string;
+    };
+    commitHash: string;
+    message: string;
+    branch: string;
+    timestamp: string;
+    stats: {
+        files_changed: number;
+        files_added: number;
+        files_removed: number;
+        lines_added: number;
+        lines_removed: number;
+    };
+    changes: Array<{
+        fileName: string;
+        added: number;
+        removed: number;
+    }>;
+    parentCommit: string;
+    desktopSyncedAt: string;
+    __v: number;
+    createdAt: string;
+    updatedAt: string;
     short_id?: string;
 }
 
@@ -111,8 +166,6 @@ export default function CommitDetailsPage() {
     const [commitData, setCommitData] = useState<CommitWithRepository | null>(
         null
     );
-    const [repoName, setRepoName] = useState<string>("repository");
-    const { currentRepository } = useRepositoryStore();
     useEffect(() => {
         const fetchCommitData = async () => {
             try {
@@ -124,37 +177,11 @@ export default function CommitDetailsPage() {
                 if (response.data.success && response.data.data.commit) {
                     const commit = response.data.data.commit;
 
-                    // Get repository name
-                    try {
-                        const repoName =
-                            currentRepository?.name || "Unknown Repository";
-                        setRepoName(repoName);
-
-                        // Add repository info to commit data
-                        setCommitData({
-                            ...commit,
-                            repository: {
-                                id: commit.repoId,
-                                name: repoName,
-                            },
-                            short_id: commit.commitHash
-                                ? commit.commitHash.substring(0, 7)
-                                : "",
-                        });
-                    } catch (repoError) {
-                        console.error("Error fetching repository:", repoError);
-                        // If repo fetch fails, still set commit data
-                        setCommitData({
-                            ...commit,
-                            repository: {
-                                id: commit.repoId,
-                                name: "Unknown Repository",
-                            },
-                            short_id: commit.commitHash
-                                ? commit.commitHash.substring(0, 7)
-                                : "",
-                        });
-                    }
+                    // Add short_id to commit data
+                    setCommitData({
+                        ...commit,
+                        short_id: commit.commitHash?.substring(0, 7) || "",
+                    });
                 } else {
                     setError("Failed to fetch commit data");
                 }
@@ -175,23 +202,7 @@ export default function CommitDetailsPage() {
     }, [commitId, repoId]);
 
     if (loading) {
-        return (
-            <div className="space-y-6">
-                <div className="flex items-center gap-2">
-                    <Skeleton className="w-32 h-9" />
-                </div>
-                <div className="space-y-4">
-                    <Skeleton className="w-full h-12" />
-                    <Skeleton className="w-full h-48" />
-                </div>
-                <div className="gap-4 grid md:grid-cols-4">
-                    {[...Array(4)].map((_, i) => (
-                        <Skeleton key={i} className="w-full h-24" />
-                    ))}
-                </div>
-                <Skeleton className="w-full h-96" />
-            </div>
-        );
+        return <CommitDetailsSkeleton />;
     }
 
     if (error || !commitData) {
@@ -220,7 +231,7 @@ export default function CommitDetailsPage() {
                 <Button variant="ghost" size="sm" asChild>
                     <Link href={`/dashboard/repositories/${repoId}`}>
                         <ArrowLeft className="mr-2 w-4 h-4" />
-                        Back to {commitData.repository?.name}
+                        Back to {commitData.repoId?.name || "Repository"}
                     </Link>
                 </Button>
             </div>
@@ -257,7 +268,7 @@ export default function CommitDetailsPage() {
                             <Copy className="mr-2 w-4 h-4" />
                             Copy SHA
                         </Button>
-                        <Button
+                        {/* <Button
                             variant="outline"
                             size="sm"
                             onClick={() => {
@@ -267,7 +278,7 @@ export default function CommitDetailsPage() {
                         >
                             <ExternalLink className="mr-2 w-4 h-4" />
                             View on GitHub
-                        </Button>
+                        </Button> */}
                     </div>
                 </div>
 
@@ -278,15 +289,23 @@ export default function CommitDetailsPage() {
                             <div className="space-y-4">
                                 <div className="flex items-center gap-3">
                                     <Avatar className="w-10 h-10">
-                                        <AvatarImage src="/placeholder.svg" />
-                                        <AvatarFallback>DEV</AvatarFallback>
+                                        {/* <AvatarImage src="/placeholder.svg" /> */}
+                                        <AvatarFallback>
+                                            {commitData.developerId?.fullName
+                                                ?.split(" ")
+                                                .map((name) => name[0])
+                                                .join("")
+                                                .toUpperCase() || "DEV"}
+                                        </AvatarFallback>
                                     </Avatar>
                                     <div>
                                         <div className="font-medium">
-                                            Developer
+                                            {commitData.developerId?.fullName ||
+                                                "Unknown Developer"}
                                         </div>
                                         <div className="text-muted-foreground text-sm">
-                                            ID: {commitData.developerId}
+                                            {commitData.developerId?.email ||
+                                                `ID: ${commitData.developerId?._id}`}
                                         </div>
                                     </div>
                                 </div>
@@ -318,7 +337,19 @@ export default function CommitDetailsPage() {
                                     <span className="text-muted-foreground">
                                         Repository
                                     </span>
-                                    <span>{commitData.repository?.name}</span>
+                                    <span>
+                                        {commitData.repoId?.name ||
+                                            "Unknown Repository"}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">
+                                        Project
+                                    </span>
+                                    <span>
+                                        {commitData.projectId?.name ||
+                                            "Unknown Project"}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">
@@ -348,9 +379,7 @@ export default function CommitDetailsPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="font-bold text-2xl">
-                            {commitData.changes?.length ||
-                                commitData.stats?.files_changed ||
-                                0}
+                            {commitData.stats?.files_changed || 0}
                         </div>
                     </CardContent>
                 </Card>
@@ -376,16 +405,7 @@ export default function CommitDetailsPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="font-bold text-green-600 text-2xl">
-                            +
-                            {commitData.stats?.lines_added ||
-                                (commitData.changes &&
-                                commitData.changes.length > 0
-                                    ? commitData.changes.reduce(
-                                          (sum, change) =>
-                                              sum + (change.added || 0),
-                                          0
-                                      )
-                                    : 0)}
+                            +{commitData.stats?.lines_added || 0}
                         </div>
                     </CardContent>
                 </Card>
@@ -398,16 +418,7 @@ export default function CommitDetailsPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="font-bold text-red-600 text-2xl">
-                            -
-                            {commitData.stats?.lines_removed ||
-                                (commitData.changes &&
-                                commitData.changes.length > 0
-                                    ? commitData.changes.reduce(
-                                          (sum, change) =>
-                                              sum + (change.removed || 0),
-                                          0
-                                      )
-                                    : 0)}
+                            -{commitData.stats?.lines_removed || 0}
                         </div>
                     </CardContent>
                 </Card>
@@ -425,16 +436,8 @@ export default function CommitDetailsPage() {
                             </CardTitle>
                             <CardDescription>
                                 {commitData.changes.length} files changed with{" "}
-                                {commitData.changes.reduce(
-                                    (sum, change) => sum + (change.added || 0),
-                                    0
-                                )}{" "}
-                                additions and{" "}
-                                {commitData.changes.reduce(
-                                    (sum, change) =>
-                                        sum + (change.removed || 0),
-                                    0
-                                )}{" "}
+                                {commitData.stats?.lines_added || 0} additions
+                                and {commitData.stats?.lines_removed || 0}{" "}
                                 deletions
                             </CardDescription>
                         </CardHeader>

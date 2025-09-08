@@ -1,16 +1,30 @@
 import { z } from "zod";
 
-// Repository schema
+// Developer object schema (for populated developerId)
+export const DeveloperSchema = z.object({
+    _id: z.string(),
+    email: z.string(),
+    fullName: z.string(),
+});
+
+// Project object schema (for populated projectId)
+export const ProjectSchema = z.object({
+    _id: z.string(),
+    name: z.string(),
+});
+
+// Repository schema with populated fields
 export const RepositorySchema = z.object({
     _id: z.string(),
     name: z.string(),
     description: z.string(),
     path: z.string(),
-    developerId: z.string(),
-    projectId: z.string(),
+    developerId: z.union([z.string(), DeveloperSchema]),
+    projectId: z.union([z.string(), ProjectSchema]),
     permission: z.string().optional(),
     repoFingerprint: z.string(),
     status: z.enum(["active", "moved", "archived", "deleted"]),
+    lastSyncedAt: z.string().optional(),
     createdAt: z.string(),
     updatedAt: z.string(),
     commits: z.array(z.any()).optional(),
@@ -21,6 +35,8 @@ export const RepositorySchema = z.object({
 });
 
 export type Repository = z.infer<typeof RepositorySchema>;
+export type Developer = z.infer<typeof DeveloperSchema>;
+export type Project = z.infer<typeof ProjectSchema>;
 
 // Repository registration schema
 export const RegisterRepositorySchema = z.object({
@@ -54,6 +70,15 @@ export const RepositoryWithCommitsSchema = RepositorySchema.extend({
             message: z.string(),
             branch: z.string(),
             timestamp: z.string(),
+            stats: z
+                .object({
+                    files_changed: z.number(),
+                    files_added: z.number().optional(),
+                    files_removed: z.number().optional(),
+                    lines_added: z.number().optional(),
+                    lines_removed: z.number().optional(),
+                })
+                .optional(),
         })
     ),
     commitsCount: z.number(),

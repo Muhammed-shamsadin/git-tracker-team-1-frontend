@@ -21,11 +21,21 @@ export function RepositoryInfoCard({ repository }: RepositoryInfoCardProps) {
     const [developer, setDeveloper] = useState<User | null>(null);
     const [projectName, setProjectName] = useState<string>("");
 
-    // Fetch project name if needed
     useEffect(() => {
         if (repository.projectId) {
-            // Simulated project name, in a real app you'd fetch this
-            setProjectName("Project " + repository.projectId.substring(0, 5));
+            // Handle populated projectId object or string
+            if (
+                typeof repository.projectId === "object" &&
+                repository.projectId !== null
+            ) {
+                setProjectName(repository.projectId.name);
+            } else {
+                // Fallback for string projectId
+                setProjectName(
+                    "Project " +
+                        (repository.projectId as string).substring(0, 5)
+                );
+            }
         }
     }, [repository.projectId]);
 
@@ -58,6 +68,15 @@ export function RepositoryInfoCard({ repository }: RepositoryInfoCardProps) {
                     <span className="text-muted-foreground">Last Updated</span>
                     <span>{timeAgo(repository.updatedAt)}</span>
                 </div>
+
+                {repository.lastSyncedAt && (
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                            Last Synced
+                        </span>
+                        <span>{timeAgo(repository.lastSyncedAt)}</span>
+                    </div>
+                )}
 
                 {repository.status && (
                     <div className="flex justify-between">

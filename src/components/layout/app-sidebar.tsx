@@ -122,8 +122,7 @@ export function AppSidebar() {
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
 
-                            {(user?.userType === "superadmin" ||
-                                user?.userType === "client") && (
+                            {user?.userType === "superadmin" && (
                                 <SidebarMenuItem>
                                     <SidebarMenuButton asChild>
                                         <Link href="/dashboard/clients">

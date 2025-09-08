@@ -1,10 +1,10 @@
 "use client";
 
-import { ActivityProps, useEffect } from "react";
+import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, User } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useProjectStore } from "@/stores/projectStore";
 import { ProjectHeader } from "@/features/projects/ProjectHeader";
 import { ProjectStatsGrid } from "@/features/projects/ProjectStatsGrid";

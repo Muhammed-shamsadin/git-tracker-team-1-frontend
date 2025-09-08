@@ -68,30 +68,23 @@ export const useProjectStore = create<ProjectState>()(
             message: null,
 
             // GET /api/projects?page=1&limit=10
-            fetchAllProjects: async (page = 1, limit = 10) => {
+            fetchAllProjects: async (page = 1, limit = 100) => {
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.get(
                         `/projects?page=${page}&limit=${limit}`
                     );
                     // Backend returns array directly, not paginated for this endpoint
-                    const projects = response.data.projects || response.data;
+                    const data: {
+                        projects?: Project[];
+                        total?: number;
+                        page?: number;
+                        limit?: number;
+                    } = response.data.data;
+                    const projects = data.projects || response.data;
 
                     set({
-                        projects: Array.isArray(projects) ? projects : [],
-                        paginatedProjects: {
-                            projects: Array.isArray(projects) ? projects : [],
-                            total: Array.isArray(projects)
-                                ? projects.length
-                                : 0,
-                            page,
-                            limit,
-                            totalPages: Math.ceil(
-                                (Array.isArray(projects)
-                                    ? projects.length
-                                    : 0) / limit
-                            ),
-                        },
+                        projects: projects,
                         isLoading: false,
                     });
                 } catch (error: any) {
@@ -117,9 +110,10 @@ export const useProjectStore = create<ProjectState>()(
                         return;
                     }
                     const response = await api.get(`/projects/${id}`);
+                    const projectData = response.data.data || response.data;
                     set({
-                        currentProject: response.data.data || response.data,
-                        message: response.data.data?.message,
+                        currentProject: projectData,
+                        message: projectData?.message || response.data.message,
                         isLoading: false,
                     });
                 } catch (error: any) {

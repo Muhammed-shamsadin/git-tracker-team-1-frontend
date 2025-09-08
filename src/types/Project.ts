@@ -151,12 +151,13 @@ export const ProjectDetailSchema = z.object({
                 name: z.string(),
                 email: z.string(),
             }),
-            status: z.enum(["active", "archived", "completed"]),
+            status: z.enum(["active", "archived", "completed", "moved"]),
             registeredAt: z.string(),
             lastUpdated: z.string(),
         })
     ),
     commitsCount: z.number(),
+    membersCount: z.number(),
     createdAt: z.string(),
     updatedAt: z.string(),
     members: z.array(

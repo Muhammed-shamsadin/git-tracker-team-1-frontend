@@ -37,7 +37,7 @@ export function ProjectStats({
             },
             {
                 title: "Team Members",
-                value: project.members?.length ?? 0,
+                value: project.membersCount ?? project.members?.length ?? 0,
                 icon: Users,
                 description: "Active team members",
             },
