@@ -36,33 +36,6 @@ export const developerColumns: ColumnDef<User>[] = [
         accessorFn: (row: User) => row.email,
     },
     {
-        id: "skills",
-        header: "Skills",
-        accessorFn: (row: User) => row.profile?.skills?.join(", ") || "",
-        cell: ({ row }) => (
-            <div className="flex flex-wrap gap-1">
-                {row.original.profile?.skills
-                    ?.slice(0, 3)
-                    .map((skill: string, i: number) => (
-                        <Badge key={i} variant="secondary">
-                            {skill}
-                        </Badge>
-                    ))}
-                {(row.original.profile?.skills?.length || 0) > 3 && (
-                    <Badge variant="outline">
-                        +{(row.original.profile?.skills?.length || 0) - 3}
-                    </Badge>
-                )}
-            </div>
-        ),
-    },
-    {
-        id: "workspaces",
-        header: "Project Count",
-        accessorFn: (row: User) => row.workspaces?.length || 0,
-        cell: ({ row }) => <span>{row.original.workspaces?.length || 0}</span>,
-    },
-    {
         id: "registeredRepos",
         header: "Repository Count",
         accessorFn: (row: User) => row.registeredRepos?.length || 0,
