@@ -15,8 +15,6 @@ import {
     TableRow,
     TableCell,
 } from "@/components/ui/table";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { GitCommit, Plus, Minus } from "lucide-react";
 import { timeAgo } from "@/lib/utils";
@@ -121,18 +119,16 @@ export function CommitsTable({
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Author</TableHead>
                             <TableHead>Message</TableHead>
                             <TableHead>Branch</TableHead>
                             <TableHead>Files</TableHead>
                             <TableHead>Changes</TableHead>
                             <TableHead>Date</TableHead>
-                            <TableHead>Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {commits.map((commit) => {
-                            // Calculate total lines added/removed from changes
+                            // Calculate total lines added/removed from changes if stats not available or incomplete
                             const totalLinesAdded =
                                 commit.stats?.lines_added ||
                                 commit.changes?.reduce(
@@ -150,30 +146,6 @@ export function CommitsTable({
 
                             return (
                                 <TableRow key={commit._id}>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <Avatar className="w-6 h-6">
-                                                <AvatarImage
-                                                    src={
-                                                        commit.author?.avatar ||
-                                                        "/placeholder.svg"
-                                                    }
-                                                    alt={
-                                                        commit.author?.name ||
-                                                        "Developer"
-                                                    }
-                                                />
-                                                <AvatarFallback>
-                                                    {commit.author?.name?.[0] ||
-                                                        "D"}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <span className="text-sm">
-                                                {commit.author?.name ||
-                                                    "Developer"}
-                                            </span>
-                                        </div>
-                                    </TableCell>
                                     <TableCell>
                                         <div>
                                             <Link
@@ -225,22 +197,6 @@ export function CommitsTable({
                                     </TableCell>
                                     <TableCell>
                                         {timeAgo(commit.timestamp)}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            asChild
-                                        >
-                                            <Link
-                                                href={`/dashboard/repositories/${
-                                                    repositoryId ||
-                                                    commit.repoId
-                                                }/commits/${commit._id}`}
-                                            >
-                                                View
-                                            </Link>
-                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             );

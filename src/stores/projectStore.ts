@@ -10,6 +10,14 @@ import {
     RemoveDeveloperData,
 } from "@/types/Project";
 
+export interface Member {
+    user_id: string;
+    name: string;
+    email: string;
+    role: string;
+    joined_at: string;
+}
+
 interface PaginatedProjects {
     projects: Project[];
     total: number;
@@ -22,6 +30,7 @@ interface ProjectState {
     projects: Project[];
     paginatedProjects: PaginatedProjects | null;
     currentProject: ProjectDetail | null;
+    members: Member[];
     isLoading: boolean;
     error: string | null;
     message: string | null;
@@ -51,9 +60,11 @@ interface ProjectState {
         projectId: string,
         developerId: string
     ) => Promise<any>;
+    fetchProjectMembers: (projectId: string) => Promise<any[]>;
 
     // Utilities
     clearCurrentProject: () => void;
+    clearMembers: () => void;
     clearError: () => void;
 }
 
@@ -63,6 +74,7 @@ export const useProjectStore = create<ProjectState>()(
             projects: [],
             paginatedProjects: null,
             currentProject: null,
+            members: [],
             isLoading: false,
             error: null,
             message: null,
@@ -408,9 +420,38 @@ export const useProjectStore = create<ProjectState>()(
                     return { repositories: [], total: 0 };
                 }
             },
+            fetchProjectMembers: async (projectId: string) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const response = await api.get(
+                        `/projects/${projectId}/members`
+                    );
+                    const members =
+                        response.data.data?.members || response.data;
+                    set({
+                        members: members,
+                        isLoading: false,
+                    });
+                    return members;
+                } catch (error: any) {
+                    set({
+                        error:
+                            error.response?.data?.message ||
+                            error.message ||
+                            "Failed to fetch project members",
+                        isLoading: false,
+                    });
+                    return [];
+                }
+            },
 
+            // Utilities
             clearCurrentProject: () => {
                 set({ currentProject: null, message: null });
+            },
+
+            clearMembers: () => {
+                set({ members: [] });
             },
 
             clearError: () => {
@@ -422,6 +463,7 @@ export const useProjectStore = create<ProjectState>()(
             partialize: (state) => ({
                 projects: state.projects,
                 currentProject: state.currentProject,
+                members: state.members,
             }),
         }
     )
