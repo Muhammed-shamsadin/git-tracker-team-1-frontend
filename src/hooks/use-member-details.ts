@@ -118,7 +118,7 @@ export function useMemberDetails({
     // Transform commits data to match component interface
     const transformedCommits = (memberCommitsForDisplay || []).map(
         (commit) => ({
-            id: commit.commitHash,
+            id: commit._id,
             message: commit.message,
             repository:
                 repoMap[
