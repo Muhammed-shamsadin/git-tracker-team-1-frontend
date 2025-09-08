@@ -104,8 +104,8 @@ export default function ProjectDetailsPage() {
                 <TabsContent value="overview" className="space-y-6">
                     <ProjectStatsGrid project={currentProject} />
                     <div className="gap-6 grid md:grid-cols-2">
-                        <RecentActivityList activities={dummyActivityItems} />
                         <CommitGraphPlaceholder />
+                        <RecentActivityList activities={dummyActivityItems} />
                     </div>
                 </TabsContent>
                 <TabsContent value="repositories" className="space-y-6">
