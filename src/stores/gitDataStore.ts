@@ -16,6 +16,7 @@ export interface CommitData {
               _id: string;
               email: string;
               fullName: string;
+              profilePictureUrl?: string;
           };
     projectId:
         | string
@@ -34,7 +35,7 @@ export interface CommitData {
         lines_added: number;
         lines_removed: number;
     };
-    changes: Array<{
+    changes?: Array<{
         fileName: string;
         added: number;
         removed: number;
@@ -43,7 +44,6 @@ export interface CommitData {
     desktopSyncedAt: string;
     createdAt: string;
     updatedAt: string;
-    __v?: number;
 }
 
 interface GitDataResponse {

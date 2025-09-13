@@ -14,6 +14,7 @@ import { ArrowLeft } from "lucide-react";
 import { useProjectStore } from "@/stores/projectStore";
 import { useMemberDetails } from "@/hooks/use-member-details";
 import ListSkeleton from "@/components/skeletons/list-page-skeleton";
+import { RecentActivity } from "@/features/projects/recent-activity";
 
 export default function MemberDetailsPage() {
     const { id: projectId, memberid: memberId } = useParams();
@@ -79,7 +80,14 @@ export default function MemberDetailsPage() {
                     <MemberStatsGrid memberData={memberData} />
                     <div className="gap-6 grid md:grid-cols-2">
                         <ContributionGraphPlaceholder />
-                        <RecentActivitySummary />
+                        <RecentActivity
+                            projectId={projectId as string}
+                            developerId={memberId as string}
+                            title="Recent Member Activity"
+                            limit={5}
+                            showRepository={true}
+                            showDeveloper={false}
+                        />
                     </div>
                 </TabsContent>
 
