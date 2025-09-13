@@ -14,6 +14,7 @@ interface UserState {
     users: any[];
     paginatedUsers: PaginatedUsers | null;
     currentUser: any | null;
+    fetchedUser: any | null;
     clients: any[];
     developers: any[];
     isLoading: boolean;
@@ -44,6 +45,7 @@ export const useUserStore = create<UserState>()(
             users: [],
             paginatedUsers: null,
             currentUser: null,
+            fetchedUser: null,
             clients: [],
             developers: [],
             isLoading: false,
@@ -126,7 +128,7 @@ export const useUserStore = create<UserState>()(
                     const response = await api.get(`/users/${id}`);
                     const userData = response.data.data.user || response.data;
                     set({
-                        currentUser: userData,
+                        fetchedUser: userData,
                         isLoading: false,
                     });
                 } catch (error: any) {
@@ -300,6 +302,7 @@ export const useUserStore = create<UserState>()(
             partialize: (state) => ({
                 users: state.users,
                 currentUser: state.currentUser,
+                fetchedUser: state.fetchedUser,
                 clients: state.clients,
                 developers: state.developers,
             }),

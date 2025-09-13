@@ -12,29 +12,28 @@ import { RecentActivitySummary } from "@/features/projects/members/RecentActivit
 import { MemberCommitsTable } from "@/features/projects/members/MemberCommitsTable";
 import { ArrowLeft } from "lucide-react";
 import { useProjectStore } from "@/stores/projectStore";
-import { useMemberDetails } from "@/hooks/use-member-details";
-import ListSkeleton from "@/components/skeletons/list-page-skeleton";
+import MemberDetailsLoading from "@/features/projects/members/members-detail-skeleton";
 import { RecentActivity } from "@/features/projects/recent-activity";
+import { useMemberDetails } from "@/hooks/use-member-details";
 
 export default function MemberDetailsPage() {
     const { id: projectId, memberid: memberId } = useParams();
-    console.log("Project ID:", projectId, "Member ID:", memberId);
     const { currentProject, fetchProjectById } = useProjectStore();
-    const { memberData, transformedCommits, isLoading, error } =
-        useMemberDetails({
-            memberId: memberId as string,
-            projectId: projectId as string,
-        });
+    const { memberData, isLoading, error } = useMemberDetails({
+        memberId: memberId as string,
+        projectId: projectId as string,
+    });
 
     // Fetch project data for navigation
     useEffect(() => {
         if (projectId) {
             fetchProjectById(projectId as string);
         }
-    }, [projectId, fetchProjectById]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [projectId]);
 
     if (isLoading) {
-        return <ListSkeleton />;
+        return <MemberDetailsLoading />;
     }
 
     if (error) {
@@ -93,10 +92,7 @@ export default function MemberDetailsPage() {
 
                 {/* Commits Tab */}
                 <TabsContent value="commits" className="space-y-6">
-                    <MemberCommitsTable
-                        memberCommits={transformedCommits}
-                        memberName={memberData.name}
-                    />
+                    <MemberCommitsTable memberId={memberId as string} />
                 </TabsContent>
             </Tabs>
         </div>

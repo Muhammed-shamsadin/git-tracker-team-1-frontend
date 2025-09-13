@@ -176,7 +176,7 @@ export const useGitDataStore = create<GitDataState>()(
                     searchParams.append("page", (params.page || 1).toString());
                     searchParams.append(
                         "limit",
-                        (params.limit || 1000).toString()
+                        (params.limit || 100).toString()
                     );
 
                     if (params.branch)
@@ -213,7 +213,7 @@ export const useGitDataStore = create<GitDataState>()(
                     searchParams.append("developerId", params.developerId);
                     searchParams.append("projectID", params.projectId);
                     searchParams.append("page", "1");
-                    searchParams.append("limit", "10000"); // High limit for stats
+                    searchParams.append("limit", "100"); // High limit for stats
 
                     if (params.branch)
                         searchParams.append("branch", params.branch);
