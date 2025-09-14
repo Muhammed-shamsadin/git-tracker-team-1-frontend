@@ -254,7 +254,6 @@ export default function DeveloperDetailsPage() {
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="projects">Projects</TabsTrigger>
                     <TabsTrigger value="repositories">Repositories</TabsTrigger>
-                    <TabsTrigger value="commits">Recent Commits</TabsTrigger>
                 </TabsList>
 
                 {/* Overview Tab */}
@@ -316,82 +315,8 @@ export default function DeveloperDetailsPage() {
                     </div>
                     <div className="gap-6 grid md:grid-cols-2">
                         {/* Contribution Activity */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <TrendingUp className="w-5 h-5" />
-                                    Contribution Activity
-                                </CardTitle>
-                                <CardDescription>
-                                    Daily commit activity over the last 30 days
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="flex justify-center items-center border-2 border-muted-foreground/25 border-dashed rounded-lg h-[200px]">
-                                    <div className="text-muted-foreground text-center">
-                                        <TrendingUp className="mx-auto mb-2 w-8 h-8" />
-                                        <p className="text-sm">
-                                            Contribution graph
-                                        </p>
-                                        <p className="text-xs">
-                                            Chart integration needed
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
 
-                        {/* Performance Summary */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Activity className="w-5 h-5" />
-                                    Performance Summary
-                                </CardTitle>
-                                <CardDescription>
-                                    Key metrics and achievements
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex justify-between items-center p-3 border rounded-lg">
-                                    <div>
-                                        <p className="font-medium">
-                                            Commits This Month
-                                        </p>
-                                        <p className="text-muted-foreground text-sm">
-                                            Across all projects
-                                        </p>
-                                    </div>
-                                    <div className="font-bold text-2xl">45</div>
-                                </div>
-                                <div className="flex justify-between items-center p-3 border rounded-lg">
-                                    <div>
-                                        <p className="font-medium">
-                                            Average Commit Size
-                                        </p>
-                                        <p className="text-muted-foreground text-sm">
-                                            Lines changed per commit
-                                        </p>
-                                    </div>
-                                    <div className="font-bold text-2xl">
-                                        156
-                                    </div>
-                                </div>
-                                <div className="flex justify-between items-center p-3 border rounded-lg">
-                                    <div>
-                                        <p className="font-medium">
-                                            Code Quality Score
-                                        </p>
-                                        <p className="text-muted-foreground text-sm">
-                                            Based on reviews and tests
-                                        </p>
-                                    </div>
-                                    <div className="font-bold text-green-600 text-2xl">
-                                        92%
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <div>Recent commit placeholder</div>
                     </div>
                 </TabsContent>
 
@@ -546,79 +471,6 @@ export default function DeveloperDetailsPage() {
                                             </TableCell>
                                             <TableCell>
                                                 {repo.last_commit}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* Commits Tab */}
-                <TabsContent value="commits" className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <GitCommit className="w-5 h-5" />
-                                Recent Commits
-                            </CardTitle>
-                            <CardDescription>
-                                Latest commits by this developer
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Message</TableHead>
-                                        <TableHead>Repository</TableHead>
-                                        <TableHead>Project</TableHead>
-                                        <TableHead>Files</TableHead>
-                                        <TableHead>Changes</TableHead>
-                                        <TableHead>Date</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {recentCommits.map((commit) => (
-                                        <TableRow key={commit.id}>
-                                            <TableCell>
-                                                <div>
-                                                    <p className="font-medium">
-                                                        {commit.message}
-                                                    </p>
-                                                    <p className="text-muted-foreground text-xs">
-                                                        #{commit.id}
-                                                    </p>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline">
-                                                    {commit.repository}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline">
-                                                    {commit.project}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                {commit.files_changed}
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-2 text-xs">
-                                                    <span className="text-green-600">
-                                                        +{commit.lines_added}
-                                                    </span>
-                                                    <span className="text-red-600">
-                                                        -{commit.lines_removed}
-                                                    </span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                {new Date(
-                                                    commit.timestamp
-                                                ).toLocaleDateString()}
                                             </TableCell>
                                         </TableRow>
                                     ))}
