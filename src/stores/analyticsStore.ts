@@ -1,332 +1,264 @@
-// TODO: Uncomment and update the analytics store implementation when the API is ready
+import { create } from "zustand";
+import api from "@/lib/axios";
 
-// import { create } from "zustand";
-// import api from "@/lib/axios";
+type KPIData = {
+	totalProjects: number;
+	activeProjects: number;
+	totalRepositories: number;
+	totalCommits: number;
+	averageCommitsPerProject: number;
+} | null;
 
-// interface AnalyticsData {
-//     projectActivity: {
-//         labels: string[];
-//         datasets: Array<{
-//             label: string;
-//             data: number[];
-//             borderColor: string;
-//             backgroundColor: string;
-//         }>;
-//     };
-//     commitTrends: {
-//         labels: string[];
-//         datasets: Array<{
-//             label: string;
-//             data: number[];
-//             borderColor: string;
-//             backgroundColor: string;
-//         }>;
-//     };
-//     topContributors: Array<{
-//         id: string;
-//         name: string;
-//         commits: number;
-//         additions: number;
-//         deletions: number;
-//         projects: number;
-//     }>;
-//     topProjects: Array<{
-//         id: string;
-//         name: string;
-//         commits: number;
-//         contributors: number;
-//         repositories: number;
-//         lastActivity: string;
-//     }>;
-// }
+type CommitData = {
+	date: string;
+	commits: number;
+}[];
 
-// interface DateRange {
-//     startDate: string;
-//     endDate: string;
-// }
+type Contributor = {
+	user_id: string;
+	name: string;
+	email: string;
+	commits: number;
+};
 
-// interface AnalyticsState {
-//     analyticsData: AnalyticsData | null;
-//     isLoading: boolean;
-//     error: string | null;
-//     dateRange: DateRange;
+type Project = {
+	id: string;
+	name: string;
+};
 
-//     // Fetch operations
-//     fetchProjectAnalytics: (dateRange?: DateRange) => Promise<void>;
-//     fetchRepositoryAnalytics: (dateRange?: DateRange) => Promise<void>;
-//     fetchTopContributors: (dateRange?: DateRange) => Promise<void>;
-//     fetchTopProjects: (dateRange?: DateRange) => Promise<void>;
-//     fetchDashboardAnalytics: (dateRange?: DateRange) => Promise<void>;
+type Repository = {
+	id: string;
+	name: string;
+	projectId?: string;
+};
 
-//     // Project specific analytics
-//     fetchProjectCommitTrends: (
-//         projectId: string,
-//         dateRange?: DateRange
-//     ) => Promise<any>;
-//     fetchProjectContributorActivity: (
-//         projectId: string,
-//         dateRange?: DateRange
-//     ) => Promise<any>;
+interface AnalyticsState {
+	kpiData: KPIData;
+	isLoading: boolean;
+	error: string | null;
+	
+	// Project and repository data
+	projects: Project[];
+	repositories: Repository[];
+	selectedProjectId: string | null;
+	selectedRepositoryId: string | null;
+	
+	// Analytics data
+	projectCommitData: CommitData | null;
+	repositoryCommitData: CommitData | null;
+	projectContributors: Contributor[] | null;
+	repositoryContributors: Contributor[] | null;
+	
+	// Actions
+	fetchKPIData: () => Promise<void>;
+	fetchProjects: () => Promise<void>;
+	fetchRepositories: (projectId?: string) => Promise<void>;
+	fetchProjectAnalytics: (projectId: string) => Promise<void>;
+	fetchRepositoryAnalytics: (repositoryId: string) => Promise<void>;
+	setSelectedProject: (projectId: string | null) => void;
+	setSelectedRepository: (repositoryId: string | null) => void;
+}
 
-//     // Repository specific analytics
-//     fetchRepositoryCommitHistory: (
-//         repositoryId: string,
-//         dateRange?: DateRange
-//     ) => Promise<any>;
-//     fetchRepositoryLanguageStats: (repositoryId: string) => Promise<any>;
+export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
+	kpiData: null,
+	isLoading: false,
+	error: null,
+	
+	// Project and repository data
+	projects: [],
+	repositories: [],
+	selectedProjectId: null,
+	selectedRepositoryId: null,
+	
+	// Analytics data
+	projectCommitData: null,
+	repositoryCommitData: null,
+	projectContributors: null,
+	repositoryContributors: null,
 
-//     // Utilities
-//     setDateRange: (range: DateRange) => void;
-//     clearAnalytics: () => void;
-// }
+	// Fetch the KPI data required by the analytics page
+	fetchKPIData: async () => {
+		set({ isLoading: true, error: null });
+		try {
+			// Fetch projects, repositories and git-data in parallel
+			const [projectsRes, repositoriesRes, gitDataRes] = await Promise.all([
+				api.get("/projects"),
+				api.get("/repositories"),
+				api.get("/git-data"),
+			]);
 
-// export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
-//     analyticsData: null,
-//     isLoading: false,
-//     error: null,
-//     dateRange: {
-//         startDate: new Date(
-//             Date.now() - 30 * 24 * 60 * 60 * 1000
-//         ).toISOString(), // Last 30 days
-//         endDate: new Date().toISOString(),
-//     },
+			// Flexible response parsing (backend sometimes wraps in data.data)
+			const projectsPayload = projectsRes.data?.data ?? projectsRes.data;
+			const repositoriesPayload = repositoriesRes.data?.data ?? repositoriesRes.data;
+			const gitPayload = gitDataRes.data?.data ?? gitDataRes.data;
 
-//     fetchProjectAnalytics: async (dateRange?: DateRange) => {
-//         set({ isLoading: true, error: null });
-//         try {
-//             const range = dateRange || get().dateRange;
-//             const response = await api.get(`/analytics/projects`, {
-//                 params: {
-//                     startDate: range.startDate,
-//                     endDate: range.endDate,
-//                 },
-//             });
+			const projects = Array.isArray(projectsPayload)
+				? projectsPayload
+				: projectsPayload?.projects ?? [];
 
-//             set((state) => ({
-//                 analyticsData: {
-//                     ...state.analyticsData,
-//                     projectActivity: response.data.data || response.data,
-//                 },
-//                 isLoading: false,
-//             }));
-//         } catch (error: any) {
-//             set({
-//                 error: error.message || "Failed to fetch project analytics",
-//                 isLoading: false,
-//             });
-//         }
-//     },
+			const repositories = Array.isArray(repositoriesPayload)
+				? repositoriesPayload
+				: repositoriesPayload?.repositories ?? [];
 
-//     fetchRepositoryAnalytics: async (dateRange?: DateRange) => {
-//         set({ isLoading: true, error: null });
-//         try {
-//             const range = dateRange || get().dateRange;
-//             const response = await api.get(`/analytics/repositories`, {
-//                 params: {
-//                     startDate: range.startDate,
-//                     endDate: range.endDate,
-//                 },
-//             });
+			const totalProjects = projects.length;
 
-//             set((state) => ({
-//                 analyticsData: {
-//                     ...state.analyticsData,
-//                     commitTrends: response.data.data || response.data,
-//                 },
-//                 isLoading: false,
-//             }));
-//         } catch (error: any) {
-//             set({
-//                 error: error.message || "Failed to fetch repository analytics",
-//                 isLoading: false,
-//             });
-//         }
-//     },
+			// Active projects: if backend provides status field, count; otherwise try filter by status
+			const activeProjects = projects.filter((p: any) => {
+				return (
+					p?.status === "active" || p?.isActive === true || p?.status === "ongoing"
+				);
+			}).length || 0;
 
-//     fetchTopContributors: async (dateRange?: DateRange) => {
-//         set({ isLoading: true, error: null });
-//         try {
-//             const range = dateRange || get().dateRange;
-//             const response = await api.get(`/analytics/top-contributors`, {
-//                 params: {
-//                     startDate: range.startDate,
-//                     endDate: range.endDate,
-//                 },
-//             });
+			const totalRepositories = Array.isArray(repositories)
+				? repositories.length
+				: 0;
 
-//             set((state) => ({
-//                 analyticsData: {
-//                     ...state.analyticsData,
-//                     topContributors: response.data.data || response.data,
-//                 },
-//                 isLoading: false,
-//             }));
-//         } catch (error: any) {
-//             set({
-//                 error: error.message || "Failed to fetch top contributors",
-//                 isLoading: false,
-//             });
-//         }
-//     },
+			// gitPayload may be an object with totalCommits
+			const totalCommits = typeof gitPayload === "object" && gitPayload !== null
+				? Number(gitPayload.totalCommits ?? gitPayload.total_commits ?? 0)
+				: 0;
 
-//     fetchTopProjects: async (dateRange?: DateRange) => {
-//         set({ isLoading: true, error: null });
-//         try {
-//             const range = dateRange || get().dateRange;
-//             const response = await api.get(`/analytics/top-projects`, {
-//                 params: {
-//                     startDate: range.startDate,
-//                     endDate: range.endDate,
-//                 },
-//             });
+			const averageCommitsPerProject = totalProjects > 0
+				? Math.round(totalCommits / totalProjects)
+				: 0;
 
-//             set((state) => ({
-//                 analyticsData: {
-//                     ...state.analyticsData,
-//                     topProjects: response.data.data || response.data,
-//                 },
-//                 isLoading: false,
-//             }));
-//         } catch (error: any) {
-//             set({
-//                 error: error.message || "Failed to fetch top projects",
-//                 isLoading: false,
-//             });
-//         }
-//     },
+			set({
+				kpiData: {
+					totalProjects,
+					activeProjects,
+					totalRepositories,
+					totalCommits,
+					averageCommitsPerProject,
+				},
+				isLoading: false,
+			});
+		} catch (error: any) {
+			set({
+				error: error?.response?.data?.message || error?.message || "Failed to load KPI data",
+				isLoading: false,
+			});
+		}
+	},
 
-//     fetchDashboardAnalytics: async (dateRange?: DateRange) => {
-//         set({ isLoading: true, error: null });
-//         try {
-//             const range = dateRange || get().dateRange;
+	// Fetch all projects for dropdown
+	fetchProjects: async () => {
+		set({ isLoading: true, error: null });
+		try {
+			const response = await api.get("/projects");
+			const projectsPayload = response.data?.data ?? response.data;
+			const projects = Array.isArray(projectsPayload)
+				? projectsPayload
+				: projectsPayload?.projects ?? [];
+			
+			set({
+				projects: projects.map((p: any) => ({
+					id: p.id,
+					name: p.name || p.title || `Project ${p.id}`,
+				})),
+				isLoading: false,
+			});
+		} catch (error: any) {
+			set({
+				error: error?.response?.data?.message || error?.message || "Failed to load projects",
+				isLoading: false,
+			});
+		}
+	},
 
-//             // Fetch all analytics in parallel
-//             const [
-//                 projectsRes,
-//                 repositoriesRes,
-//                 contributorsRes,
-//                 topProjectsRes,
-//             ] = await Promise.all([
-//                 api.get(`/analytics/projects`, { params: range }),
-//                 api.get(`/analytics/repositories`, { params: range }),
-//                 api.get(`/analytics/top-contributors`, { params: range }),
-//                 api.get(`/analytics/top-projects`, { params: range }),
-//             ]);
+	// Fetch repositories (optionally filtered by project)
+	fetchRepositories: async (projectId?: string) => {
+		set({ isLoading: true, error: null });
+		try {
+			let response;
+			if (projectId) {
+				response = await api.get(`/projects/${projectId}/repositories`);
+			} else {
+				response = await api.get("/repositories");
+			}
+			
+			const repositoriesPayload = response.data?.data ?? response.data;
+			const repositories = Array.isArray(repositoriesPayload)
+				? repositoriesPayload
+				: repositoriesPayload?.repositories ?? [];
+			
+			set({
+				repositories: repositories.map((r: any) => ({
+					id: r.id,
+					name: r.name || r.title || `Repository ${r.id}`,
+					projectId: r.projectId || projectId,
+				})),
+				isLoading: false,
+			});
+		} catch (error: any) {
+			set({
+				error: error?.response?.data?.message || error?.message || "Failed to load repositories",
+				isLoading: false,
+			});
+		}
+	},
 
-//             set({
-//                 analyticsData: {
-//                     projectActivity: projectsRes.data.data || projectsRes.data,
-//                     commitTrends:
-//                         repositoriesRes.data.data || repositoriesRes.data,
-//                     topContributors:
-//                         contributorsRes.data.data || contributorsRes.data,
-//                     topProjects:
-//                         topProjectsRes.data.data || topProjectsRes.data,
-//                 },
-//                 isLoading: false,
-//             });
-//         } catch (error: any) {
-//             set({
-//                 error: error.message || "Failed to fetch dashboard analytics",
-//                 isLoading: false,
-//             });
-//         }
-//     },
+	// Fetch project analytics data
+	fetchProjectAnalytics: async (projectId: string) => {
+		set({ isLoading: true, error: null });
+		try {
+			const response = await api.get(`/projects/${projectId}/analytics`);
+			const data = response.data;
+			
+			// Handle the actual API response format
+			const commitData: CommitData = data?.commit_graph || data?.commits || [];
+			const contributors: Contributor[] = data?.top_contributors || [];
+			
+			set({
+				projectCommitData: commitData,
+				projectContributors: contributors,
+				isLoading: false,
+			});
+		} catch (error: any) {
+			set({
+				error: error?.response?.data?.message || error?.message || "Failed to load project analytics",
+				isLoading: false,
+			});
+		}
+	},
 
-//     fetchProjectCommitTrends: async (
-//         projectId: string,
-//         dateRange?: DateRange
-//     ) => {
-//         set({ isLoading: true, error: null });
-//         try {
-//             const range = dateRange || get().dateRange;
-//             const response = await api.get(`/projects/${projectId}/analytics`, {
-//                 params: range,
-//             });
-//             set({ isLoading: false });
-//             return response.data.data || response.data;
-//         } catch (error: any) {
-//             set({
-//                 error: error.message || "Failed to fetch project commit trends",
-//                 isLoading: false,
-//             });
-//             return null;
-//         }
-//     },
+	// Fetch repository analytics data
+	fetchRepositoryAnalytics: async (repositoryId: string) => {
+		set({ isLoading: true, error: null });
+		try {
+			const response = await api.get(`/repositories/${repositoryId}/analytics`);
+			const data = response.data;
+			
+			// Handle the actual API response format
+			const commitData: CommitData = data?.commit_graph || data?.commits || [];
+			const contributors: Contributor[] = data?.top_contributors || [];
+			
+			set({
+				repositoryCommitData: commitData,
+				repositoryContributors: contributors,
+				isLoading: false,
+			});
+		} catch (error: any) {
+			set({
+				error: error?.response?.data?.message || error?.message || "Failed to load repository analytics",
+				isLoading: false,
+			});
+		}
+	},
 
-//     fetchProjectContributorActivity: async (
-//         projectId: string,
-//         dateRange?: DateRange
-//     ) => {
-//         set({ isLoading: true, error: null });
-//         try {
-//             const range = dateRange || get().dateRange;
-//             const response = await api.get(`/projects/${projectId}/commits`, {
-//                 params: range,
-//             });
-//             set({ isLoading: false });
-//             return response.data.data || response.data;
-//         } catch (error: any) {
-//             set({
-//                 error:
-//                     error.message ||
-//                     "Failed to fetch project contributor activity",
-//                 isLoading: false,
-//             });
-//             return null;
-//         }
-//     },
+	// Set selected project and fetch its repositories
+	setSelectedProject: (projectId: string | null) => {
+		set({ selectedProjectId: projectId, selectedRepositoryId: null });
+		if (projectId) {
+			get().fetchRepositories(projectId);
+		} else {
+			set({ repositories: [] });
+		}
+	},
 
-//     fetchRepositoryCommitHistory: async (
-//         repositoryId: string,
-//         dateRange?: DateRange
-//     ) => {
-//         set({ isLoading: true, error: null });
-//         try {
-//             const range = dateRange || get().dateRange;
-//             const response = await api.get(
-//                 `/repositories/${repositoryId}/analytics`,
-//                 {
-//                     params: range,
-//                 }
-//             );
-//             set({ isLoading: false });
-//             return response.data.data || response.data;
-//         } catch (error: any) {
-//             set({
-//                 error:
-//                     error.message ||
-//                     "Failed to fetch repository commit history",
-//                 isLoading: false,
-//             });
-//             return null;
-//         }
-//     },
+	// Set selected repository
+	setSelectedRepository: (repositoryId: string | null) => {
+		set({ selectedRepositoryId: repositoryId });
+	},
+}));
 
-//     fetchRepositoryLanguageStats: async (repositoryId: string) => {
-//         set({ isLoading: true, error: null });
-//         try {
-//             const response = await api.get(
-//                 `/repositories/${repositoryId}/language-stats`
-//             );
-//             set({ isLoading: false });
-//             return response.data.data || response.data;
-//         } catch (error: any) {
-//             set({
-//                 error:
-//                     error.message ||
-//                     "Failed to fetch repository language stats",
-//                 isLoading: false,
-//             });
-//             return null;
-//         }
-//     },
 
-//     setDateRange: (range: DateRange) => {
-//         set({ dateRange: range });
-//     },
-
-//     clearAnalytics: () => {
-//         set({ analyticsData: null, error: null });
-//     },
-// }));

@@ -236,7 +236,7 @@ export default function AppNavbar() {
                                         {user?.fullName[0].toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
-                            </Button>
+                            </Button>   
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
                             className="w-56"
