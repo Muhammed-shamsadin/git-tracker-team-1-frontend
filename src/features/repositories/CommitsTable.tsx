@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import {
     Card,
     CardHeader,
     CardTitle,
     CardDescription,
     CardContent,
+    CardFooter,
 } from "@/components/ui/card";
 import {
     Table,
@@ -15,8 +17,9 @@ import {
     TableRow,
     TableCell,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { GitCommit, Plus, Minus } from "lucide-react";
+import { GitCommit, Plus, Minus, Loader2 } from "lucide-react";
 import { timeAgo } from "@/lib/utils";
 
 interface CommitChange {
@@ -59,13 +62,34 @@ interface CommitsTableProps {
     commits: Commit[];
     repositoryId?: string;
     isLoading?: boolean;
+    hasMore?: boolean;
+    onLoadMore?: () => void;
+    isLoadingMore?: boolean;
 }
 
 export function CommitsTable({
     commits = [],
     repositoryId,
     isLoading = false,
+    hasMore = false,
+    onLoadMore,
+    isLoadingMore = false,
 }: CommitsTableProps) {
+    const [displayCount, setDisplayCount] = useState(15);
+
+    // Show only the first `displayCount` commits
+    const visibleCommits = commits.slice(0, displayCount);
+    const canShowMore = commits.length > displayCount;
+
+    const handleLoadMore = () => {
+        if (canShowMore) {
+            // Show 15 more commits from the existing list
+            setDisplayCount((prev) => prev + 15);
+        } else if (hasMore && onLoadMore) {
+            // Fetch more commits from the API
+            onLoadMore();
+        }
+    };
     if (isLoading) {
         return (
             <Card>
@@ -127,7 +151,7 @@ export function CommitsTable({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {commits.map((commit) => {
+                        {visibleCommits.map((commit) => {
                             // Calculate total lines added/removed from changes if stats not available or incomplete
                             const totalLinesAdded =
                                 commit.stats?.lines_added ||
@@ -204,6 +228,33 @@ export function CommitsTable({
                     </TableBody>
                 </Table>
             </CardContent>
+            {(canShowMore || hasMore) && (
+                <CardFooter className="flex justify-center pt-4">
+                    <Button
+                        variant="outline"
+                        onClick={handleLoadMore}
+                        disabled={isLoadingMore}
+                        className="gap-2"
+                    >
+                        {isLoadingMore ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Loading...
+                            </>
+                        ) : (
+                            <>
+                                Load More
+                                {canShowMore && (
+                                    <span className="text-muted-foreground text-xs">
+                                        (showing {displayCount} of{" "}
+                                        {commits.length})
+                                    </span>
+                                )}
+                            </>
+                        )}
+                    </Button>
+                </CardFooter>
+            )}
         </Card>
     );
 }

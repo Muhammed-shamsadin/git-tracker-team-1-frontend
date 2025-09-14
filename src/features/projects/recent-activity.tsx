@@ -73,7 +73,7 @@ export function RecentActivity({
     // Fetch commits based on the provided filters
     useEffect(() => {
         const fetchData = async () => {
-            if (projectId) {
+            if (projectId || repositoryId || developerId) {
                 clearCommits(); // Clear stale data
                 await fetchCommits({
                     page: 1,
