@@ -1,172 +1,186 @@
+"use client";
+
+import { useEffect } from "react";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 import { MemberHeader } from "@/features/projects/members/MemberHeader";
 import { MemberStatsGrid } from "@/features/projects/members/MemberStatsGrid";
 import { ContributionGraphPlaceholder } from "@/features/projects/members/ContributionGraphPlaceholder";
 import { RecentActivitySummary } from "@/features/projects/members/RecentActivitySummary";
 import { MemberCommitsTable } from "@/features/projects/members/MemberCommitsTable";
-import { RepositoryContributionsTable } from "@/features/projects/members/RepositoryContributionsTable";
-import { ArrowLeft } from "lucide-react";
+import { MemberRepositoriesTable } from "@/features/projects/members/MemberRepositoriesTable";
+import { ArrowLeft, RefreshCw, AlertTriangle } from "lucide-react";
+import { useProjectStore } from "@/stores/projectStore";
+import MemberDetailsLoading from "@/features/projects/members/members-detail-skeleton";
+import { RecentActivity } from "@/features/projects/recent-activity";
+import { useMemberDetails } from "@/hooks/use-member-details";
 
-// Mock data - replace with API calls
-const memberData = {
-    user_id: "u1",
-    name: "John Doe",
-    email: "john@example.com",
-    role: "owner",
-    avatar: "/placeholder.svg?height=80&width=80",
-    joined_at: "2025-08-01T10:00:00Z",
-    last_active: "2 hours ago",
-    location: "San Francisco, CA",
-    bio: "Full-stack developer with 8+ years of experience in React, Node.js, and cloud technologies. Passionate about building scalable applications and leading development teams.",
-    skills: ["React", "Node.js", "TypeScript", "AWS", "Docker", "PostgreSQL"],
-    total_commits: 127,
-    total_repositories: 3,
-    lines_added: 12450,
-    lines_removed: 3200,
-};
+export default function MemberDetailsPage() {
+    const { id: projectId, memberid: memberId } = useParams();
+    const { currentProject, fetchProjectById } = useProjectStore();
+    const { memberData, repositories, isLoading, error, isDataReady, retry } =
+        useMemberDetails({
+            memberId: memberId as string,
+            projectId: projectId as string,
+        });
 
-const projectData = {
-    id: "p1234567-8901-2345-6789-012345678901",
-    name: "Git Tracker",
-};
+    // Fetch project data for navigation
+    useEffect(() => {
+        if (projectId) {
+            fetchProjectById(projectId as string);
+        }
+    }, [projectId]);
 
-const memberCommits = [
-    {
-        id: "c1",
-        message: "Added user authentication system with JWT tokens",
-        repository: "git-tracker-backend",
-        branch: "main",
-        timestamp: "2025-08-03T10:30:00Z",
-        files_changed: 8,
-        lines_added: 245,
-        lines_removed: 12,
-    },
-    {
-        id: "c2",
-        message: "Updated dashboard UI components and responsive design",
-        repository: "git-tracker-frontend",
-        branch: "feature/dashboard-update",
-        timestamp: "2025-08-03T08:15:00Z",
-        files_changed: 12,
-        lines_added: 189,
-        lines_removed: 45,
-    },
-    {
-        id: "c3",
-        message: "Fixed database connection pooling issues",
-        repository: "git-tracker-backend",
-        branch: "bugfix/db-connection",
-        timestamp: "2025-08-02T16:45:00Z",
-        files_changed: 3,
-        lines_added: 67,
-        lines_removed: 23,
-    },
-    {
-        id: "c4",
-        message: "Implemented real-time notifications system",
-        repository: "git-tracker-backend",
-        branch: "feature/notifications",
-        timestamp: "2025-08-02T14:20:00Z",
-        files_changed: 15,
-        lines_added: 423,
-        lines_removed: 8,
-    },
-    {
-        id: "c5",
-        message: "Added unit tests for authentication module",
-        repository: "git-tracker-backend",
-        branch: "main",
-        timestamp: "2025-08-01T11:30:00Z",
-        files_changed: 6,
-        lines_added: 156,
-        lines_removed: 0,
-    },
-];
+    // Loading state
+    if (isLoading && !isDataReady) {
+        return <MemberDetailsLoading />;
+    }
 
-const contributionStats = [
-    { date: "2025-08-01", commits: 3 },
-    { date: "2025-08-02", commits: 5 },
-    { date: "2025-08-03", commits: 2 },
-    { date: "2025-08-04", commits: 0 },
-    { date: "2025-08-05", commits: 4 },
-    { date: "2025-08-06", commits: 1 },
-    { date: "2025-08-07", commits: 3 },
-];
+    // Error state with retry option
+    if (error && !memberData) {
+        return (
+            <div className="mx-auto px-4 py-8 container">
+                <div className="flex items-center gap-2 mb-6">
+                    <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/dashboard/projects/${projectId}`}>
+                            <ArrowLeft className="mr-2 w-4 h-4" />
+                            Back to {currentProject?.name || "Project"}
+                        </Link>
+                    </Button>
+                </div>
 
-const repositoryContributions = [
-    {
-        repository: "git-tracker-backend",
-        commits: 78,
-        lines_added: 8450,
-        lines_removed: 2100,
-        last_commit: "2 hours ago",
-    },
-    {
-        repository: "git-tracker-frontend",
-        commits: 34,
-        lines_added: 2890,
-        lines_removed: 890,
-        last_commit: "1 day ago",
-    },
-    {
-        repository: "git-tracker-mobile",
-        commits: 15,
-        lines_added: 1110,
-        lines_removed: 210,
-        last_commit: "3 days ago",
-    },
-];
+                <Alert variant="destructive" className="max-w-2xl">
+                    <AlertTriangle className="w-4 h-4" />
+                    <AlertDescription className="flex justify-between items-center">
+                        <span>{error}</span>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={retry}
+                            className="ml-4"
+                        >
+                            <RefreshCw className="mr-2 w-4 h-4" />
+                            Retry
+                        </Button>
+                    </AlertDescription>
+                </Alert>
+            </div>
+        );
+    }
 
-export default function MemberDetailsPage({ params }: any) {
+    // Not found state
+    if (!isLoading && !memberData) {
+        return (
+            <div className="mx-auto px-4 py-8 container">
+                <div className="flex items-center gap-2 mb-6">
+                    <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/dashboard/projects/${projectId}`}>
+                            <ArrowLeft className="mr-2 w-4 h-4" />
+                            Back to {currentProject?.name || "Project"}
+                        </Link>
+                    </Button>
+                </div>
+
+                <div className="py-12 text-center">
+                    <h2 className="mb-2 font-semibold text-muted-foreground text-2xl">
+                        Member Not Found
+                    </h2>
+                    <p className="text-muted-foreground">
+                        The requested member could not be found in this project.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 mx-auto px-4 py-6 container">
             {/* Back Navigation */}
-            <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" asChild>
-                    <Link href={`/dashboard/projects`}>
-                        <ArrowLeft className="mr-2 w-4 h-4" />
-                        Back to {projectData.name}
-                    </Link>
+            <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/dashboard/projects/${projectId}`}>
+                            <ArrowLeft className="mr-2 w-4 h-4" />
+                            Back to {currentProject?.name || "Project"}
+                        </Link>
+                    </Button>
+                </div>
+
+                {/* Refresh button for data reload */}
+                <Button variant="outline" size="sm" onClick={retry}>
+                    <RefreshCw className="mr-2 w-4 h-4" />
+                    Refresh
                 </Button>
             </div>
 
+            {/* Error banner for partial data */}
+            {error && memberData && (
+                <Alert className="bg-yellow-50 border-yellow-200">
+                    <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                    <AlertDescription className="text-yellow-800">
+                        Some data may be incomplete due to a loading error:{" "}
+                        {error}
+                    </AlertDescription>
+                </Alert>
+            )}
+
             {/* Member Header */}
-            <MemberHeader member={memberData} />
+            {memberData && <MemberHeader member={memberData} />}
 
             {/* Tabs */}
             <Tabs defaultValue="overview" className="space-y-6">
-                <TabsList>
+                <TabsList className="grid grid-cols-3 w-full">
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="commits">Recent Commits</TabsTrigger>
                     <TabsTrigger value="repositories">
-                        Repository Contributions
+                        Repositories ({repositories.length})
                     </TabsTrigger>
                 </TabsList>
 
                 {/* Overview Tab */}
                 <TabsContent value="overview" className="space-y-6">
-                    <MemberStatsGrid memberData={memberData} />
-                    <div className="gap-6 grid md:grid-cols-2">
+                    {memberData && <MemberStatsGrid memberData={memberData} />}
+                    <div className="gap-6 grid lg:grid-cols-2">
                         <ContributionGraphPlaceholder />
-                        <RecentActivitySummary />
+                        <RecentActivity
+                            projectId={projectId as string}
+                            developerId={memberId as string}
+                            title="Recent Member Activity"
+                            limit={5}
+                            showRepository={true}
+                            showDeveloper={false}
+                        />
                     </div>
                 </TabsContent>
 
                 {/* Commits Tab */}
                 <TabsContent value="commits" className="space-y-6">
                     <MemberCommitsTable
-                        memberCommits={memberCommits}
-                        memberName={memberData.name}
+                        projectId={projectId as string}
+                        memberId={memberId as string}
+                        title="Recent Member Commits"
+                        limit={10}
+                        showDescription={true}
                     />
                 </TabsContent>
 
-                {/* Repository Contributions Tab */}
+                {/* Repositories Tab */}
                 <TabsContent value="repositories" className="space-y-6">
-                    <RepositoryContributionsTable
-                        repositoryContributions={repositoryContributions}
-                    />
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h3 className="font-semibold text-lg">
+                                Member Repositories
+                            </h3>
+                            <div className="text-muted-foreground text-sm">
+                                Total: {repositories.length} repositories
+                            </div>
+                        </div>
+
+                        <MemberRepositoriesTable repositories={repositories} />
+                    </div>
                 </TabsContent>
             </Tabs>
         </div>

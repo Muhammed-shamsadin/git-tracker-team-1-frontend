@@ -18,13 +18,14 @@ interface PaginatedRepositories {
 interface RepositoryState {
     repositories: Repository[];
     paginatedRepositories: PaginatedRepositories | null;
+    projectRepositories: Repository[];
     currentRepository: Repository | null;
     isLoading: boolean;
     error: string | null;
 
     // Fetch operations
     fetchAllRepositories: (page?: number, limit?: number) => Promise<void>;
-    fetchUserRepositories: () => Promise<void>;
+    fetchDeveloperRepositories: () => Promise<void>;
     fetchProjectRepositories: (projectId: string) => Promise<void>;
     fetchRepositoryById: (id: string) => Promise<void>;
 
@@ -55,12 +56,13 @@ export const useRepositoryStore = create<RepositoryState>()(
     persist(
         (set, get) => ({
             repositories: [],
+            projectRepositories: [],
             paginatedRepositories: null,
             currentRepository: null,
             isLoading: false,
             error: null,
 
-            fetchAllRepositories: async (page = 1, limit = 10) => {
+            fetchAllRepositories: async (page = 1, limit = 100) => {
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.get(
@@ -89,14 +91,20 @@ export const useRepositoryStore = create<RepositoryState>()(
                 }
             },
 
-            fetchUserRepositories: async () => {
+            fetchDeveloperRepositories: async () => {
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.get(
-                        "/users/developers/me/repositories"
+                        "/repositories/me/developer"
+                    );
+                    const fetchedRepos =
+                        response.data.data.repositories || response.data;
+                    console.log(
+                        "Fetched developer repositories:",
+                        fetchedRepos
                     );
                     set({
-                        repositories: response.data.data || response.data,
+                        repositories: fetchedRepos,
                         isLoading: false,
                     });
                 } catch (error: any) {
@@ -116,7 +124,8 @@ export const useRepositoryStore = create<RepositoryState>()(
                         `/projects/${projectId}/repositories`
                     );
                     set({
-                        repositories: response.data.data || response.data,
+                        projectRepositories:
+                            response.data.data.repositories || response.data,
                         isLoading: false,
                     });
                 } catch (error: any) {
@@ -133,8 +142,12 @@ export const useRepositoryStore = create<RepositoryState>()(
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.get(`/repositories/${id}`);
+                    const repositoryData = response.data.data || response.data;
+
+                    // The API now returns populated developerId and projectId objects
+                    // No need to transform as the schema handles both string and object types
                     set({
-                        currentRepository: response.data.data || response.data,
+                        currentRepository: repositoryData,
                         isLoading: false,
                     });
                 } catch (error: any) {
@@ -148,14 +161,16 @@ export const useRepositoryStore = create<RepositoryState>()(
             createRepository: async (data: CreateRepositoryData) => {
                 set({ isLoading: true, error: null });
                 try {
-                    const response = await api.post("/repositories", data);
+                    // Use new backend endpoint for registration
+                    const response = await api.post(
+                        "/repositories/register",
+                        data
+                    );
                     const newRepository = response.data.data || response.data;
 
-                    if (
-                        newRepository &&
-                        newRepository.name &&
-                        (newRepository._id || newRepository.id)
-                    ) {
+                    // Accept either _id or id for new repositories
+                    const repoId = newRepository._id || newRepository.id;
+                    if (newRepository && repoId) {
                         set((state) => ({
                             repositories: [
                                 ...state.repositories,
@@ -214,7 +229,8 @@ export const useRepositoryStore = create<RepositoryState>()(
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.delete(`/repositories/${id}`);
-                    if (response.data.deleted || response.status === 200) {
+                    const result = response.data.data || response.data;
+                    if (result.deleted || response.status === 200) {
                         set((state) => ({
                             repositories: state.repositories.filter(
                                 (r) => r._id !== id
@@ -248,8 +264,31 @@ export const useRepositoryStore = create<RepositoryState>()(
                     const response = await api.get(
                         `/repositories/${repositoryId}/commits?page=${page}&limit=${limit}`
                     );
+                    const commits =
+                        response.data.data?.commits || response.data;
+
+                    // Map author info from developer data if needed
+                    // Enhanced to work with the new commit structure including stats
+                    const commitsWithAuthor = commits.map((commit: any) => ({
+                        ...commit,
+                        author: {
+                            name: `Developer ${
+                                commit.developerId?.substring(0, 5) || 'Unknown'
+                            }`,
+                            avatar: `/placeholder.svg?id=${commit.developerId}`,
+                        },
+                        // Ensure stats are properly structured
+                        stats: commit.stats || {
+                            files_changed: 0,
+                            files_added: 0,
+                            files_removed: 0,
+                            lines_added: 0,
+                            lines_removed: 0,
+                        },
+                    }));
+
                     set({ isLoading: false });
-                    return response.data.data || response.data;
+                    return commitsWithAuthor;
                 } catch (error: any) {
                     set({
                         error:
@@ -308,6 +347,7 @@ export const useRepositoryStore = create<RepositoryState>()(
             partialize: (state) => ({
                 repositories: state.repositories,
                 currentRepository: state.currentRepository,
+                projectRepositories: state.projectRepositories,
             }),
         }
     )

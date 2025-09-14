@@ -125,7 +125,6 @@ export function ProjectOverview() {
                 <TabsList>
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="repositories">Repositories</TabsTrigger>
-                    <TabsTrigger value="team">Team</TabsTrigger>
                 </TabsList>
                 <TabsContent value="overview" className="space-y-6 pt-6">
                     <ProjectStats
@@ -139,23 +138,16 @@ export function ProjectOverview() {
                             isLoading={isLoading}
                         />
                         <RecentActivity
-                            project={currentProject}
-                            isLoading={isLoading}
+                            projectId={currentProject?._id}
+                            title="Recent Commits"
+                            limit={5}
+                            showRepository={true}
+                            showDeveloper={true}
                         />
                     </div>
                 </TabsContent>
                 <TabsContent value="repositories" className="pt-6">
                     <RepositoriesPage />
-                </TabsContent>
-                <TabsContent value="team" className="pt-6">
-                    <TeamPage
-                        {...{
-                            ...currentProject,
-                            repositories: currentProject.repositories.map(
-                                (repo: any) => repo.id
-                            ),
-                        }}
-                    />
                 </TabsContent>
             </Tabs>
         </div>

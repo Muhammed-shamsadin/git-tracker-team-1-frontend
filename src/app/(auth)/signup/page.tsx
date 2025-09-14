@@ -163,7 +163,7 @@ export default function SignUpPage() {
                                                 className="mt-2"
                                             >
                                                 <p className="text-muted-foreground text-sm">
-                                                    I'm looking to hire
+                                                    I&apos;m looking to hire
                                                     developers or manage
                                                     projects
                                                 </p>
@@ -173,8 +173,8 @@ export default function SignUpPage() {
                                                 className="mt-2"
                                             >
                                                 <p className="text-muted-foreground text-sm">
-                                                    I'm a developer looking to
-                                                    work on projects
+                                                    I&apos;m a developer looking
+                                                    to work on projects
                                                 </p>
                                             </TabsContent>
                                         </Tabs>

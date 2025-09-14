@@ -32,7 +32,10 @@ api.interceptors.response.use(
             try {
                 const refreshToken = localStorage.getItem("refresh-token");
                 const response = await axios.post(
-                    "http://localhost:3001/api/auth/refresh",
+                    `${
+                        process.env.NEXT_PUBLIC_API_URL ||
+                        "http://localhost:3001/api"
+                    }/auth/refresh`,
                     {
                         refreshToken,
                     }

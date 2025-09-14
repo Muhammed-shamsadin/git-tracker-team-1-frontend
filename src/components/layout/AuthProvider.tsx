@@ -5,10 +5,14 @@ import { useAuthStore } from "@/stores/authStore";
 import { Loader } from "lucide-react";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const { checkAuth } = useAuthStore();
+    const { checkAuth, user } = useAuthStore();
     const [ready, setReady] = useState(false);
 
     useEffect(() => {
+        if (user) {
+            setReady(true);
+            return;
+        }
         let mounted = true;
         (async () => {
             try {
@@ -23,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return () => {
             mounted = false;
         };
-    }, [checkAuth]);
+    }, [checkAuth, user]);
 
     if (!ready) {
         return (
@@ -38,8 +42,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     <h1 className="font-semibold text-2xl">Git Tracker</h1>
 
                     <p className="max-w-xs text-muted-foreground text-sm text-center">
-                        Checking authentication and preparing your workspace.
-                        This may take a moment.
+                        Checking authentication and preparing verifying
+                        workspace. This is for your safety! This may take a
+                        moment.
                     </p>
 
                     <div

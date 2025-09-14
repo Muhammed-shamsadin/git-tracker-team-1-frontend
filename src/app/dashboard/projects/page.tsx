@@ -25,7 +25,7 @@ export default function Projects() {
     const { deleteProject } = useProjectStore();
 
     // Use the new role-based hook for automatic project fetching
-    const { projects, isLoading, error, userRole } = useRoleBasedProjects();
+    const { projects, isLoading, error } = useRoleBasedProjects();
 
     const [selectedRows, setSelectedRows] = useState<Project[]>([]);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -51,15 +51,6 @@ export default function Projects() {
         }
     };
 
-    // Helper function to check permissions
-    const canEditProject = (project: Project) => {
-        if (!user) return false;
-        if (user.userType === "superadmin") return true;
-        if (user.userType === "client" && project.clientId === user._id)
-            return true;
-        return false;
-    };
-
     const canDeleteProject = (project: Project) => {
         if (!user) return false;
         if (user.userType === "superadmin") return true;
@@ -76,15 +67,6 @@ export default function Projects() {
             onClick: (row) => {
                 router.push(`/dashboard/projects/${row._id}`);
             },
-        },
-        {
-            icon: <Edit className="w-4 h-4" />,
-            label: "Edit",
-            onClick: (row) => {
-                toast.success(`Editing project: ${row.name}`);
-                // TODO: Open edit dialog or navigate to edit page
-            },
-            visible: (row) => canEditProject(row),
         },
         {
             icon: <Trash2 className="w-4 h-4" />,

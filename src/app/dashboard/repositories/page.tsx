@@ -11,13 +11,11 @@ import type {
 } from "@/components/data-table/types";
 import { Eye, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { mockRepositories } from "@/data/repositories";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { useRoleBasedRepositories } from "@/hooks/use-repositories";
+import ListSkeleton from "@/components/skeletons/list-page-skeleton";
 
 export default function Repositories() {
-    const [repositories, setRepositories] =
-        useState<Repository[]>(mockRepositories);
+    const { repositories, isLoading, error } = useRoleBasedRepositories();
     const [selectedRows, setSelectedRows] = useState<Repository[]>([]);
 
     const rowActions: RowAction<Repository>[] = [
@@ -39,18 +37,16 @@ export default function Repositories() {
             icon: <Trash2 className="w-4 h-4" />,
             label: "Delete",
             onClick: (row) => {
-                setRepositories((prev) =>
-                    prev.filter((repository) => repository.id !== row.id)
-                );
                 toast.success(`Deleted repository: ${row.name}`);
             },
         },
     ];
 
     const statusConfig: StatusConfig = {
-        active: { icon: "🟢", label: "Active", color: "green" },
-        archived: { icon: "🔒", label: "Archived", color: "gray" },
-        completed: { icon: "✅", label: "Completed", color: "blue" },
+        active: { icon: "●", label: "Active", color: "green" },
+        moved: { icon: "→", label: "Moved", color: "orange" },
+        archived: { icon: "⏸", label: "Archived", color: "gray" },
+        deleted: { icon: "–", label: "Deleted", color: "red" },
     };
 
     const filters: FilterConfig[] = [
@@ -60,8 +56,9 @@ export default function Repositories() {
             type: "select",
             options: [
                 { label: "Active", value: "active" },
+                { label: "Moved", value: "moved" },
                 { label: "Archived", value: "archived" },
-                { label: "Completed", value: "completed" },
+                { label: "Deleted", value: "deleted" },
             ],
         },
     ];
@@ -81,24 +78,27 @@ export default function Repositories() {
                         Manage your repositories and their settings.
                     </p>
                 </div>
-                <Button>
-                    <Plus className="mr-2 w-4 h-4" />
-                    New Repository
-                </Button>
             </div>
+            {/* Loading/Error States */}
+            {isLoading && <ListSkeleton />}
+            {error && (
+                <div className="py-4 text-red-500 text-center">{error}</div>
+            )}
+
             {/* Data Table */}
-            <DataTable
-                data={repositories}
-                columns={repositoryColumns}
-                initialSort={[{ id: "updatedDate", desc: true }]}
-                rowActions={rowActions}
-                searchableFields={["name", "owner", "projectId"]}
-                filters={filters}
-                statusConfig={statusConfig}
-                enableRowSelection={true}
-                onRowSelectionChange={handleRowSelectionChange}
-                pageSize={10}
-            />
+            {!isLoading && !error && (
+                <DataTable
+                    data={repositories}
+                    columns={repositoryColumns}
+                    rowActions={rowActions}
+                    searchableFields={["name"]}
+                    filters={filters}
+                    statusConfig={statusConfig}
+                    pageSize={10}
+                    rowIdAccessor="_id"
+                    initialSort={[{ id: "updatedAt", desc: true }]}
+                />
+            )}
         </div>
     );
 }

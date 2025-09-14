@@ -1,95 +1,201 @@
 import { z } from "zod";
 
+// Developer object schema (for populated developerId)
+export const DeveloperSchema = z.object({
+    _id: z.string(),
+    email: z.string(),
+    fullName: z.string(),
+});
+
+// Project object schema (for populated projectId)
+export const ProjectSchema = z.object({
+    _id: z.string(),
+    name: z.string(),
+});
+
+// Repository schema with populated fields
 export const RepositorySchema = z.object({
     _id: z.string(),
     name: z.string(),
     description: z.string(),
-    url: z.string().url(),
-    status: z.enum(["active", "archived", "deleted"]),
-    projectId: z.string(),
-    ownerId: z.string(), // Developer who owns the repository
-    contributors: z.array(z.string()), // Array of developer IDs
-    lastCommitAt: z.string().nullable(),
-    commitsCount: z.number().default(0),
-    branchCount: z.number().default(0),
-    tags: z.array(z.string()).optional(),
+    path: z.string(),
+    developerId: z.union([z.string(), DeveloperSchema]),
+    projectId: z.union([z.string(), ProjectSchema]),
+    permission: z.string().optional(),
+    repoFingerprint: z.string(),
+    status: z.enum(["active", "moved", "archived", "deleted"]),
+    lastSyncedAt: z.string().optional(),
     createdAt: z.string(),
     updatedAt: z.string(),
+    commits: z.array(z.any()).optional(),
+    commitsCount: z.number().optional(),
+    contributorsCount: z.number().optional(),
+    filesCount: z.number().optional(),
+    linesOfCode: z.number().optional(),
 });
 
 export type Repository = z.infer<typeof RepositorySchema>;
+export type Developer = z.infer<typeof DeveloperSchema>;
+export type Project = z.infer<typeof ProjectSchema>;
 
-export const CreateRepositorySchema = z.object({
+// Repository registration schema
+export const RegisterRepositorySchema = z.object({
     name: z.string().min(1, "Repository name is required"),
     description: z.string().min(1, "Description is required"),
-    url: z.string().url("Invalid repository URL"),
+    path: z.string().min(1, "Repository path is required"),
+    developerId: z.string().min(1, "Developer ID is required"),
     projectId: z.string().min(1, "Project ID is required"),
-    status: z.enum(["active", "archived"]).default("active"),
+    repoFingerprint: z.string().min(1, "Repository fingerprint is required"),
 });
 
-export type CreateRepositoryData = z.infer<typeof CreateRepositorySchema>;
+export type RegisterRepositoryData = z.infer<typeof RegisterRepositorySchema>;
 
-export const UpdateRepositorySchema = CreateRepositorySchema.partial().omit({
-    projectId: true,
+// Repository update schema
+export const UpdateRepositorySchema = z.object({
+    name: z.string().min(1, "Repository name is required").optional(),
+    path: z.string().min(1, "Repository path is required").optional(),
+    description: z.string().min(1, "Description is required").optional(),
+    status: z.enum(["active", "moved", "archived"]).optional(),
+    developerId: z.string().optional(),
 });
 
 export type UpdateRepositoryData = z.infer<typeof UpdateRepositorySchema>;
 
-// Commit related schemas
+// Repository with commits (for developer repository endpoint)
+export const RepositoryWithCommitsSchema = RepositorySchema.extend({
+    commits: z.array(
+        z.object({
+            _id: z.string(),
+            commitHash: z.string(),
+            message: z.string(),
+            branch: z.string(),
+            timestamp: z.string(),
+            stats: z
+                .object({
+                    files_changed: z.number(),
+                    files_added: z.number().optional(),
+                    files_removed: z.number().optional(),
+                    lines_added: z.number().optional(),
+                    lines_removed: z.number().optional(),
+                })
+                .optional(),
+        })
+    ),
+    commitsCount: z.number(),
+});
+
+export type RepositoryWithCommits = z.infer<typeof RepositoryWithCommitsSchema>;
+
+// Developer repositories response
+export const DeveloperRepositoriesResponseSchema = z.object({
+    repositories: z.array(RepositoryWithCommitsSchema),
+    message: z.string(),
+});
+
+export type DeveloperRepositoriesResponse = z.infer<
+    typeof DeveloperRepositoriesResponseSchema
+>;
+
+// Project repositories response (simple array)
+export const ProjectRepositoriesResponseSchema = z.array(
+    z.object({
+        _id: z.string(),
+        name: z.string(),
+        status: z.string(),
+        developerId: z.string(),
+        createdAt: z.string(),
+        updatedAt: z.string(),
+    })
+);
+
+export type ProjectRepositoriesResponse = z.infer<
+    typeof ProjectRepositoriesResponseSchema
+>;
+
+// Developer project repositories response
+export const DeveloperProjectRepositoriesResponseSchema = z.object({
+    success: z.boolean(),
+    message: z.string(),
+    data: z.array(RepositorySchema),
+    projectId: z.string(),
+    developerId: z.string(),
+    totalRepositories: z.number(),
+});
+
+export type DeveloperProjectRepositoriesResponse = z.infer<
+    typeof DeveloperProjectRepositoriesResponseSchema
+>;
+
+// Repository analytics schema
+export const RepositoryAnalyticsResponseSchema = z.object({
+    commit_graph: z.array(
+        z.object({
+            date: z.string(),
+            commits: z.number(),
+        })
+    ),
+    top_contributors: z.array(
+        z.object({
+            user_id: z.string(),
+            commits: z.number(),
+        })
+    ),
+    message: z.string(),
+    repository: RepositorySchema,
+});
+
+export type RepositoryAnalyticsResponse = z.infer<
+    typeof RepositoryAnalyticsResponseSchema
+>;
+
+// Simple repository list (for user endpoints)
+export const SimpleRepositoryListSchema = z.array(
+    z.object({
+        _id: z.string(),
+        name: z.string(),
+        status: z.string(),
+        // Can include other fields as needed
+    })
+);
+
+export type SimpleRepositoryList = z.infer<typeof SimpleRepositoryListSchema>;
+
+// Commit schema (updated to match backend)
 export const CommitSchema = z.object({
     _id: z.string(),
-    sha: z.string(),
-    message: z.string(),
-    authorId: z.string(),
-    authorName: z.string(),
-    authorEmail: z.string(),
-    repositoryId: z.string(),
+    repoId: z.string(),
+    developerId: z.string(),
     projectId: z.string(),
+    commitHash: z.string(),
+    message: z.string(),
+    branch: z.string(),
     timestamp: z.string(),
-    stats: z.object({
-        additions: z.number(),
-        deletions: z.number(),
-        changes: z.array(
+    stats: z
+        .object({
+            files_changed: z.number(),
+            files_added: z.number().optional(),
+            files_removed: z.number().optional(),
+            lines_added: z.number().optional(),
+            lines_removed: z.number().optional(),
+        })
+        .optional(),
+    changes: z
+        .array(
             z.object({
-                filename: z.string(),
-                additions: z.number(),
-                deletions: z.number(),
-                status: z.enum(["added", "modified", "deleted", "renamed"]),
+                fileName: z.string(),
+                added: z.number(),
+                removed: z.number(),
             })
-        ),
-    }),
-    createdAt: z.string(),
-    updatedAt: z.string(),
+        )
+        .optional(),
+    parentCommit: z.string().optional(),
+    desktopSyncedAt: z.string().optional(),
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
 });
 
 export type Commit = z.infer<typeof CommitSchema>;
 
-// Analytics schemas
-export const RepositoryAnalyticsSchema = z.object({
-    totalCommits: z.number(),
-    totalContributors: z.number(),
-    commitsByDay: z.array(
-        z.object({
-            date: z.string(),
-            count: z.number(),
-        })
-    ),
-    topContributors: z.array(
-        z.object({
-            developerId: z.string(),
-            name: z.string(),
-            commits: z.number(),
-            additions: z.number(),
-            deletions: z.number(),
-        })
-    ),
-    languageStats: z.array(
-        z.object({
-            language: z.string(),
-            percentage: z.number(),
-            lines: z.number(),
-        })
-    ),
-});
-
-export type RepositoryAnalytics = z.infer<typeof RepositoryAnalyticsSchema>;
+// Legacy support - keeping old interfaces but mapping to new structure
+export const CreateRepositorySchema = RegisterRepositorySchema;
+export type CreateRepositoryData = RegisterRepositoryData;

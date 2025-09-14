@@ -2,105 +2,88 @@
 
 import {
     FolderKanban,
-    GitBranch,
-    Users,
-    AlertCircle,
-    Plus,
+    FolderOpen,
+    Database,
+    GitCommit,
 } from "lucide-react";
-import Link from "next/link";
 import { StatsCard } from "@/components/cards/stats-card";
 import { Button } from "@/components/ui/button";
-
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { QuickActionsMenu } from "@/features/dashboard/components/quick-action-menu";
 import { useAuthStore } from "@/stores/authStore";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
-const recentProjects = [
+// Mock data for pie chart - developer contributions
+const developerContributions = [
+    { name: "Alice Johnson", commits: 45, color: "#8884d8" },
+    { name: "Bob Smith", commits: 32, color: "#82ca9d" },
+    { name: "Carol Davis", commits: 28, color: "#ffc658" },
+    { name: "David Wilson", commits: 18, color: "#ff7c7c" },
+    { name: "Eva Brown", commits: 12, color: "#8dd1e1" },
+];
+
+const activeProjects = [
     {
-        id: 1,
-        name: "Web Application",
+        id: "1",
+        name: "Git Tracker",
+        description: "Track local git repositories and developer progress",
         status: "active",
-        repos: 8,
-        lastActive: "2 hours ago",
+        repositories: 3,
+        members: 5,
     },
     {
-        id: 2,
-        name: "Mobile App",
+        id: "2", 
+        name: "E-commerce Platform",
+        description: "Modern e-commerce solution with React and Node.js",
         status: "active",
-        repos: 4,
-        lastActive: "1 day ago",
-    },
-    {
-        id: 3,
-        name: "API Service",
-        status: "active",
-        repos: 12,
-        lastActive: "3 hours ago",
+        repositories: 2,
+        members: 3,
     },
 ];
 
-const recentRepositories = [
-    {
-        id: 1,
-        name: "web-frontend",
-        project: "Web Application",
-        lastCommit: "2 hours ago",
-        status: "active",
-    },
-    {
-        id: 2,
-        name: "api-backend",
-        project: "Web Application",
-        lastCommit: "4 hours ago",
-        status: "active",
-    },
-    {
-        id: 3,
-        name: "mobile-app",
-        project: "Mobile App",
-        lastCommit: "1 day ago",
-        status: "active",
-    },
-];
 
 const stats = [
     {
         title: "Total Projects",
-        value: 24,
-        change: { value: 12, type: "increase" },
+        value: 2,
+        change: { value: 12.5, type: "increase" },
+        icon: <FolderOpen className="w-4 h-4 text-muted-foreground" />,
+    },
+    {
+        title: "Active Projects",
+        value: 2,
+        change: { value: 2.1, type: "decrease" },
         icon: <FolderKanban className="w-4 h-4 text-muted-foreground" />,
     },
     {
-        title: "Active Repositories",
-        value: 156,
-        change: { value: 8, type: "increase" },
-        icon: <GitBranch className="w-4 h-4 text-muted-foreground" />,
+        title: "Total Repositories",
+        value: 5,
+        change: { value: 8.3, type: "increase" },
+        icon: <Database className="w-4 h-4 text-muted-foreground" />,
     },
     {
-        title: "Team Members",
-        value: 32,
-        change: { value: 4, type: "increase" },
-        icon: <Users className="w-4 h-4 text-muted-foreground" />,
-    },
-    {
-        title: "Pending Actions",
-        value: 8,
-        change: { value: 2, type: "decrease" },
-        icon: <AlertCircle className="w-4 h-4 text-muted-foreground" />,
+        title: "Total Commits",
+        value: 34,
+        change: { value: 12.5, type: "increase" },
+        icon: <GitCommit className="w-4 h-4 text-muted-foreground" />,
     },
 ];
 
 export default function Dashboard() {
     const { user } = useAuthStore();
+    
+    // Chart configuration for pie chart
+    const chartConfig = {
+        commits: {
+            label: "Commits",
+        },
+    };
+
     return (
         <div className="space-y-6">
-            {/* Quick Actions */}
+            {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="font-bold text-3xl tracking-tight">
@@ -111,14 +94,13 @@ export default function Dashboard() {
                         <span className="font-bold text-foreground">
                             {`${user?.fullName.split(" ")[0]} ! `}
                         </span>
-                        Here's what's happening with your repositories.
+                        Here's what's happening with your projects.
                     </p>
                 </div>
                 <QuickActionsMenu />
             </div>
 
-            {/* Stats Overview */}
-
+            {/* Row 1: KPI Cards */}
             <div className="gap-4 grid md:grid-cols-2 lg:grid-cols-4">
                 {stats.map((stat, index) => (
                     <StatsCard
@@ -130,6 +112,70 @@ export default function Dashboard() {
                     />
                 ))}
             </div>
+
+            {/* Row 2: Developer Contributions Pie Chart */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Developer Contributions</CardTitle>
+                    <CardDescription>
+                        Distribution of commits by team members
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ChartContainer config={chartConfig} className="h-[300px]">
+                        <PieChart>
+                            <Pie
+                                data={developerContributions}
+                                dataKey="commits"
+                                nameKey="name"
+                                cx="50%"
+                                cy="50%"
+                                outerRadius={100}
+                                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                            >
+                                {developerContributions.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                            </Pie>
+                            <ChartTooltip content={<ChartTooltipContent />} />
+                        </PieChart>
+                    </ChartContainer>
+                </CardContent>
+            </Card>
+
+            {/* Row 3: Active Projects */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Active Projects</CardTitle>
+                    <CardDescription>Your most recently updated projects</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {activeProjects.map((project) => (
+                        <div
+                            key={project.id}
+                            className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-accent/50 transition-colors"
+                        >
+                            <div className="flex-1">
+                                <h3 className="font-semibold text-lg">{project.name}</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    {project.description}
+                                </p>
+                                <div className="flex items-center gap-4 mt-2">
+                                    <Badge variant="secondary" className="text-xs">
+                                        {project.status}
+                                    </Badge>
+                                    <span className="text-xs text-muted-foreground">
+                                        {project.repositories} repositories • {project.members} members
+                                    </span>
+                                </div>
+                            </div>
+                            <Button variant="outline" size="sm">
+                                View Project
+                            </Button>
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
         </div>
     );
 }

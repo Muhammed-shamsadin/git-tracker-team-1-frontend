@@ -71,7 +71,7 @@ export function ProjectSettingsDialog() {
     const currentTags = watch("tags") || [];
 
     const onSubmit = async (data: UpdateProjectData) => {
-        const projectId = currentProject?.id ?? (id as string | undefined);
+        const projectId = currentProject?._id;
         if (!projectId) {
             toast.error("Project ID is missing. Cannot update project.");
             return;
@@ -80,7 +80,6 @@ export function ProjectSettingsDialog() {
             console.log("Updating project with data:", data);
             const result = await updateProject(projectId, data);
             if (result) {
-                await router.refresh();
                 toast.success("Project settings updated successfully");
                 setOpen(false);
             }
@@ -91,7 +90,7 @@ export function ProjectSettingsDialog() {
     };
 
     const onDelete = async () => {
-        const projectId = currentProject?.id ?? (id as string | undefined);
+        const projectId = currentProject?._id;
         if (!projectId) {
             toast.error("Project ID is missing. Cannot delete project.");
             return;
@@ -114,7 +113,7 @@ export function ProjectSettingsDialog() {
     useEffect(() => {
         if (open) {
             // if we don't have the project in store, try to fetch by route id
-            if (!currentProject?.id && id) {
+            if (!currentProject?._id && id) {
                 fetchProjectById(id as string).catch((e) =>
                     console.error(
                         "Failed to fetch project for settings dialog",
@@ -271,6 +270,7 @@ export function ProjectSettingsDialog() {
                                     <Input
                                         id="tags"
                                         placeholder="Add tags (press Enter to add)"
+                                        disabled={currentTags.length > 20}
                                         onKeyDown={(e) => {
                                             if (e.key === "Enter") {
                                                 e.preventDefault();
@@ -278,7 +278,10 @@ export function ProjectSettingsDialog() {
                                                     e.currentTarget.value.trim();
                                                 if (
                                                     value &&
-                                                    !currentTags.includes(value)
+                                                    !currentTags.includes(
+                                                        value
+                                                    ) &&
+                                                    currentTags.length < 20
                                                 ) {
                                                     setValue("tags", [
                                                         ...currentTags,
@@ -320,9 +323,19 @@ export function ProjectSettingsDialog() {
                                         </div>
                                     )}
                                 </div>
-                                <p className="text-muted-foreground text-xs">
-                                    Add tags to categorize your project
-                                </p>
+                                <div className="flex justify-between items-center">
+                                    <p className="text-muted-foreground text-xs">
+                                        Add tags to categorize your project
+                                    </p>
+                                    <p className="text-muted-foreground text-xs">
+                                        {currentTags.length}/20 tags
+                                    </p>
+                                </div>
+                                {currentTags.length >= 20 && (
+                                    <p className="text-amber-600 dark:text-amber-400 text-xs">
+                                        Maximum of 20 tags allowed
+                                    </p>
+                                )}
                             </div>
                         </div>
 

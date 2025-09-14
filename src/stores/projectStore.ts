@@ -10,6 +10,14 @@ import {
     RemoveDeveloperData,
 } from "@/types/Project";
 
+export interface Member {
+    user_id: string;
+    name: string;
+    email: string;
+    role: string;
+    joined_at: string;
+}
+
 interface PaginatedProjects {
     projects: Project[];
     total: number;
@@ -22,6 +30,7 @@ interface ProjectState {
     projects: Project[];
     paginatedProjects: PaginatedProjects | null;
     currentProject: ProjectDetail | null;
+    members: Member[];
     isLoading: boolean;
     error: string | null;
     message: string | null;
@@ -39,6 +48,11 @@ interface ProjectState {
     // Developer assignment operations
     assignDevelopers: (data: AssignDeveloperData) => Promise<any>;
     removeDeveloper: (data: RemoveDeveloperData) => Promise<boolean>;
+    updateDeveloperRole: (data: {
+        projectId: string;
+        developerId: string;
+        role: string;
+    }) => Promise<any>;
 
     // Role-based project fetching (from user endpoints)
     fetchClientProjects: () => Promise<void>; // users/clients/me/projects
@@ -51,9 +65,11 @@ interface ProjectState {
         projectId: string,
         developerId: string
     ) => Promise<any>;
+    fetchProjectMembers: (projectId: string) => Promise<any[]>;
 
     // Utilities
     clearCurrentProject: () => void;
+    clearMembers: () => void;
     clearError: () => void;
 }
 
@@ -63,35 +79,29 @@ export const useProjectStore = create<ProjectState>()(
             projects: [],
             paginatedProjects: null,
             currentProject: null,
+            members: [],
             isLoading: false,
             error: null,
             message: null,
 
             // GET /api/projects?page=1&limit=10
-            fetchAllProjects: async (page = 1, limit = 10) => {
+            fetchAllProjects: async (page = 1, limit = 100) => {
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.get(
                         `/projects?page=${page}&limit=${limit}`
                     );
                     // Backend returns array directly, not paginated for this endpoint
-                    const projects = response.data.data || response.data;
+                    const data: {
+                        projects?: Project[];
+                        total?: number;
+                        page?: number;
+                        limit?: number;
+                    } = response.data.data;
+                    const projects = data.projects || response.data;
 
                     set({
-                        projects: Array.isArray(projects) ? projects : [],
-                        paginatedProjects: {
-                            projects: Array.isArray(projects) ? projects : [],
-                            total: Array.isArray(projects)
-                                ? projects.length
-                                : 0,
-                            page,
-                            limit,
-                            totalPages: Math.ceil(
-                                (Array.isArray(projects)
-                                    ? projects.length
-                                    : 0) / limit
-                            ),
-                        },
+                        projects: projects,
                         isLoading: false,
                     });
                 } catch (error: any) {
@@ -117,9 +127,10 @@ export const useProjectStore = create<ProjectState>()(
                         return;
                     }
                     const response = await api.get(`/projects/${id}`);
+                    const projectData = response.data.data || response.data;
                     set({
-                        currentProject: response.data.data || response.data,
-                        message: response.data.data?.message,
+                        currentProject: projectData,
+                        message: projectData?.message || response.data.message,
                         isLoading: false,
                     });
                 } catch (error: any) {
@@ -138,9 +149,11 @@ export const useProjectStore = create<ProjectState>()(
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.post("/projects", data);
+
                     const newProject = response.data.data || response.data;
 
-                    if (newProject && newProject._id) {
+                    const projectId = newProject._id || newProject.id;
+                    if (newProject && projectId) {
                         set((state) => ({
                             projects: [...state.projects, newProject],
                             isLoading: false,
@@ -167,6 +180,7 @@ export const useProjectStore = create<ProjectState>()(
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.patch(`/projects/${id}`, data);
+
                     const updatedProject = response.data.data || response.data;
 
                     set((state) => ({
@@ -197,6 +211,7 @@ export const useProjectStore = create<ProjectState>()(
                 set({ isLoading: true, error: null });
                 try {
                     const response = await api.delete(`/projects/${id}`);
+                    // Use flexible parsing, don't enforce strict schema
                     const result = response.data.data || response.data;
 
                     if (result.deleted) {
@@ -297,6 +312,47 @@ export const useProjectStore = create<ProjectState>()(
                         isLoading: false,
                     });
                     return false;
+                }
+            },
+
+            // PUT /api/project-developers/update
+            updateDeveloperRole: async (data: {
+                projectId: string;
+                developerId: string;
+                role: string;
+            }) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const response = await api.put(
+                        "/project-developers/update",
+                        data
+                    );
+                    const result = response.data.data || response.data;
+
+                    set({
+                        isLoading: false,
+                        message: "Developer role updated successfully",
+                    });
+
+                    // Refresh current project if it's the one being updated
+                    const currentProject = get().currentProject;
+                    if (
+                        currentProject &&
+                        currentProject._id === data.projectId
+                    ) {
+                        get().fetchProjectById(data.projectId);
+                    }
+
+                    return result;
+                } catch (error: any) {
+                    set({
+                        error:
+                            error.response?.data?.message ||
+                            error.message ||
+                            "Failed to update developer role",
+                        isLoading: false,
+                    });
+                    return undefined;
                 }
             },
 
@@ -410,9 +466,38 @@ export const useProjectStore = create<ProjectState>()(
                     return { repositories: [], total: 0 };
                 }
             },
+            fetchProjectMembers: async (projectId: string) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const response = await api.get(
+                        `/projects/${projectId}/members`
+                    );
+                    const members =
+                        response.data.data?.members || response.data;
+                    set({
+                        members: members,
+                        isLoading: false,
+                    });
+                    return members;
+                } catch (error: any) {
+                    set({
+                        error:
+                            error.response?.data?.message ||
+                            error.message ||
+                            "Failed to fetch project members",
+                        isLoading: false,
+                    });
+                    return [];
+                }
+            },
 
+            // Utilities
             clearCurrentProject: () => {
                 set({ currentProject: null, message: null });
+            },
+
+            clearMembers: () => {
+                set({ members: [] });
             },
 
             clearError: () => {
@@ -424,6 +509,7 @@ export const useProjectStore = create<ProjectState>()(
             partialize: (state) => ({
                 projects: state.projects,
                 currentProject: state.currentProject,
+                members: state.members,
             }),
         }
     )

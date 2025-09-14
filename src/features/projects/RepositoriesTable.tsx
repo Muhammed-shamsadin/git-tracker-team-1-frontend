@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { ProjectDetail } from "@/types/Project";
+import { timeAgo } from "@/lib/utils";
 
 export function RepositoriesTable({
     repositories,
@@ -39,56 +40,42 @@ export function RepositoriesTable({
                     <TableHeader>
                         <TableRow>
                             <TableHead>Repository</TableHead>
-                            <TableHead>Description</TableHead>
-                            <TableHead>Commits</TableHead>
-                            <TableHead>Contributors</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Registered By</TableHead>
                             <TableHead>Last Updated</TableHead>
                             <TableHead>Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {repositories.map((repo) => (
-                            <TableRow key={repo.id}>
+                            <TableRow key={repo._id}>
                                 <TableCell>
                                     <div className="flex items-center gap-2">
                                         <GitBranch className="w-4 h-4 text-muted-foreground" />
                                         <div>
-                                            <div className="font-medium">
+                                            <Link
+                                                href={`/dashboard/repositories/${repo._id}`}
+                                                className="font-medium text-foreground hover:underline"
+                                            >
                                                 {repo.name}
-                                            </div>
-                                            <div className="text-muted-foreground text-xs">
-                                                {repo.url || ""}
-                                            </div>
+                                            </Link>
                                         </div>
                                     </div>
                                 </TableCell>
-                                <TableCell className="max-w-[300px]">
-                                    <p className="truncate">
-                                        {repo.description || ""}
-                                    </p>
-                                </TableCell>
-                                <TableCell>{repo.commits ?? 0}</TableCell>
-                                <TableCell>{repo.contributors ?? 0}</TableCell>
+                                <TableCell>{repo.status}</TableCell>
                                 <TableCell>
-                                    {repo.lastUpdated ? repo.lastUpdated : "-"}
+                                    {repo.registeredBy?.name || "-"}
+                                    <div className="text-muted-foreground text-xs">
+                                        {repo.registeredBy?.email || ""}
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    {repo.lastUpdated
+                                        ? timeAgo(repo.lastUpdated)
+                                        : "-"}
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-2">
-                                        {repo.url && (
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                asChild
-                                            >
-                                                <a
-                                                    href={repo.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                >
-                                                    <ExternalLink className="w-4 h-4" />
-                                                </a>
-                                            </Button>
-                                        )}
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button
@@ -99,12 +86,14 @@ export function RepositoriesTable({
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem>
-                                                    View Details
+                                                <DropdownMenuItem asChild>
+                                                    <Link
+                                                        href={`/dashboard/repositories/${repo._id}`}
+                                                    >
+                                                        View Details
+                                                    </Link>
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem>
-                                                    Edit Repository
-                                                </DropdownMenuItem>
+
                                                 <DropdownMenuItem className="text-destructive">
                                                     Remove from Project
                                                 </DropdownMenuItem>

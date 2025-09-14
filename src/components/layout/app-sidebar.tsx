@@ -97,16 +97,65 @@ export function AppSidebar() {
                     <SidebarGroupLabel>Main Navigation</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {items.map((item) => (
-                                <SidebarMenuItem key={item.title}>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild>
+                                    <Link href="/dashboard">
+                                        <Home />
+                                        <span>Dashboard</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild>
+                                    <Link href="/dashboard/projects">
+                                        <FolderGit2 />
+                                        <span>Projects</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild>
+                                    <Link href="/dashboard/repositories">
+                                        <GitBranch />
+                                        <span>Repositories</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+
+                            {user?.userType === "superadmin" && (
+                                <SidebarMenuItem>
                                     <SidebarMenuButton asChild>
-                                        <Link href={item.url}>
-                                            <item.icon />
-                                            <span>{item.title}</span>
+                                        <Link href="/dashboard/clients">
+                                            <Users />
+                                            <span>Clients</span>
                                         </Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
-                            ))}
+                            )}
+
+                            {(user?.userType === "superadmin" ||
+                                user?.userType === "client") && (
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton asChild>
+                                        <Link href="/dashboard/developers">
+                                            <Users />
+                                            <span>Developers</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            )}
+
+                            {(user?.userType === "developer" ||
+                                user?.userType === "client") && (
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton asChild>
+                                        <Link href="/dashboard/analytics">
+                                            <BarChart3 />
+                                            <span>Analytics</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            )}
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
@@ -115,16 +164,14 @@ export function AppSidebar() {
                     <SidebarGroupLabel>Account</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {bottomItems.map((item) => (
-                                <SidebarMenuItem key={item.title}>
-                                    <SidebarMenuButton asChild>
-                                        <Link href={item.url}>
-                                            <item.icon />
-                                            <span>{item.title}</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            ))}
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild>
+                                    <Link href="/dashboard/settings">
+                                        <Settings />
+                                        <span>Settings</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
@@ -139,7 +186,7 @@ export function AppSidebar() {
                         </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col justify-center">
                             <p className="font-medium text-sm truncate">
                                 {user?.fullName}
                             </p>

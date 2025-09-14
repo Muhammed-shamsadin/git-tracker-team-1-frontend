@@ -5,6 +5,7 @@ import { Repository } from "@/types/Repository";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { timeAgo } from "@/lib/utils";
 
 export const repositoryColumns: ColumnDef<Repository>[] = [
     {
@@ -22,68 +23,39 @@ export const repositoryColumns: ColumnDef<Repository>[] = [
             );
         },
     },
+
     {
-        accessorKey: "owner",
-        header: "Owner",
-        cell: ({ row }) => row.getValue("owner"),
-    },
-    {
-        accessorKey: "projectId",
-        header: "Project ID",
-        cell: ({ row }) => (
-            <Link
-                href={`/dashboard/projects/${row.getValue("projectId")}`}
-                className="hover:underline"
-            >
-                {row.getValue("projectId")}
-            </Link>
-        ),
-    },
-    {
-        accessorKey: "branchCount",
-        header: "Branch Count",
-        cell: ({ row }) => (
-            <Badge variant="secondary">{row.getValue("branchCount")}</Badge>
-        ),
-    },
-    {
-        accessorKey: "commitCount",
+        accessorKey: "commitsCount",
         header: "Commit Count",
+        accessorFn: (row) => row.commitsCount ?? 0,
         cell: ({ row }) => (
-            <Badge variant="secondary">{row.getValue("commitCount")}</Badge>
+            <Badge variant="secondary">{row.getValue("commitsCount")}</Badge>
         ),
     },
     {
-        accessorKey: "createdDate",
+        accessorKey: "createdAt",
         header: "Created Date",
         cell: ({ row }) => (
             <div className="text-center">
-                {new Date(row.getValue("createdDate")).toLocaleDateString()}
+                {new Date(row.getValue("createdAt")).toLocaleDateString()}
             </div>
         ),
     },
     {
-        accessorKey: "updatedDate",
+        accessorKey: "updatedAt",
         header: "Last Updated",
-        accessorFn: (row: any) => new Date(row.updatedDate),
+        accessorFn: (row: any) => new Date(row.updatedAt),
         sortingFn: (rowA: any, rowB: any, columnId: string) => {
             const dateA = rowA.getValue(columnId) as Date;
             const dateB = rowB.getValue(columnId) as Date;
             return dateA.getTime() - dateB.getTime();
         },
         cell: ({ row }) => {
-            const updatedDate = row.getValue("updatedDate") as Date;
-            const now = new Date();
-            const timeDiff = Math.abs(now.getTime() - updatedDate.getTime());
-            const seconds = Math.floor(timeDiff / 1000);
-            const minutes = Math.floor(seconds / 60);
-            const hours = Math.floor(minutes / 60);
-            const days = Math.floor(hours / 24);
-
-            if (days > 0) return `${days} days ago`;
-            if (hours > 0) return `${hours} hours ago`;
-            if (minutes > 0) return `${minutes} minutes ago`;
-            return `${seconds} seconds ago`;
+            return (
+                <div className="text-center">
+                    {timeAgo(row.getValue("updatedAt") as Date)}
+                </div>
+            );
         },
     },
     {
@@ -96,6 +68,8 @@ export const repositoryColumns: ColumnDef<Repository>[] = [
                         ? "default"
                         : row.getValue("status") === "archived"
                         ? "secondary"
+                        : row.getValue("status") === "moved"
+                        ? "outline"
                         : "destructive"
                 }
             >

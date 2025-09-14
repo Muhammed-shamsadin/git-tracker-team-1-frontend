@@ -23,21 +23,6 @@ export const projectColomns: ColumnDef<Project>[] = [
             );
         },
     },
-    // {
-    //     header: "Client",
-    //     accessorFn: (row) =>
-    //         typeof row.clientId === "object"
-    //             ? row.clientId?.name
-    //             : row.clientId,
-    //     cell: ({ row }) => {
-    //         const client = row.original.clientId;
-    //         return (
-    //             <span>
-    //                 {typeof client === "object" ? client?.name : client}
-    //             </span>
-    //         );
-    //     },
-    // },
     {
         header: "Repository Count",
         accessorFn: (row) => row.repositories?.length ?? 0,

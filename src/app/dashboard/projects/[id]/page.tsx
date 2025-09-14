@@ -1,10 +1,10 @@
 "use client";
 
-import { ActivityProps, useEffect } from "react";
+import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, User } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useProjectStore } from "@/stores/projectStore";
 import { ProjectHeader } from "@/features/projects/ProjectHeader";
 import { ProjectStatsGrid } from "@/features/projects/ProjectStatsGrid";
@@ -19,6 +19,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { useProjectPermissions } from "@/hooks/use-projects";
 import ProjectDetailsLoading from "@/features/projects/project-details-skeleton";
 import { AddDeveloperDialog } from "@/features/projects/add-developer-dialog";
+import { timeAgo } from "@/lib/utils";
+import { RecentActivity } from "@/features/projects/recent-activity";
 
 export default function ProjectDetailsPage() {
     const { id } = useParams();
@@ -43,46 +45,6 @@ export default function ProjectDetailsPage() {
         return <div className="p-8 text-destructive text-center">{error}</div>;
     }
 
-    // TODO: Replace with real activity data from API if available
-    const dummyActivityItems: ActivityItem[] = [
-        {
-            id: 1,
-            type: "commit",
-            message: "Fix: resolve null pointer in auth flow",
-            author: "Alice Johnson",
-            repository: "auth-service",
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-            avatar: "https://i.pravatar.cc/40?img=1",
-        },
-        {
-            id: 2,
-            type: "issue",
-            message: "UI: dashboard charts not rendering on mobile",
-            author: "Bob Smith",
-            repository: "web-client",
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-            avatar: "https://i.pravatar.cc/40?img=2",
-        },
-        {
-            id: 3,
-            type: "merge",
-            message: "Merge: feature/login -> main",
-            author: "Carol Peters",
-            repository: "auth-service",
-            timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-            avatar: "https://i.pravatar.cc/40?img=3",
-        },
-        {
-            id: 4,
-            type: "comment",
-            message: "Comment: left feedback on PR #42",
-            author: "Dave Lee",
-            repository: "api",
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-            avatar: "https://i.pravatar.cc/40?img=5",
-        },
-    ];
-
     return (
         <div className="space-y-6">
             <ProjectHeader project={currentProject} />
@@ -95,8 +57,14 @@ export default function ProjectDetailsPage() {
                 <TabsContent value="overview" className="space-y-6">
                     <ProjectStatsGrid project={currentProject} />
                     <div className="gap-6 grid md:grid-cols-2">
-                        <RecentActivityList activities={dummyActivityItems} />
                         <CommitGraphPlaceholder />
+                        <RecentActivity
+                            projectId={currentProject._id}
+                            title="Recent Project Activity"
+                            limit={5}
+                            showRepository={true}
+                            showDeveloper={true}
+                        />
                     </div>
                 </TabsContent>
                 <TabsContent value="repositories" className="space-y-6">
@@ -132,7 +100,7 @@ export default function ProjectDetailsPage() {
                         </div>
                         {canManageMembers && (
                             <AddDeveloperDialog
-                                projectId={currentProject?.id}
+                                projectId={currentProject?._id}
                             />
                         )}
                     </div>
