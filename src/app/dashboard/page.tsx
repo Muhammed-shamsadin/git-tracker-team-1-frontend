@@ -13,7 +13,12 @@ import { Badge } from "@/components/ui/badge";
 import { QuickActionsMenu } from "@/features/dashboard/components/quick-action-menu";
 import { useAuthStore } from "@/stores/authStore";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Cell } from "recharts";
+import { useEffect, useMemo, useState } from "react";
+import { useProjectStore } from "@/stores/projectStore";
+import { useRepositoryStore } from "@/stores/repositoryStore";
+import Link from "next/link";
+import { useAnalyticsStore } from "@/stores/analyticsStore";
 
 // Mock data for pie chart - developer contributions
 const developerContributions = [
@@ -24,55 +29,72 @@ const developerContributions = [
     { name: "Eva Brown", commits: 12, color: "#8dd1e1" },
 ];
 
-const activeProjects = [
-    {
-        id: "1",
-        name: "Git Tracker",
-        description: "Track local git repositories and developer progress",
-        status: "active",
-        repositories: 3,
-        members: 5,
-    },
-    {
-        id: "2", 
-        name: "E-commerce Platform",
-        description: "Modern e-commerce solution with React and Node.js",
-        status: "active",
-        repositories: 2,
-        members: 3,
-    },
-];
-
-
-const stats = [
-    {
-        title: "Total Projects",
-        value: 2,
-        change: { value: 12.5, type: "increase" },
-        icon: <FolderOpen className="w-4 h-4 text-muted-foreground" />,
-    },
-    {
-        title: "Active Projects",
-        value: 2,
-        change: { value: 2.1, type: "decrease" },
-        icon: <FolderKanban className="w-4 h-4 text-muted-foreground" />,
-    },
-    {
-        title: "Total Repositories",
-        value: 5,
-        change: { value: 8.3, type: "increase" },
-        icon: <Database className="w-4 h-4 text-muted-foreground" />,
-    },
-    {
-        title: "Total Commits",
-        value: 34,
-        change: { value: 12.5, type: "increase" },
-        icon: <GitCommit className="w-4 h-4 text-muted-foreground" />,
-    },
-];
+// Active projects will be derived from the backend list
 
 export default function Dashboard() {
     const { user } = useAuthStore();
+    const { projects, fetchAllProjects, isLoading } = useProjectStore();
+    const { fetchProjectRepositories } = useRepositoryStore();
+    const [repoCounts, setRepoCounts] = useState<Record<string, number>>({});
+    const { kpiData, fetchKPIData } = useAnalyticsStore();
+
+    useEffect(() => {
+        // Load projects for dashboard widgets
+        fetchAllProjects();
+        fetchKPIData();
+    }, [fetchAllProjects, fetchKPIData]);
+
+    // Normalize and filter for active projects
+    const activeProjects = useMemo(() => {
+        return (projects || [])
+            .map((p: any) => {
+                const id = (p.id ?? p._id) as string;
+                return {
+                    id,
+                    name: p.name ?? p.title ?? "Unnamed Project",
+                    description: p.description ?? "",
+                    status: p.status ?? (p.isActive ? "active" : "archived"),
+                    // Use fetched counts if available, else fallback to provided values/arrays
+                    // repositories:
+                    //     repoCounts[id] ?? p.repositoriesCount ?? p.repositories?.length ?? 0,
+                    commits: p.commitsCount ?? p.projectCommits?.length ?? 0,
+                    members: p.membersCount ?? p.projectDevelopers?.length ?? 0,
+                };
+            })
+            .filter((p) => p.status?.toLowerCase() === "active");
+    }, [projects, repoCounts]);
+
+    // Fetch per-project repository counts for active projects
+    useEffect(() => {
+        const loadRepoCounts = async () => {
+            const entries = await Promise.all(
+                (projects || [])
+                    .filter((p: any) => (p.status ?? (p.isActive ? "active" : "archived")).toLowerCase() === "active")
+                    .map(async (p: any) => {
+                        const projectId = (p.id ?? p._id) as string;
+                        if (!projectId) return null;
+                        try {
+                            const repos = await fetchProjectRepositories(projectId);
+                            const count = Array.isArray(repos) ? repos.length : 0;
+                            return [projectId, count] as [string, number];
+                        } catch {
+                            return [projectId, 0] as [string, number];
+                        }
+                    })
+            );
+            const map: Record<string, number> = {};
+            for (const entry of entries) {
+                if (!entry) continue;
+                const [id, count] = entry;
+                map[id] = count;
+            }
+            setRepoCounts(map);
+        };
+        if ((projects || []).length > 0) {
+            loadRepoCounts();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [projects, fetchProjectRepositories]);
     
     // Chart configuration for pie chart
     const chartConfig = {
@@ -102,15 +124,30 @@ export default function Dashboard() {
 
             {/* Row 1: KPI Cards */}
             <div className="gap-4 grid md:grid-cols-2 lg:grid-cols-4">
-                {stats.map((stat, index) => (
-                    <StatsCard
-                        key={index}
-                        title={stat.title}
-                        value={stat.value}
-                        change={stat.change}
-                        icon={stat.icon}
-                    />
-                ))}
+                <StatsCard
+                    title="Total Projects"
+                    value={kpiData?.totalProjects ?? 0}
+                    change={{ value: 0, type: "increase" }}
+                    icon={<FolderOpen className="w-4 h-4 text-muted-foreground" />}
+                />
+                <StatsCard
+                    title="Active Projects"
+                    value={kpiData?.activeProjects ?? 0}
+                    change={{ value: 0, type: "increase" }}
+                    icon={<FolderKanban className="w-4 h-4 text-muted-foreground" />}
+                />
+                <StatsCard
+                    title="Total Repositories"
+                    value={kpiData?.totalRepositories ?? 0}
+                    change={{ value: 0, type: "increase" }}
+                    icon={<Database className="w-4 h-4 text-muted-foreground" />}
+                />
+                <StatsCard
+                    title="Total Commits"
+                    value={kpiData?.totalCommits ?? 0}
+                    change={{ value: 0, type: "increase" }}
+                    icon={<GitCommit className="w-4 h-4 text-muted-foreground" />}
+                />
             </div>
 
             {/* Row 2: Developer Contributions Pie Chart */}
@@ -150,6 +187,12 @@ export default function Dashboard() {
                     <CardDescription>Your most recently updated projects</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                    {isLoading && (
+                        <div className="text-sm text-muted-foreground">Loading projects…</div>
+                    )}
+                    {!isLoading && activeProjects.length === 0 && (
+                        <div className="text-sm text-muted-foreground">No active projects yet.</div>
+                    )}
                     {activeProjects.map((project) => (
                         <div
                             key={project.id}
@@ -164,14 +207,18 @@ export default function Dashboard() {
                                     <Badge variant="secondary" className="text-xs">
                                         {project.status}
                                     </Badge>
+                                    {/* // commitsCount */}
                                     <span className="text-xs text-muted-foreground">
-                                        {project.repositories} repositories • {project.members} members
+                                        {project.commits} commits • {project.members} members
                                     </span>
+                                    {/* <span className="text-xs text-muted-foreground">
+                                        {(repoCounts[project.id as string] ?? project.repositories) || 0} repositories • {project.members} members
+                                    </span> */}
                                 </div>
                             </div>
-                            <Button variant="outline" size="sm">
-                                View Project
-                            </Button>
+                            <Link href={`/dashboard/projects/${project.id}`}>
+                                <Button variant="outline" size="sm">View Project</Button>
+                            </Link>
                         </div>
                     ))}
                 </CardContent>

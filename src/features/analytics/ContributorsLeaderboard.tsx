@@ -113,8 +113,8 @@ export function ContributorsLeaderboard({
                             </SelectTrigger>
                             <SelectContent>
                                 {/* No global option per spec */}
-                                {projects.map((p) => (
-                                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                {projects.map((p, idx) => (
+                                    <SelectItem key={p.id ?? `project-${idx}`} value={p.id}>{p.name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -124,8 +124,8 @@ export function ContributorsLeaderboard({
                             </SelectTrigger>
                             <SelectContent>
                                 {/* No global option per spec */}
-                                {repositories.map((r) => (
-                                    <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                                {repositories.map((r, idx) => (
+                                    <SelectItem key={r.id ?? `repo-${idx}`} value={r.id}>{r.name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>

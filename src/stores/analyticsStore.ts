@@ -32,6 +32,8 @@ type Repository = {
 	projectId?: string;
 };
 
+type TimeRange = "week" | "month" | "year";
+
 interface AnalyticsState {
 	kpiData: KPIData;
 	isLoading: boolean;
@@ -53,8 +55,8 @@ interface AnalyticsState {
 	fetchKPIData: () => Promise<void>;
 	fetchProjects: () => Promise<void>;
 	fetchRepositories: (projectId?: string) => Promise<void>;
-	fetchProjectAnalytics: (projectId: string) => Promise<void>;
-	fetchRepositoryAnalytics: (repositoryId: string) => Promise<void>;
+	fetchProjectAnalytics: (projectId: string, timeRange?: TimeRange) => Promise<void>;
+	fetchRepositoryAnalytics: (repositoryId: string, timeRange?: TimeRange) => Promise<void>;
 	setSelectedProject: (projectId: string | null) => void;
 	setSelectedRepository: (repositoryId: string | null) => void;
 }
@@ -197,16 +199,30 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
 		}
 	},
 
-	// Fetch project analytics data
-	fetchProjectAnalytics: async (projectId: string) => {
+	// Fetch project analytics data (supports time range)
+	fetchProjectAnalytics: async (projectId: string, timeRange?: TimeRange) => {
 		set({ isLoading: true, error: null });
 		try {
-			const response = await api.get(`/projects/${projectId}/analytics`);
-			const data = response.data;
+			const response = await api.get(`/projects/${projectId}/analytics`, {
+				// Support multiple param names in case backend expects a different key
+				params: timeRange
+					? { timeRange, range: timeRange, time_range: timeRange }
+					: undefined,
+			});
+			const payload = response.data?.data ?? response.data;
+			console.log("Project Analytics Data:", payload);
 			
-			// Handle the actual API response format
-			const commitData: CommitData = data?.commit_graph || data?.commits || [];
-			const contributors: Contributor[] = data?.top_contributors || [];
+			// Normalize commit graph shape
+			const rawGraph = payload?.commit_graph || payload?.commits || [];
+			const commitData: CommitData = Array.isArray(rawGraph)
+				? rawGraph
+					.map((d: any) => ({
+						date: typeof d.date === "string" ? d.date : new Date(d.date).toISOString().slice(0, 10),
+						commits: Number(d.commits ?? d.count ?? 0),
+					}))
+					.filter((d: any) => d && d.date && !Number.isNaN(d.commits))
+				: [];
+			const contributors: Contributor[] = payload?.top_contributors || [];
 			
 			set({
 				projectCommitData: commitData,
@@ -222,15 +238,29 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
 	},
 
 	// Fetch repository analytics data
-	fetchRepositoryAnalytics: async (repositoryId: string) => {
+	fetchRepositoryAnalytics: async (repositoryId: string, timeRange?: TimeRange) => {
 		set({ isLoading: true, error: null });
 		try {
-			const response = await api.get(`/repositories/${repositoryId}/analytics`);
-			const data = response.data;
+			const response = await api.get(`/repositories/${repositoryId}/analytics`, {
+				// Support multiple param names in case backend expects a different key
+				params: timeRange
+					? { timeRange, range: timeRange, time_range: timeRange }
+					: undefined,
+			});
+			const payload = response.data?.data ?? response.data;
+			console.log("Repository Analytics Data:", payload, "(range:", timeRange, ")");
 			
-			// Handle the actual API response format
-			const commitData: CommitData = data?.commit_graph || data?.commits || [];
-			const contributors: Contributor[] = data?.top_contributors || [];
+			// Normalize commit graph shape
+			const rawGraph = payload?.commit_graph || payload?.commits || [];
+			const commitData: CommitData = Array.isArray(rawGraph)
+				? rawGraph
+					.map((d: any) => ({
+						date: typeof d.date === "string" ? d.date : new Date(d.date).toISOString().slice(0, 10),
+						commits: Number(d.commits ?? d.count ?? 0),
+					}))
+					.filter((d: any) => d && d.date && !Number.isNaN(d.commits))
+				: [];
+			const contributors: Contributor[] = payload?.top_contributors || [];
 			
 			set({
 				repositoryCommitData: commitData,
