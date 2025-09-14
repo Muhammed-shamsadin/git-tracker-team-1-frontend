@@ -9,6 +9,7 @@ import { RepositoryStatsGrid } from "@/features/repositories/RepositoryStatsGrid
 import { CommitActivityChart } from "@/features/repositories/CommitActivityChart";
 import { RepositoryInfoCard } from "@/features/repositories/RepositoryInfoCard";
 import { CommitsTable } from "@/features/repositories/CommitsTable";
+import { RecentActivity } from "@/features/projects/recent-activity";
 import RepositoryDetailsLoading from "@/features/repositories/repository-details-skeleton";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -71,8 +72,15 @@ export default function RepositoryDetailsPage() {
                     <RepositoryStatsGrid repository={currentRepository} />
                     <div className="gap-6 grid md:grid-cols-2">
                         <CommitActivityChart repository={currentRepository} />
-                        <RepositoryInfoCard repository={currentRepository} />
+                        <RecentActivity
+                            repositoryId={currentRepository._id}
+                            title="Recent Repository Activity"
+                            limit={6}
+                            showRepository={false}
+                            showDeveloper={true}
+                        />
                     </div>
+                    <RepositoryInfoCard repository={currentRepository} />
                 </TabsContent>
 
                 {/* Commits Tab */}

@@ -32,93 +32,14 @@ import {
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import api from "@/lib/axios";
+import { useGitDataStore, CommitData } from "@/stores/gitDataStore";
 import { Commit } from "@/types/Repository";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRepositoryStore } from "@/stores/repositoryStore";
 import { toast } from "sonner";
 import CommitDetailsSkeleton from "@/features/repositories/commits/commit-details-skeleton";
 
-interface CommitResponse {
-    success: boolean;
-    data: {
-        commit: {
-            _id: string;
-            repoId: {
-                _id: string;
-                name: string;
-            };
-            developerId: {
-                _id: string;
-                email: string;
-                fullName: string;
-            };
-            projectId: {
-                _id: string;
-                name: string;
-            };
-            commitHash: string;
-            message: string;
-            branch: string;
-            timestamp: string;
-            stats: {
-                files_changed: number;
-                files_added: number;
-                files_removed: number;
-                lines_added: number;
-                lines_removed: number;
-            };
-            changes: Array<{
-                fileName: string;
-                added: number;
-                removed: number;
-            }>;
-            parentCommit: string;
-            desktopSyncedAt: string;
-            __v: number;
-            createdAt: string;
-            updatedAt: string;
-        };
-        message: string;
-    };
-}
-
-interface CommitWithRepository {
-    _id: string;
-    repoId: {
-        _id: string;
-        name: string;
-    };
-    developerId: {
-        _id: string;
-        email: string;
-        fullName: string;
-    };
-    projectId: {
-        _id: string;
-        name: string;
-    };
-    commitHash: string;
-    message: string;
-    branch: string;
-    timestamp: string;
-    stats: {
-        files_changed: number;
-        files_added: number;
-        files_removed: number;
-        lines_added: number;
-        lines_removed: number;
-    };
-    changes: Array<{
-        fileName: string;
-        added: number;
-        removed: number;
-    }>;
-    parentCommit: string;
-    desktopSyncedAt: string;
-    __v: number;
-    createdAt: string;
-    updatedAt: string;
+interface CommitWithRepository extends CommitData {
     short_id?: string;
 }
 
@@ -161,47 +82,29 @@ export default function CommitDetailsPage() {
     const repoId = params.id as string;
     const commitId = params.commitid as string;
 
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { fetchCommitById, isLoading, error } = useGitDataStore();
     const [commitData, setCommitData] = useState<CommitWithRepository | null>(
         null
     );
+
     useEffect(() => {
         const fetchCommitData = async () => {
-            try {
-                setLoading(true);
-                const response = await api.get<CommitResponse>(
-                    `/git-data/${commitId}`
-                );
-
-                if (response.data.success && response.data.data.commit) {
-                    const commit = response.data.data.commit;
-
+            if (commitId) {
+                const commit = await fetchCommitById(commitId);
+                if (commit) {
                     // Add short_id to commit data
                     setCommitData({
                         ...commit,
                         short_id: commit.commitHash?.substring(0, 7) || "",
                     });
-                } else {
-                    setError("Failed to fetch commit data");
                 }
-            } catch (err) {
-                setError("An error occurred while fetching commit data");
-                console.error("Commit fetch error:", err);
-            } finally {
-                setLoading(false);
             }
         };
 
-        if (commitId) {
-            fetchCommitData();
-        } else {
-            setError("No commit ID provided");
-            setLoading(false);
-        }
-    }, [commitId, repoId]);
+        fetchCommitData();
+    }, [commitId, fetchCommitById]);
 
-    if (loading) {
+    if (isLoading) {
         return <CommitDetailsSkeleton />;
     }
 
@@ -231,7 +134,10 @@ export default function CommitDetailsPage() {
                 <Button variant="ghost" size="sm" asChild>
                     <Link href={`/dashboard/repositories/${repoId}`}>
                         <ArrowLeft className="mr-2 w-4 h-4" />
-                        Back to {commitData.repoId?.name || "Repository"}
+                        Back to{" "}
+                        {typeof commitData.repoId === "object"
+                            ? commitData.repoId?.name
+                            : "Repository"}
                     </Link>
                 </Button>
             </div>
@@ -291,21 +197,29 @@ export default function CommitDetailsPage() {
                                     <Avatar className="w-10 h-10">
                                         {/* <AvatarImage src="/placeholder.svg" /> */}
                                         <AvatarFallback>
-                                            {commitData.developerId?.fullName
-                                                ?.split(" ")
-                                                .map((name) => name[0])
-                                                .join("")
-                                                .toUpperCase() || "DEV"}
+                                            {typeof commitData.developerId ===
+                                            "object"
+                                                ? commitData.developerId?.fullName
+                                                      ?.split(" ")
+                                                      .map((name) => name[0])
+                                                      .join("")
+                                                      .toUpperCase()
+                                                : "DEV"}
                                         </AvatarFallback>
                                     </Avatar>
                                     <div>
                                         <div className="font-medium">
-                                            {commitData.developerId?.fullName ||
-                                                "Unknown Developer"}
+                                            {typeof commitData.developerId ===
+                                            "object"
+                                                ? commitData.developerId
+                                                      ?.fullName
+                                                : "Unknown Developer"}
                                         </div>
                                         <div className="text-muted-foreground text-sm">
-                                            {commitData.developerId?.email ||
-                                                `ID: ${commitData.developerId?._id}`}
+                                            {typeof commitData.developerId ===
+                                            "object"
+                                                ? commitData.developerId?.email
+                                                : `ID: ${commitData.developerId}`}
                                         </div>
                                     </div>
                                 </div>
@@ -338,8 +252,9 @@ export default function CommitDetailsPage() {
                                         Repository
                                     </span>
                                     <span>
-                                        {commitData.repoId?.name ||
-                                            "Unknown Repository"}
+                                        {typeof commitData.repoId === "object"
+                                            ? commitData.repoId?.name
+                                            : "Unknown Repository"}
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-sm">
@@ -347,8 +262,10 @@ export default function CommitDetailsPage() {
                                         Project
                                     </span>
                                     <span>
-                                        {commitData.projectId?.name ||
-                                            "Unknown Project"}
+                                        {typeof commitData.projectId ===
+                                        "object"
+                                            ? commitData.projectId?.name
+                                            : "Unknown Project"}
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-sm">
