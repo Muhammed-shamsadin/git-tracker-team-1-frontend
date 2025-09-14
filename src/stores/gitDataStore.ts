@@ -46,6 +46,23 @@ export interface CommitData {
     updatedAt: string;
 }
 
+export interface MemberRepository {
+    id: string;
+    name: string;
+    totalCommits: number;
+}
+
+export interface MemberDetailsData {
+    totalCommits: number;
+    totalLinesAdded: number;
+    totalLinesRemoved: number;
+    totalFilesAdded: number;
+    totalFilesRemoved: number;
+    totalFilesChanged: number;
+    uniqueRepos: number;
+    repos: MemberRepository[];
+}
+
 interface GitDataResponse {
     commits: CommitData[];
     totalCommits: number;
@@ -66,6 +83,7 @@ interface GitDataState {
         totalLinesRemoved: number;
         uniqueRepositories: number;
     } | null;
+    memberDetailsData: MemberDetailsData | null;
     isLoading: boolean;
     error: string | null;
 
@@ -102,12 +120,19 @@ interface GitDataState {
         branch?: string;
     }) => Promise<void>;
 
+    // New optimized endpoint for member details
+    fetchMemberDetailsOptimized: (params: {
+        projectId: string;
+        memberId: string;
+    }) => Promise<MemberDetailsData | undefined>;
+
     // Fetch single commit by ID
     fetchCommitById: (commitId: string) => Promise<CommitData | undefined>;
 
     // Utilities
     clearCommits: () => void;
     clearMemberCommits: () => void;
+    clearMemberDetails: () => void;
     clearError: () => void;
 }
 
@@ -119,6 +144,7 @@ export const useGitDataStore = create<GitDataState>()(
             memberCommits: [],
             memberCommitsForDisplay: [],
             memberStatsData: null,
+            memberDetailsData: null,
             isLoading: false,
             error: null,
 
@@ -298,6 +324,33 @@ export const useGitDataStore = create<GitDataState>()(
                 }
             },
 
+            // New optimized endpoint for member details - GET /project/{id}/members/{memberid}
+            fetchMemberDetailsOptimized: async (params) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const response = await api.get(
+                        `/projects/${params.projectId}/members/${params.memberId}`
+                    );
+                    const data = response.data.data;
+
+                    set({
+                        memberDetailsData: data,
+                        isLoading: false,
+                    });
+
+                    return data;
+                } catch (error: any) {
+                    set({
+                        error:
+                            error.response?.data?.message ||
+                            error.message ||
+                            "Failed to fetch member details",
+                        isLoading: false,
+                    });
+                    return undefined;
+                }
+            },
+
             // Fetch single commit by ID using the new API endpoint
             fetchCommitById: async (commitId: string) => {
                 set({ isLoading: true, error: null });
@@ -331,6 +384,15 @@ export const useGitDataStore = create<GitDataState>()(
                 });
             },
 
+            clearMemberDetails: () => {
+                set({
+                    memberDetailsData: null,
+                    memberStatsData: null,
+                    memberCommits: [],
+                    memberCommitsForDisplay: [],
+                });
+            },
+
             clearError: () => {
                 set({ error: null });
             },
@@ -340,6 +402,7 @@ export const useGitDataStore = create<GitDataState>()(
             partialize: (state: GitDataState) => ({
                 commits: state.commits,
                 memberCommits: state.memberCommits,
+                memberDetailsData: state.memberDetailsData,
             }),
         }
     )

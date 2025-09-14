@@ -26,6 +26,7 @@ import { useGitDataStore, CommitData } from "@/stores/gitDataStore";
 
 interface MemberCommitsTableProps {
     memberId: string;
+    projectId?: string;
     limit?: number;
     title?: string;
     showDescription?: boolean;
@@ -33,27 +34,31 @@ interface MemberCommitsTableProps {
 
 export function MemberCommitsTable({
     memberId,
+    projectId,
     limit = 10,
     title = "Recent Commits",
     showDescription = true,
 }: MemberCommitsTableProps) {
-    const { id: projectId } = useParams();
+    const { id: fallbackProjectId } = useParams();
+    const currentProjectId = projectId || (fallbackProjectId as string);
+
     const {
         memberCommitsForDisplay,
         fetchMemberRecentCommits,
         isLoading,
         error,
     } = useGitDataStore();
+
     // Fetch member's recent commits
     useEffect(() => {
-        if (memberId && projectId) {
+        if (memberId && currentProjectId) {
             fetchMemberRecentCommits({
                 developerId: memberId,
-                projectId: projectId as string,
+                projectId: currentProjectId,
                 limit: limit,
             });
         }
-    }, [memberId, projectId, limit, fetchMemberRecentCommits]);
+    }, [memberId, currentProjectId, limit, fetchMemberRecentCommits]);
 
     // Transform commits for display
     const commits = useMemo(() => {
