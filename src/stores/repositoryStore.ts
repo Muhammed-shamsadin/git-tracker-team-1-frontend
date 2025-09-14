@@ -273,7 +273,7 @@ export const useRepositoryStore = create<RepositoryState>()(
                         ...commit,
                         author: {
                             name: `Developer ${
-                                commit.developerId?.substring(0, 5) || "Unknown"
+                                commit.developerId?.substring(0, 5) || 'Unknown'
                             }`,
                             avatar: `/placeholder.svg?id=${commit.developerId}`,
                         },
