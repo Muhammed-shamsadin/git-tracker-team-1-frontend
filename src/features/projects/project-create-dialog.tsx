@@ -23,7 +23,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Plus, Loader2, AlertCircle } from "lucide-react";
+import { Plus, Loader2, AlertCircle, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -36,6 +37,7 @@ export function ProjectCreateDialog() {
     const { createProject, isLoading } = useProjectStore();
     const router = useRouter();
     const [open, setOpen] = useState(false);
+    const [tagInput, setTagInput] = useState("");
 
     const {
         register,
@@ -52,10 +54,38 @@ export function ProjectCreateDialog() {
             description: "",
             status: "active",
             repoLimit: 10,
+            tags: [],
         },
     });
 
     const currentStatus = watch("status");
+    const currentTags = watch("tags") || [];
+
+    const addTag = () => {
+        const trimmedTag = tagInput.trim();
+        if (
+            trimmedTag &&
+            !currentTags.includes(trimmedTag) &&
+            currentTags.length < 20
+        ) {
+            setValue("tags", [...currentTags, trimmedTag]);
+            setTagInput("");
+        }
+    };
+
+    const removeTag = (tagToRemove: string) => {
+        setValue(
+            "tags",
+            currentTags.filter((tag) => tag !== tagToRemove)
+        );
+    };
+
+    const handleTagInputKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            addTag();
+        }
+    };
 
     const onSubmit = async (data: CreateProjectData) => {
         try {
@@ -87,6 +117,7 @@ export function ProjectCreateDialog() {
     useEffect(() => {
         if (!open) {
             reset();
+            setTagInput("");
         }
     }, [open, reset]);
     return (
@@ -152,8 +183,8 @@ export function ProjectCreateDialog() {
                                     <Textarea
                                         id="description"
                                         placeholder="Enter project description"
-                                        rows={4}
-                                        className={cn("w-full min-h-[120px]", {
+                                        rows={3}
+                                        className={cn("w-full min-h-[100px]", {
                                             "border-destructive focus-visible:ring-destructive/50":
                                                 errors.description,
                                         })}
@@ -207,11 +238,82 @@ export function ProjectCreateDialog() {
                                         </SelectContent>
                                     </Select>
                                 </div>
+                                {/* Tags */}
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                        <Label htmlFor="tags">Tags</Label>
+                                        <span className="text-muted-foreground text-xs">
+                                            {currentTags.length}/20 tags
+                                        </span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Input
+                                            id="tags"
+                                            value={tagInput}
+                                            onChange={(e) =>
+                                                setTagInput(e.target.value)
+                                            }
+                                            onKeyDown={handleTagInputKeyDown}
+                                            placeholder="Add a tag and press Enter"
+                                            className="flex-1"
+                                            disabled={currentTags.length >= 20}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={addTag}
+                                            disabled={
+                                                !tagInput.trim() ||
+                                                currentTags.includes(
+                                                    tagInput.trim()
+                                                ) ||
+                                                currentTags.length >= 20
+                                            }
+                                        >
+                                            Add
+                                        </Button>
+                                    </div>
+                                    {currentTags.length >= 20 && (
+                                        <p className="text-amber-600 dark:text-amber-500 text-sm">
+                                            Maximum of 20 tags allowed
+                                        </p>
+                                    )}
+                                    {currentTags.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 bg-muted/50 p-3 rounded-md">
+                                            {currentTags.map((tag) => (
+                                                <Badge
+                                                    key={tag}
+                                                    variant="secondary"
+                                                    className="flex items-center gap-1"
+                                                >
+                                                    {tag}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            removeTag(tag)
+                                                        }
+                                                        className="hover:bg-secondary-foreground/20 ml-1 p-0.5 rounded-full"
+                                                    >
+                                                        <X className="w-3 h-3" />
+                                                    </button>
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                                 {/* Repo Limit */}
                                 <div className="space-y-2">
                                     <div className="flex justify-between items-center">
                                         <Label htmlFor="repoLimit">
-                                            Repository Limit
+                                            <div className="flex flex-col">
+                                                Repository Limit
+                                                <span className="block mt-0.5 font-normal text-muted-foreground text-xs">
+                                                    Number of repositories a
+                                                    developer can add in the
+                                                    project
+                                                </span>
+                                            </div>
                                         </Label>
                                         {errors.repoLimit && (
                                             <span className="flex items-center gap-1 text-destructive text-xs">
@@ -224,6 +326,7 @@ export function ProjectCreateDialog() {
                                         id="repoLimit"
                                         type="number"
                                         min={1}
+                                        max={15}
                                         placeholder="Enter repository limit"
                                         className={cn("w-full", {
                                             "border-destructive focus-visible:ring-destructive/50":

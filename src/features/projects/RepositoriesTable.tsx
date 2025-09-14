@@ -86,12 +86,14 @@ export function RepositoriesTable({
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem>
-                                                    View Details
+                                                <DropdownMenuItem asChild>
+                                                    <Link
+                                                        href={`/dashboard/repositories/${repo._id}`}
+                                                    >
+                                                        View Details
+                                                    </Link>
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem>
-                                                    Edit Repository
-                                                </DropdownMenuItem>
+
                                                 <DropdownMenuItem className="text-destructive">
                                                     Remove from Project
                                                 </DropdownMenuItem>

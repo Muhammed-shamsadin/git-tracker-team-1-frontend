@@ -67,31 +67,54 @@ export function RecentActivity({
     showDeveloper = true,
     className,
 }: RecentActivityProps) {
-    const { commits, fetchCommits, isLoading, error } = useGitDataStore();
+    const { commits, fetchCommits, isLoading, error, clearCommits } =
+        useGitDataStore();
 
     // Fetch commits based on the provided filters
     useEffect(() => {
         const fetchData = async () => {
-            await fetchCommits({
-                page: 1,
-                limit: limit,
-                projectId: projectId,
-                repoId: repositoryId,
-                developerId: developerId,
-            });
+            if (projectId || repositoryId || developerId) {
+                clearCommits(); // Clear stale data
+                await fetchCommits({
+                    page: 1,
+                    limit: limit,
+                    projectId: projectId,
+                    repoId: repositoryId,
+                    developerId: developerId,
+                });
+            }
         };
 
         // Only fetch if we have at least one filter
         if (projectId || repositoryId || developerId) {
             fetchData();
         }
-    }, [projectId, repositoryId, developerId, limit, fetchCommits]);
+    }, [
+        projectId,
+        repositoryId,
+        developerId,
+        limit,
+        fetchCommits,
+        clearCommits,
+    ]);
 
     // Transform commits into activity items
     const activities = useMemo(() => {
         if (!commits || commits.length === 0) return [];
 
-        return commits.slice(0, limit).map((commit: CommitData) => {
+        // Filter commits by projectId if provided (client-side filtering as backup)
+        let filteredCommits = commits;
+        if (projectId) {
+            filteredCommits = commits.filter((commit: CommitData) => {
+                const commitProjectId =
+                    typeof commit.projectId === "object"
+                        ? commit.projectId._id
+                        : commit.projectId;
+                return commitProjectId === projectId;
+            });
+        }
+
+        return filteredCommits.slice(0, limit).map((commit: CommitData) => {
             // Handle union types for developerId and repoId
             const developer =
                 typeof commit.developerId === "object"
@@ -135,8 +158,7 @@ export function RecentActivity({
                 initials: initials,
             };
         });
-    }, [commits, limit]);
-
+    }, [commits, limit, projectId]);
     if (isLoading) {
         return (
             <Card className={className}>

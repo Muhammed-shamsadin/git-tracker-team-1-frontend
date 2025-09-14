@@ -48,6 +48,11 @@ interface ProjectState {
     // Developer assignment operations
     assignDevelopers: (data: AssignDeveloperData) => Promise<any>;
     removeDeveloper: (data: RemoveDeveloperData) => Promise<boolean>;
+    updateDeveloperRole: (data: {
+        projectId: string;
+        developerId: string;
+        role: string;
+    }) => Promise<any>;
 
     // Role-based project fetching (from user endpoints)
     fetchClientProjects: () => Promise<void>; // users/clients/me/projects
@@ -307,6 +312,47 @@ export const useProjectStore = create<ProjectState>()(
                         isLoading: false,
                     });
                     return false;
+                }
+            },
+
+            // PUT /api/project-developers/update
+            updateDeveloperRole: async (data: {
+                projectId: string;
+                developerId: string;
+                role: string;
+            }) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const response = await api.put(
+                        "/project-developers/update",
+                        data
+                    );
+                    const result = response.data.data || response.data;
+
+                    set({
+                        isLoading: false,
+                        message: "Developer role updated successfully",
+                    });
+
+                    // Refresh current project if it's the one being updated
+                    const currentProject = get().currentProject;
+                    if (
+                        currentProject &&
+                        currentProject._id === data.projectId
+                    ) {
+                        get().fetchProjectById(data.projectId);
+                    }
+
+                    return result;
+                } catch (error: any) {
+                    set({
+                        error:
+                            error.response?.data?.message ||
+                            error.message ||
+                            "Failed to update developer role",
+                        isLoading: false,
+                    });
+                    return undefined;
                 }
             },
 
