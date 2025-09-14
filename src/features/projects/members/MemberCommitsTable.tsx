@@ -206,9 +206,7 @@ export function MemberCommitsTable({
                     </CardTitle>
                     {showDescription && (
                         <CardDescription>
-                            Latest commits by{" "}
-                            {commits[0]?.memberName || "this member"} in this
-                            project
+                            Latest commits by this member in this project
                         </CardDescription>
                     )}
                 </CardHeader>
