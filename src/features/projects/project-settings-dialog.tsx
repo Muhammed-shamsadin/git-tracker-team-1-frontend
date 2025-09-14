@@ -270,6 +270,7 @@ export function ProjectSettingsDialog() {
                                     <Input
                                         id="tags"
                                         placeholder="Add tags (press Enter to add)"
+                                        disabled={currentTags.length > 20}
                                         onKeyDown={(e) => {
                                             if (e.key === "Enter") {
                                                 e.preventDefault();
@@ -277,7 +278,10 @@ export function ProjectSettingsDialog() {
                                                     e.currentTarget.value.trim();
                                                 if (
                                                     value &&
-                                                    !currentTags.includes(value)
+                                                    !currentTags.includes(
+                                                        value
+                                                    ) &&
+                                                    currentTags.length < 20
                                                 ) {
                                                     setValue("tags", [
                                                         ...currentTags,
@@ -319,9 +323,19 @@ export function ProjectSettingsDialog() {
                                         </div>
                                     )}
                                 </div>
-                                <p className="text-muted-foreground text-xs">
-                                    Add tags to categorize your project
-                                </p>
+                                <div className="flex justify-between items-center">
+                                    <p className="text-muted-foreground text-xs">
+                                        Add tags to categorize your project
+                                    </p>
+                                    <p className="text-muted-foreground text-xs">
+                                        {currentTags.length}/20 tags
+                                    </p>
+                                </div>
+                                {currentTags.length >= 20 && (
+                                    <p className="text-amber-600 dark:text-amber-400 text-xs">
+                                        Maximum of 20 tags allowed
+                                    </p>
+                                )}
                             </div>
                         </div>
 
