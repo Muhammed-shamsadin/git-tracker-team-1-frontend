@@ -145,26 +145,26 @@ export default function MemberDetailsPage() {
                     {memberData && <MemberStatsGrid memberData={memberData} />}
                     <div className="gap-6 grid lg:grid-cols-2">
                         <ContributionGraphPlaceholder />
-                        {/* <RecentActivity
+                        <RecentActivity
                             projectId={projectId as string}
                             developerId={memberId as string}
                             title="Recent Member Activity"
                             limit={5}
                             showRepository={true}
                             showDeveloper={false}
-                        /> */}
+                        />
                     </div>
                 </TabsContent>
 
                 {/* Commits Tab */}
                 <TabsContent value="commits" className="space-y-6">
-                    {/* <MemberCommitsTable
+                    <MemberCommitsTable
                         projectId={projectId as string}
                         memberId={memberId as string}
                         title="Recent Member Commits"
                         limit={10}
                         showDescription={true}
-                    /> */}
+                    />
                 </TabsContent>
 
                 {/* Repositories Tab */}
