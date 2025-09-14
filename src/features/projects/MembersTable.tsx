@@ -19,6 +19,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { UpdateDeveloperRoleDialog } from "@/features/projects/UpdateDeveloperRoleDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 import { Mail, MoreHorizontal, UserX, Settings } from "lucide-react";
@@ -30,6 +31,11 @@ interface RemovalState {
     isDialogOpen: boolean;
     memberToRemove: ProjectDetail["members"][0] | null;
     isRemoving: boolean;
+}
+
+interface RoleUpdateState {
+    isDialogOpen: boolean;
+    memberToUpdate: ProjectDetail["members"][0] | null;
 }
 
 export function MembersTable({
@@ -47,11 +53,23 @@ export function MembersTable({
         isRemoving: false,
     });
 
+    const [roleUpdateState, setRoleUpdateState] = useState<RoleUpdateState>({
+        isDialogOpen: false,
+        memberToUpdate: null,
+    });
+
     const handleRemoveClick = (member: ProjectDetail["members"][0]) => {
         setRemovalState({
             isDialogOpen: true,
             memberToRemove: member,
             isRemoving: false,
+        });
+    };
+
+    const handleRoleUpdateClick = (member: ProjectDetail["members"][0]) => {
+        setRoleUpdateState({
+            isDialogOpen: true,
+            memberToUpdate: member,
         });
     };
 
@@ -97,6 +115,14 @@ export function MembersTable({
             });
             clearError();
         }
+    };
+
+    const handleRoleUpdateDialogClose = () => {
+        setRoleUpdateState({
+            isDialogOpen: false,
+            memberToUpdate: null,
+        });
+        clearError();
     };
 
     if (members.length === 0) {
@@ -211,12 +237,17 @@ export function MembersTable({
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem
-                                                        onClick={() => {
-                                                            // TODO: Implement role change functionality
-                                                            toast.info(
-                                                                "Role change functionality coming soon!"
-                                                            );
-                                                        }}
+                                                        onClick={() =>
+                                                            handleRoleUpdateClick(
+                                                                member
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            isLoading ||
+                                                            removalState.isRemoving ||
+                                                            member.role ===
+                                                                "owner"
+                                                        }
                                                     >
                                                         <Settings className="mr-2 w-4 h-4" />
                                                         Change Role
@@ -265,6 +296,14 @@ export function MembersTable({
                 variant="destructive"
                 onConfirm={handleRemoveConfirm}
                 isLoading={removalState.isRemoving}
+            />
+
+            {/* Role Update Dialog */}
+            <UpdateDeveloperRoleDialog
+                open={roleUpdateState.isDialogOpen}
+                onOpenChange={handleRoleUpdateDialogClose}
+                member={roleUpdateState.memberToUpdate}
+                projectId={projectId}
             />
         </>
     );
