@@ -270,7 +270,7 @@ export default function AppNavbar() {
                 </div>
               </div>
               <div className="p-3 border-t text-center">
-                <Link href="/notifications" className="text-sm">
+                <Link href="/dashboard/notification" className="text-sm">
                   View all notifications
                 </Link>
               </div>
@@ -289,7 +289,7 @@ export default function AppNavbar() {
                     {user?.fullName[0].toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-              </Button>
+              </Button>   
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">

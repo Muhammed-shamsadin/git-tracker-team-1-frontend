@@ -100,8 +100,8 @@ export default function MembersPage() {
             icon: <MessageCircle className="w-4 h-4" />,
             label: "Contact",
             onClick: (member) => {
-                // Open email client
-                window.location.href = `mailto:${member.email}`;
+                window.open(`mailto:${member.email}`);
+                toast.success(`Opening email to ${member.name}`);
             },
         },
         {

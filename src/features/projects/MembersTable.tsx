@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
     Table,
@@ -17,9 +18,25 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { UpdateDeveloperRoleDialog } from "@/features/projects/UpdateDeveloperRoleDialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
-import { Mail, MapPin, MoreHorizontal, Plus } from "lucide-react";
+import { Mail, MoreHorizontal, UserX, Settings } from "lucide-react";
 import { ProjectDetail } from "@/types/Project";
+import { useProjectStore } from "@/stores/projectStore";
+import { toast } from "sonner";
+
+interface RemovalState {
+    isDialogOpen: boolean;
+    memberToRemove: ProjectDetail["members"][0] | null;
+    isRemoving: boolean;
+}
+
+interface RoleUpdateState {
+    isDialogOpen: boolean;
+    memberToUpdate: ProjectDetail["members"][0] | null;
+}
 
 export function MembersTable({
     members,
@@ -28,6 +45,86 @@ export function MembersTable({
     members: ProjectDetail["members"];
     projectId: string;
 }) {
+    const { removeDeveloper, isLoading, error, clearError } = useProjectStore();
+
+    const [removalState, setRemovalState] = useState<RemovalState>({
+        isDialogOpen: false,
+        memberToRemove: null,
+        isRemoving: false,
+    });
+
+    const [roleUpdateState, setRoleUpdateState] = useState<RoleUpdateState>({
+        isDialogOpen: false,
+        memberToUpdate: null,
+    });
+
+    const handleRemoveClick = (member: ProjectDetail["members"][0]) => {
+        setRemovalState({
+            isDialogOpen: true,
+            memberToRemove: member,
+            isRemoving: false,
+        });
+    };
+
+    const handleRoleUpdateClick = (member: ProjectDetail["members"][0]) => {
+        setRoleUpdateState({
+            isDialogOpen: true,
+            memberToUpdate: member,
+        });
+    };
+
+    const handleRemoveConfirm = async () => {
+        if (!removalState.memberToRemove) return;
+
+        setRemovalState((prev) => ({ ...prev, isRemoving: true }));
+        clearError();
+
+        try {
+            const success = await removeDeveloper({
+                projectId,
+                developerId: removalState.memberToRemove.userId,
+            });
+
+            if (success) {
+                toast.success(
+                    `${removalState.memberToRemove.name} has been removed from the project successfully.`
+                );
+                setRemovalState({
+                    isDialogOpen: false,
+                    memberToRemove: null,
+                    isRemoving: false,
+                });
+            } else {
+                toast.error(
+                    "Failed to remove member from project. Please try again."
+                );
+            }
+        } catch (error) {
+            toast.error("An unexpected error occurred. Please try again.");
+        } finally {
+            setRemovalState((prev) => ({ ...prev, isRemoving: false }));
+        }
+    };
+
+    const handleDialogClose = () => {
+        if (!removalState.isRemoving) {
+            setRemovalState({
+                isDialogOpen: false,
+                memberToRemove: null,
+                isRemoving: false,
+            });
+            clearError();
+        }
+    };
+
+    const handleRoleUpdateDialogClose = () => {
+        setRoleUpdateState({
+            isDialogOpen: false,
+            memberToUpdate: null,
+        });
+        clearError();
+    };
+
     if (members.length === 0) {
         return (
             <div className="p-4 text-muted-foreground text-center">
@@ -35,6 +132,7 @@ export function MembersTable({
             </div>
         );
     }
+
     // Role color mapping
     const roleVariant: Record<string, string> = {
         owner: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
@@ -53,102 +151,160 @@ export function MembersTable({
     };
 
     return (
-        <Card>
-            <CardContent className="p-0">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Member</TableHead>
-                            <TableHead>Role</TableHead>
-                            <TableHead>Joined</TableHead>
-                            {/* <TableHead>Last Active</TableHead> */}
-                            <TableHead>Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {members.map((member) => (
-                            <TableRow key={member.userId}>
-                                <TableCell>
-                                    <div className="flex items-center gap-3">
-                                        <Avatar>
-                                            <AvatarFallback>
-                                                {member.name
-                                                    .split(" ")
-                                                    .map((n) =>
-                                                        n[0].toUpperCase()
-                                                    )
-                                                    .join("")}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <div className="font-medium">
-                                                <Link
-                                                    href={`/dashboard/projects/${projectId}/members/${member.userId}`}
-                                                    className="hover:underline"
-                                                >
-                                                    {member.name}
-                                                </Link>
-                                            </div>
-                                            <div className="flex items-center gap-1 text-muted-foreground text-xs">
-                                                <Mail className="w-3 h-3" />
-                                                {member.email}
+        <>
+            {/* Error Alert */}
+            {error && (
+                <Alert variant="destructive" className="mb-4">
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            )}
+
+            <Card>
+                <CardContent className="p-2">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Member</TableHead>
+                                <TableHead>Role</TableHead>
+                                <TableHead>Joined</TableHead>
+                                <TableHead>Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {members.map((member) => (
+                                <TableRow key={member.userId}>
+                                    <TableCell>
+                                        <div className="flex items-center gap-3">
+                                            <Avatar>
+                                                <AvatarFallback>
+                                                    {member.name
+                                                        .split(" ")
+                                                        .map((n) =>
+                                                            n[0].toUpperCase()
+                                                        )
+                                                        .join("")}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <div className="font-medium">
+                                                    <Link
+                                                        href={`/dashboard/projects/${projectId}/members/${member.userId}`}
+                                                        className="hover:underline"
+                                                    >
+                                                        {member.name}
+                                                    </Link>
+                                                </div>
+                                                <div className="flex items-center gap-1 text-muted-foreground text-xs">
+                                                    <Mail className="w-3 h-3" />
+                                                    {member.email}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge
-                                        className={
-                                            roleVariant[member.role] ||
-                                            "bg-gray-100 text-gray-800"
-                                        }
-                                    >
-                                        {member.role}
-                                    </Badge>
-                                </TableCell>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge
+                                            className={
+                                                roleVariant[member.role] ||
+                                                "bg-gray-100 text-gray-800"
+                                            }
+                                        >
+                                            {member.role}
+                                        </Badge>
+                                    </TableCell>
 
-                                <TableCell>
-                                    {member.joinedAt
-                                        ? new Date(
-                                              member.joinedAt
-                                          ).toLocaleDateString()
-                                        : "-"}
-                                </TableCell>
-                                {/* <TableCell>
-                                    {member?.lastActive ?? "-"}
-                                </TableCell> */}
-                                <TableCell>
-                                    <div className="flex items-center gap-2">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                >
-                                                    <MoreHorizontal className="w-4 h-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem>
-                                                    Change Role
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem>
-                                                    Send Message
-                                                </DropdownMenuItem>
-                                                {member.role !== "owner" && (
-                                                    <DropdownMenuItem className="text-destructive">
-                                                        Remove from Project
+                                    <TableCell>
+                                        {member.joinedAt
+                                            ? new Date(
+                                                  member.joinedAt
+                                              ).toLocaleDateString()
+                                            : "-"}
+                                    </TableCell>
+
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        disabled={
+                                                            isLoading ||
+                                                            removalState.isRemoving
+                                                        }
+                                                    >
+                                                        <MoreHorizontal className="w-4 h-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
+                                                            handleRoleUpdateClick(
+                                                                member
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            isLoading ||
+                                                            removalState.isRemoving ||
+                                                            member.role ===
+                                                                "owner"
+                                                        }
+                                                    >
+                                                        <Settings className="mr-2 w-4 h-4" />
+                                                        Change Role
                                                     </DropdownMenuItem>
-                                                )}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
+                                                    {member.role !==
+                                                        "owner" && (
+                                                        <DropdownMenuItem
+                                                            className="text-destructive focus:text-destructive"
+                                                            onClick={() =>
+                                                                handleRemoveClick(
+                                                                    member
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                isLoading ||
+                                                                removalState.isRemoving
+                                                            }
+                                                        >
+                                                            <UserX className="mr-2 w-4 h-4" />
+                                                            Remove from Project
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+
+            {/* Removal Confirmation Dialog */}
+            <ConfirmationDialog
+                open={removalState.isDialogOpen}
+                onOpenChange={handleDialogClose}
+                title="Remove Member from Project"
+                description={
+                    removalState.memberToRemove
+                        ? `Are you sure you want to remove ${removalState.memberToRemove.name} from this project? This action cannot be undone. The member will lose access to all project resources and data.`
+                        : "Are you sure you want to remove this member?"
+                }
+                confirmText="Remove Member"
+                cancelText="Cancel"
+                variant="destructive"
+                onConfirm={handleRemoveConfirm}
+                isLoading={removalState.isRemoving}
+            />
+
+            {/* Role Update Dialog */}
+            <UpdateDeveloperRoleDialog
+                open={roleUpdateState.isDialogOpen}
+                onOpenChange={handleRoleUpdateDialogClose}
+                member={roleUpdateState.memberToUpdate}
+                projectId={projectId}
+            />
+        </>
     );
 }
