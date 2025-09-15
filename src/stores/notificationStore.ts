@@ -34,15 +34,18 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
     connect: () => {
         if (get().eventSource) return;
-        
+
         const token = localStorage.getItem("auth-token");
         if (!token) {
             console.error("No auth token found for SSE connection.");
             return;
         }
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-        const eventSource = new EventSource(`${baseUrl}/notifications/stream?token=${token}`);
-        
+        const baseUrl =
+            process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+        const eventSource = new EventSource(
+            `${baseUrl}/notifications/stream?token=${token}`
+        );
+
         eventSource.onopen = () => console.log("SSE Connection Opened.");
 
         eventSource.onmessage = (event) => {
@@ -54,23 +57,31 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
             // Safety check to prevent errors if the data is malformed
             if (!newNotification || !newNotification._id) {
-                console.warn("Received a malformed notification via SSE:", eventData);
+                console.warn(
+                    "Received a malformed notification via SSE:",
+                    eventData
+                );
                 return;
             }
 
-            set(produce((state: NotificationState) => {
-                // Prevent duplicate notifications from being added (handles race conditions)
-                if (!state.notifications.some(n => n._id === newNotification._id)) {
-                    state.notifications.unshift(newNotification);
-                    if (!newNotification.isRead) {
-                        state.unreadCount += 1;
+            set(
+                produce((state: NotificationState) => {
+                    // Prevent duplicate notifications from being added (handles race conditions)
+                    if (
+                        !state.notifications.some(
+                            (n) => n._id === newNotification._id
+                        )
+                    ) {
+                        state.notifications.unshift(newNotification);
+                        if (!newNotification.isRead) {
+                            state.unreadCount += 1;
+                        }
                     }
-                }
-            }));
+                })
+            );
         };
 
         eventSource.onerror = (error) => {
-            console.error("SSE Error:", error);
             eventSource.close();
             set({ eventSource: null });
         };
@@ -89,25 +100,41 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
             const response = await api.get("/notifications");
             // This logic correctly handles if your API wraps the response in a 'data' object or not.
             const notifications = response.data.data || response.data;
-            const unreadCount = notifications.filter((n: Notification) => !n.isRead).length;
+            const unreadCount = notifications.filter(
+                (n: Notification) => !n.isRead
+            ).length;
             set({ notifications, unreadCount, isLoading: false });
         } catch (error: any) {
-            set({ error: error.response?.data?.message || "Failed to fetch notifications", isLoading: false });
+            set({
+                error:
+                    error.response?.data?.message ||
+                    "Failed to fetch notifications",
+                isLoading: false,
+            });
         }
     },
 
     markAsRead: async (notificationId: string) => {
-        const originalState = { notifications: get().notifications, unreadCount: get().unreadCount };
-        const notificationToUpdate = originalState.notifications.find(n => n._id === notificationId);
+        const originalState = {
+            notifications: get().notifications,
+            unreadCount: get().unreadCount,
+        };
+        const notificationToUpdate = originalState.notifications.find(
+            (n) => n._id === notificationId
+        );
         if (!notificationToUpdate || notificationToUpdate.isRead) return;
 
-        set(produce((state: NotificationState) => {
-            const notification = state.notifications.find(n => n._id === notificationId);
-            if (notification) {
-                notification.isRead = true;
-                state.unreadCount = Math.max(0, state.unreadCount - 1);
-            }
-        }));
+        set(
+            produce((state: NotificationState) => {
+                const notification = state.notifications.find(
+                    (n) => n._id === notificationId
+                );
+                if (notification) {
+                    notification.isRead = true;
+                    state.unreadCount = Math.max(0, state.unreadCount - 1);
+                }
+            })
+        );
         try {
             await api.patch(`/notifications/${notificationId}/read`);
         } catch (error) {
@@ -118,11 +145,18 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
     markAllAsRead: async () => {
         if (get().unreadCount === 0) return;
-        const originalState = { notifications: get().notifications, unreadCount: get().unreadCount };
-        set(produce((state: NotificationState) => {
-            state.notifications.forEach(n => { n.isRead = true });
-            state.unreadCount = 0;
-        }));
+        const originalState = {
+            notifications: get().notifications,
+            unreadCount: get().unreadCount,
+        };
+        set(
+            produce((state: NotificationState) => {
+                state.notifications.forEach((n) => {
+                    n.isRead = true;
+                });
+                state.unreadCount = 0;
+            })
+        );
         try {
             await api.patch("/notifications/read-all");
         } catch (error) {
