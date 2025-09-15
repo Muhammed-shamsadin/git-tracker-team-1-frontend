@@ -9,7 +9,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Save, Github, Linkedin, Twitter } from "lucide-react";
+import {
+  Plus,
+  Save,
+  Github,
+  Linkedin,
+  Twitter,
+  Trash2,
+  RotateCw,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useUserStore } from "@/stores/userStore";
@@ -84,6 +92,84 @@ export default function SettingsPage() {
     }
   };
 
+  // Recycle bin state (inline in settings tab)
+  type RecycleItem = {
+    id: string;
+    name: string;
+    deletedAt: string;
+  };
+
+  const [recycleItems, setRecycleItems] = useState<RecycleItem[]>([]);
+  const [recycleLoading, setRecycleLoading] = useState(false);
+
+  const [recycleQuery, setRecycleQuery] = useState("");
+
+  const filteredRecycle = recycleItems.filter((i) =>
+    `${i.name}`.toLowerCase().includes(recycleQuery.toLowerCase())
+  );
+
+  // Load archived/deleted projects from the server
+  useEffect(() => {
+    let mounted = true;
+    const loadDeleted = async () => {
+      setRecycleLoading(true);
+      try {
+        // dynamic import to avoid adding api import at top if unused elsewhere
+        const { default: api } = await import("@/lib/axios");
+        const res = await api.get("/projects/deleted");
+        const data = res.data.data || res.data;
+        // normalize to RecycleItem shape where possible
+        const items: RecycleItem[] = (
+          Array.isArray(data) ? data : data.projects || []
+        ).map((p: any) => ({
+          id: p._id || p.id,
+          name: p.name || p.title || `Project ${p._id || p.id}`,
+          deletedAt: p.deletedAt || p.archivedAt || p.deleted_at || "",
+        }));
+        if (mounted) setRecycleItems(items);
+      } catch (err) {
+        // ignore fetch errors for now
+      } finally {
+        if (mounted) setRecycleLoading(false);
+      }
+    };
+    loadDeleted();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Restore an archived project via the server and refresh project lists
+  const restoreRecycleItem = async (id: string) => {
+    setRecycleLoading(true);
+    try {
+      const { default: api } = await import("@/lib/axios");
+      const res = await api.patch(`/projects/${id}/restore`);
+      const data = res.data.data || res.data;
+      // optimistically remove from UI
+      setRecycleItems((s) => s.filter((i) => i.id !== id));
+
+      // refresh project lists in the store so restored project appears
+      try {
+        const { useProjectStore } = await import("@/stores/projectStore");
+        // call multiple fetchers to cover different role views
+        const store = useProjectStore.getState();
+        // best-effort refresh
+        store.fetchAllProjects().catch(() => {});
+        store.fetchClientProjects().catch(() => {});
+        store.fetchDeveloperProjects().catch(() => {});
+      } catch (e) {
+        // ignore errors from store refresh
+      }
+
+      toast.success("Item restored");
+    } catch (err) {
+      toast.error("Failed to restore item");
+    } finally {
+      setRecycleLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -97,7 +183,7 @@ export default function SettingsPage() {
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="recyclebin">Recycle Bin</TabsTrigger>
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
         </TabsList>
 
@@ -332,17 +418,76 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>Security Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Configure your security settings.
-              </p>
-            </CardContent>
-          </Card>
+        <TabsContent value="recyclebin">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Recycle Bin Settings</h2>
+                <p className="text-muted-foreground">
+                  Configure your recycle bin settings.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <Input
+                placeholder="Search deleted items"
+                value={recycleQuery}
+                onChange={(e) => setRecycleQuery(e.target.value)}
+              />
+              <div className="text-sm text-muted-foreground">
+                {recycleItems.length} deleted items
+              </div>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Deleted Items</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-hidden rounded-md border">
+                  <div className="grid grid-cols-12 gap-4 p-3 bg-muted/40 text-sm font-medium">
+                    <div className="col-span-6">Name</div>
+                    <div className="col-span-3">Deleted At</div>
+                    <div className="col-span-1">Deleted</div>
+                  </div>
+                  <div className="divide-y">
+                    {filteredRecycle.map((item) => (
+                      <div
+                        key={item.id}
+                        className="grid grid-cols-12 items-center gap-4 p-3"
+                      >
+                        <div className="col-span-6 flex items-center gap-2">
+                          <div className="w-6 h-6 flex items-center justify-center bg-gray-100 rounded text-muted-foreground" />
+                          <div>
+                            <div className="font-medium">
+                              {item.name}{" "}
+                              <span className="ml-2 text-xs py-0.5 px-2 rounded bg-slate-100 text-muted-foreground"></span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-span-3 text-sm text-muted-foreground">
+                          {item.deletedAt}
+                        </div>
+                        <div className="col-span-1 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => restoreRecycleItem(item.id)}
+                            >
+                              <RotateCw className="mr-2 w-4 h-4" />
+                              Restore
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
         <TabsContent value="appearance">
           <Card>
