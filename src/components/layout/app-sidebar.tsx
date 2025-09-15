@@ -7,6 +7,7 @@ import {
     FolderGit2,
     GitBranch,
     BarChart3,
+    Bell,
 } from "lucide-react";
 
 import {
@@ -164,6 +165,14 @@ export function AppSidebar() {
                     <SidebarGroupLabel>Account</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild>
+                                    <Link href="/dashboard/notification">
+                                        <Bell />
+                                        <span>Notification</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
                             <SidebarMenuItem>
                                 <SidebarMenuButton asChild>
                                     <Link href="/dashboard/settings">
