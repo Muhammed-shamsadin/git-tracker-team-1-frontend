@@ -48,7 +48,7 @@ export const developerColumns: ColumnDef<User>[] = [
         header: "Joined",
         accessorFn: (row: User) => row.createdAt,
         cell: ({ row }) => (
-            <span>{new Date(row.original.createdAt).toLocaleDateString()}</span>
+            <span>{new Date(row.original.createdAt).toLocaleString()}</span>
         ),
     },
     {

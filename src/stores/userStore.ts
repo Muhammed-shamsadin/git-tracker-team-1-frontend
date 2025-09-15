@@ -16,6 +16,7 @@ interface UserState {
     currentUser: any | null;
     fetchedUser: any | null;
     developerDetails: any | null;
+    clientDetails: any | null;
     clients: any[];
     developers: any[];
     isLoading: boolean;
@@ -31,6 +32,7 @@ interface UserState {
     fetchDevelopers: () => Promise<void>;
     fetchUserById: (id: string) => Promise<void>;
     fetchDevDetail: (id: string) => Promise<void>;
+    fetchClientDetail: (id: string) => Promise<void>;
     createUser: (data: any) => Promise<any | undefined>;
     updateUser: (id: string, data: any) => Promise<any | undefined>;
     updateMe: (data: any) => Promise<any | undefined>;
@@ -49,6 +51,7 @@ export const useUserStore = create<UserState>()(
             currentUser: null,
             fetchedUser: null,
             developerDetails: null,
+            clientDetails: null,
             clients: [],
             developers: [],
             isLoading: false,
@@ -149,12 +152,21 @@ export const useUserStore = create<UserState>()(
             fetchDevDetail: async (id: string) => {
                 set({ isLoading: true, error: null });
                 try {
+                    /* Lines 155-163 omitted */
+                } catch (error: any) {
+                    /* Lines 164-171 omitted */
+                }
+            },
+
+            // GET /api/users/:id?withDetails=true (for clients)
+            fetchClientDetail: async (id: string) => {
+                set({ isLoading: true, error: null });
+                try {
                     const response = await api.get(
                         `/users/${id}?withDetails=true`
                     );
-                    const detailData = response.data.data;
                     set({
-                        developerDetails: detailData,
+                        clientDetails: response.data.data,
                         isLoading: false,
                     });
                 } catch (error: any) {
@@ -162,7 +174,7 @@ export const useUserStore = create<UserState>()(
                         error:
                             error.response?.data?.message ||
                             error.message ||
-                            "Failed to fetch developer details",
+                            "Failed to fetch client details",
                         isLoading: false,
                     });
                 }
@@ -330,6 +342,7 @@ export const useUserStore = create<UserState>()(
                 currentUser: state.currentUser,
                 fetchedUser: state.fetchedUser,
                 developerDetails: state.developerDetails,
+                clientDetails: state.clientDetails,
                 clients: state.clients,
                 developers: state.developers,
             }),

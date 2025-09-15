@@ -3,6 +3,7 @@ import { User } from "@/types/User";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Building } from "lucide-react";
+import Link from "next/link";
 
 export const clientColumns: ColumnDef<User>[] = [
     {
@@ -20,7 +21,11 @@ export const clientColumns: ColumnDef<User>[] = [
                         {row.original.fullName.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
                 </Avatar>
-                <span>{row.original.fullName}</span>
+                <span>
+                    <Link href={`/dashboard/clients/${row.original._id}`}>
+                        {row.original.fullName}
+                    </Link>
+                </span>
             </div>
         ),
     },

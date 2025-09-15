@@ -5,7 +5,7 @@ import { DataTable } from "@/components/data-table/DataTable";
 import { clientColumns } from "./columns";
 import { User } from "@/types/User";
 import type { RowAction } from "@/components/data-table/types";
-import { Eye, Mail, FileText } from "lucide-react";
+import { Eye, Mail, FileText, Trash } from "lucide-react";
 import { toast } from "sonner";
 import { useUserStore } from "@/stores/userStore";
 import { useRouter } from "next/navigation";
@@ -21,6 +21,14 @@ export default function Clients() {
         fetchClients();
     }, [fetchClients]);
 
+    const canDeleteUser = (user: User) => {
+        if (!user) return false;
+        if (user.userType === "superadmin") return true;
+        return false;
+    };
+    const handleDeleteClick = (row: User) => {
+        toast.error("Delete client functionality is not implemented yet.");
+    };
     // Row actions for client items
     const rowActions: RowAction<User>[] = [
         {
@@ -31,20 +39,19 @@ export default function Clients() {
             },
         },
         {
-            icon: <FileText className="w-4 h-4" />,
-            label: "View Projects",
-            onClick: (row) => {
-                router.push(`/dashboard/projects?clientId=${row._id}`);
-                toast.success(`Viewing projects for ${row.fullName}`);
-            },
-        },
-        {
             icon: <Mail className="w-4 h-4" />,
             label: "Contact",
             onClick: (row) => {
                 window.open(`mailto:${row.email}`);
                 toast.success(`Opening email to ${row.fullName}`);
             },
+        },
+        {
+            icon: <Trash className="w-4 h-4" />,
+            label: "Delete Client",
+            variant: "destructive",
+            onClick: handleDeleteClick,
+            visible: (row) => canDeleteUser(row),
         },
     ];
 
