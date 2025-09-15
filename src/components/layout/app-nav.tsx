@@ -34,7 +34,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 export default function AppNavbar() {
   const pathname = usePathname();
-<<<<<<< HEAD
   const router = useRouter();
 
   const { logout, user } = useAuthStore();
@@ -63,31 +62,12 @@ export default function AppNavbar() {
     const repoIndex = parts.indexOf("repositories");
     if (repoIndex !== -1 && parts[repoIndex + 1]) {
       const repoId = parts[repoIndex + 1];
-=======
-  const { logout, user } = useAuthStore();
-  const { currentProject, isLoading } = useProjectStore();
-  const {
-    currentRepository,
-    isLoading: repoLoading,
-    fetchRepositoryById,
-  } = useRepositoryStore();
-
-  // Effect to fetch repository data when on repository pages
-  React.useEffect(() => {
-    const parts = pathname.split("/").filter(Boolean);
-    const repoIndex = parts.indexOf("repositories");
-
-    if (repoIndex !== -1 && parts[repoIndex + 1]) {
-      const repoId = parts[repoIndex + 1];
-      // Only fetch if we don't have the current repository or it's a different one
->>>>>>> 8fe8fab7ce4d54ac4a7603afae659b2f96146333
       if (!currentRepository || currentRepository._id !== repoId) {
         fetchRepositoryById(repoId);
       }
     }
   }, [pathname, currentRepository, fetchRepositoryById]);
 
-<<<<<<< HEAD
   // Connect to notifications when user is logged in
   useEffect(() => {
     if (user) {
@@ -99,9 +79,6 @@ export default function AppNavbar() {
 
   // Breadcrumbs
   const breadcrumbs = useMemo(() => {
-=======
-  const breadcrumbs = React.useMemo(() => {
->>>>>>> 8fe8fab7ce4d54ac4a7603afae659b2f96146333
     const parts = pathname.split("/").filter(Boolean);
 
     return parts.map((part, index) => {
@@ -110,37 +87,19 @@ export default function AppNavbar() {
         .replace(/-/g, " ")
         .replace(/\b\w/g, (c) => c.toUpperCase());
 
-<<<<<<< HEAD
-=======
-      // Handle project breadcrumbs
->>>>>>> 8fe8fab7ce4d54ac4a7603afae659b2f96146333
       if (index > 0 && parts[index - 1] === "projects") {
         if (currentProject && part === currentProject._id) {
           label = currentProject.name;
         } else if (isLoading) {
           label = "Loading...";
-<<<<<<< HEAD
         }
       }
 
-=======
-        } else {
-          label = part;
-        }
-      }
-
-      // Handle repository breadcrumbs
->>>>>>> 8fe8fab7ce4d54ac4a7603afae659b2f96146333
       if (index > 0 && parts[index - 1] === "repositories") {
         if (currentRepository && part === currentRepository._id) {
           label = currentRepository.name;
         } else if (repoLoading) {
           label = "Loading...";
-<<<<<<< HEAD
-=======
-        } else {
-          label = part;
->>>>>>> 8fe8fab7ce4d54ac4a7603afae659b2f96146333
         }
       }
 
@@ -148,15 +107,10 @@ export default function AppNavbar() {
         label,
         href,
         isLast: index === parts.length - 1,
-<<<<<<< HEAD
-=======
-        isFirst: index === 0,
->>>>>>> 8fe8fab7ce4d54ac4a7603afae659b2f96146333
       };
     });
   }, [pathname, currentProject, isLoading, currentRepository, repoLoading]);
 
-<<<<<<< HEAD
   const mobileBreadcrumbs = useMemo(
     () =>
       breadcrumbs.length <= 2
@@ -178,33 +132,11 @@ export default function AppNavbar() {
   );
 
   // Logout
-=======
-  // For mobile, show only the last 2 breadcrumbs or just the current page if very small
-  const mobileBreadcrumbs = React.useMemo(() => {
-    if (breadcrumbs.length <= 2) return breadcrumbs;
-    return [
-      breadcrumbs[breadcrumbs.length - 2],
-      breadcrumbs[breadcrumbs.length - 1],
-    ];
-  }, [breadcrumbs]);
-
-  // For tablets/medium screens, show only the last 3 breadcrumbs
-  const tabletBreadcrumbs = React.useMemo(() => {
-    if (breadcrumbs.length <= 3) return breadcrumbs;
-    return [
-      breadcrumbs[breadcrumbs.length - 3],
-      breadcrumbs[breadcrumbs.length - 2],
-      breadcrumbs[breadcrumbs.length - 1],
-    ];
-  }, [breadcrumbs]);
-
->>>>>>> 8fe8fab7ce4d54ac4a7603afae659b2f96146333
   const handleLogout = () => {
     logout();
     window.location.href = "/login";
   };
 
-<<<<<<< HEAD
   // Handle notifications
   const handleNotificationClick = (notification: Notification) => {
     markAsRead(notification._id);
@@ -222,20 +154,11 @@ export default function AppNavbar() {
     <header className="top-0 z-50 sticky bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur border-b w-full">
       <div className="flex justify-between items-center gap-2 sm:gap-4 px-4 sm:px-6 py-2 h-14">
         {/* Left side: Sidebar + Breadcrumbs */}
-=======
-  return (
-    <header className="top-0 z-50 sticky bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur border-b w-full">
-      <div className="flex justify-between items-center gap-2 sm:gap-4 px-4 sm:px-6 py-2 h-14">
->>>>>>> 8fe8fab7ce4d54ac4a7603afae659b2f96146333
         <div className="flex flex-1 items-center gap-2 min-w-0">
           <SidebarTrigger className="-ml-1" />
           <div className="flex-1 min-w-0">
             <Breadcrumb>
-<<<<<<< HEAD
               {/* Desktop */}
-=======
-              {/* Desktop breadcrumbs - full navigation for large screens */}
->>>>>>> 8fe8fab7ce4d54ac4a7603afae659b2f96146333
               <BreadcrumbList className="hidden lg:flex items-center gap-1 text-sm">
                 {breadcrumbs.map((crumb, index) => (
                   <React.Fragment key={crumb.href}>
@@ -258,11 +181,7 @@ export default function AppNavbar() {
                 ))}
               </BreadcrumbList>
 
-<<<<<<< HEAD
               {/* Tablet */}
-=======
-              {/* Tablet breadcrumbs - show only last 3 items for medium screens */}
->>>>>>> 8fe8fab7ce4d54ac4a7603afae659b2f96146333
               <BreadcrumbList className="hidden lg:hidden sm:flex items-center gap-1 text-sm">
                 {tabletBreadcrumbs.map((crumb, index) => (
                   <React.Fragment key={crumb.href}>
@@ -285,11 +204,7 @@ export default function AppNavbar() {
                 ))}
               </BreadcrumbList>
 
-<<<<<<< HEAD
               {/* Mobile */}
-=======
-              {/* Mobile breadcrumbs - show only last 2 items */}
->>>>>>> 8fe8fab7ce4d54ac4a7603afae659b2f96146333
               <BreadcrumbList className="sm:hidden flex items-center gap-1 text-sm">
                 {mobileBreadcrumbs.map((crumb, index) => (
                   <React.Fragment key={crumb.href}>
@@ -315,14 +230,9 @@ export default function AppNavbar() {
           </div>
         </div>
 
-<<<<<<< HEAD
         {/* Right side: Search, Theme, Notifications, User */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {/* Search (hidden on mobile) */}
-=======
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          {/* Search - hidden on mobile, shown on medium+ screens */}
->>>>>>> 8fe8fab7ce4d54ac4a7603afae659b2f96146333
           <div className="hidden md:block relative">
             <Search className="top-2.5 left-2.5 absolute w-4 h-4 text-muted-foreground" />
             <Input
@@ -334,7 +244,6 @@ export default function AppNavbar() {
 
           <ThemeToggle />
 
-<<<<<<< HEAD
           {/* Notifications */}
           <DropdownMenu
             open={isNotificationDropdownOpen}
@@ -398,14 +307,10 @@ export default function AppNavbar() {
           </DropdownMenu>
 
           {/* User Dropdown */}
-=======
-          {/* Notifications - hidden on mobile */}
->>>>>>> 8fe8fab7ce4d54ac4a7603afae659b2f96146333
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-<<<<<<< HEAD
                 className="relative rounded-full w-8 h-8"
               >
                 <Avatar className="w-8 h-8">
@@ -429,92 +334,6 @@ export default function AppNavbar() {
                     {user?.email}
                   </p>
                 </div>
-=======
-                size="icon"
-                className="hidden sm:flex relative"
-                aria-label="Notifications"
-              >
-                <Bell className="w-4 h-4" />
-                {/* unread badge */}
-                <span className="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-red-600 text-white text-[10px] w-4 h-4">
-                  2
-                </span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              className="w-[320px] p-0"
-              align="end"
-              forceMount
-            >
-              <div className="p-3 border-b">
-                <p className="font-medium">Notifications</p>
-              </div>
-              <div className="divide-y">
-                <div className="p-3 flex gap-3 items-start">
-                  <span className="inline-block w-2 h-2 mt-1 rounded-full bg-blue-500" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">
-                      New commit in git-tracker-backend
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      John Doe • 2 hours ago
-                    </p>
-                  </div>
-                </div>
-                <div className="p-3 flex gap-3 items-start">
-                  <span className="inline-block w-2 h-2 mt-1 rounded-full bg-blue-500" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">
-                      Project E-commerce updated
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Jane Smith • 4 hours ago
-                    </p>
-                  </div>
-                </div>
-                <div className="p-3 flex gap-3 items-start">
-                  <span className="inline-block w-2 h-2 mt-1 rounded-full bg-transparent border border-muted-foreground" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">New team member added</p>
-                    <p className="text-xs text-muted-foreground">
-                      Admin • 1 day ago
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="p-3 border-t text-center">
-                <Link href="/dashboard/notification" className="text-sm">
-                  View all notifications
-                </Link>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative rounded-full w-8 h-8">
-                <Avatar className="w-8 h-8">
-                  <AvatarImage
-                    src={user?.profileImage ?? undefined}
-                    alt="Profile"
-                  />
-                  <AvatarFallback>
-                    {user?.fullName[0].toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>   
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="font-medium text-sm leading-none">
-                    {user?.fullName}
-                  </p>
-                  <p className="text-muted-foreground text-xs leading-none">
-                    {user?.email}
-                  </p>
-                </div>
->>>>>>> 8fe8fab7ce4d54ac4a7603afae659b2f96146333
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
