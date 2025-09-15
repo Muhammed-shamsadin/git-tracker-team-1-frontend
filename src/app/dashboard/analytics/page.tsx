@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { StatsCard } from "@/components/cards/stats-card";
 import { FolderGit2, FolderOpen, GitCommit, Database } from "lucide-react";
 import CommitTrendsChart from "@/features/analytics/CommitTrendsChart";
 import ContributorsLeaderboard from "@/features/analytics/ContributorsLeaderboard";
 import { useAnalyticsStore } from "@/stores/analyticsStore";
+import { useProjectStore } from "@/stores/projectStore";
+import { useRepositoryStore } from "@/stores/repositoryStore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Analytics() {
@@ -13,8 +15,6 @@ export default function Analytics() {
         kpiData, 
         isLoading, 
         error, 
-        projects,
-        repositories,
         selectedProjectId,
         selectedRepositoryId,
         projectCommitData,
@@ -22,33 +22,41 @@ export default function Analytics() {
         projectContributors,
         repositoryContributors,
         fetchKPIData,
-        fetchProjects,
-        fetchRepositories,
         fetchProjectAnalytics,
         fetchRepositoryAnalytics,
         setSelectedProject,
         setSelectedRepository
     } = useAnalyticsStore();
 
+    // Use centralized stores for projects & repositories lists
+    const { projects: allProjects, fetchAllProjects } = useProjectStore();
+    const { repositories: allRepositories, fetchAllRepositories } = useRepositoryStore();
+
     // Fetch initial data on component mount
     useEffect(() => {
         fetchKPIData();
-        fetchProjects();
-    }, [fetchKPIData, fetchProjects]);
+        // Fetch dropdown data from dedicated stores
+        fetchAllProjects();
+        fetchAllRepositories();
+    }, [fetchKPIData, fetchAllProjects, fetchAllRepositories]);
 
-    // Fetch project analytics when project is selected
+    // Local state for project & repository time ranges
+    const [projectTimeRange, setProjectTimeRange] = useState<"week" | "month" | "year">("week");
+    const [repositoryTimeRange, setRepositoryTimeRange] = useState<"week" | "month" | "year">("week");
+
+    // Fetch project analytics when project or time range changes
     useEffect(() => {
         if (selectedProjectId) {
-            fetchProjectAnalytics(selectedProjectId);
+            fetchProjectAnalytics(selectedProjectId, projectTimeRange);
         }
-    }, [selectedProjectId, fetchProjectAnalytics]);
+    }, [selectedProjectId, projectTimeRange, fetchProjectAnalytics]);
 
-    // Fetch repository analytics when repository is selected
+    // Fetch repository analytics when repository or time range changes
     useEffect(() => {
         if (selectedRepositoryId) {
-            fetchRepositoryAnalytics(selectedRepositoryId);
+        fetchRepositoryAnalytics(selectedRepositoryId, repositoryTimeRange);
         }
-    }, [selectedRepositoryId, fetchRepositoryAnalytics]);
+    }, [selectedRepositoryId, repositoryTimeRange, fetchRepositoryAnalytics]);
 
     // KPI cards configuration
     const kpis = [
@@ -79,11 +87,42 @@ export default function Analytics() {
     ];
 
     // Get selected project and repository names for display
-    const selectedProject = projects.find(p => p.id === selectedProjectId);
-    const selectedRepository = repositories.find(r => r.id === selectedRepositoryId);
+    const getProjectId = (p: any) => (p?.id ?? p?._id) as string | undefined;
+    const getRepoId = (r: any) => (r?.id ?? r?._id) as string | undefined;
+    const projectsList = Array.isArray(allProjects)
+        ? allProjects
+        : ((allProjects as any)?.projects ?? []);
+    const repositoriesList = Array.isArray(allRepositories)
+        ? allRepositories
+        : ((allRepositories as any)?.repositories ?? []);
 
-    // Use real contributor data from API or fallback to empty array
-    const contributors = projectContributors || repositoryContributors || [];
+    const selectedProject = projectsList.find((p: any) => getProjectId(p) === selectedProjectId);
+    const selectedRepository = repositoriesList.find((r: any) => getRepoId(r) === selectedRepositoryId);
+
+    // Contributors leaderboard now fetches independently; no coupled data here
+
+    // Auto-select defaults: if no project/repo selected, pick the first available item
+    useEffect(() => {
+        if (!selectedProjectId) {
+            const firstProjectId = (projectsList as any[])
+                .map((p: any) => getProjectId(p))
+                .find((id: any) => !!id);
+            if (firstProjectId) {
+                setSelectedProject(firstProjectId as string);
+            }
+        }
+    }, [selectedProjectId, projectsList, setSelectedProject]);
+
+    useEffect(() => {
+        if (!selectedRepositoryId) {
+            const firstRepoId = (repositoriesList as any[])
+                .map((r: any) => getRepoId(r))
+                .find((id: any) => !!id);
+            if (firstRepoId) {
+                setSelectedRepository(firstRepoId as string);
+            }
+        }
+    }, [selectedRepositoryId, repositoriesList, setSelectedRepository]);
 
     return (
         <div className="space-y-6">
@@ -105,29 +144,36 @@ export default function Analytics() {
                 ))}
             </div>
 
-            {/* Row 2: Commit Trends */}
-            <div className="grid gap-4 lg:grid-cols-2">
+            {/* Row 2: Commit Trends (stacked) */}
+            <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="text-lg font-semibold">Project Commit Activity</h3>
+                                <h3 className="text-lg font-semibold">Project Commit Activity</h3>
                             <p className="text-sm text-muted-foreground">
                                 {selectedProject ? `Commits for ${selectedProject.name}` : "Select a project to view commit activity"}
                             </p>
                         </div>
                         <Select
                             value={selectedProjectId || "none"}
-                            onValueChange={(value) => setSelectedProject(value === "none" ? null : value)}
+                            onValueChange={(value) => {
+                                const newVal = value === "none" ? null : value;
+                                console.log("Project selected:", newVal);
+                                setSelectedProject(newVal);
+                            }}
                         >
-                            <SelectTrigger className="w-[200px]">
+                                <SelectTrigger className="w-[200px]">
                                 <SelectValue placeholder="Select Project" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="none">All Projects</SelectItem>
-                                {projects.map((project) => (
-                                    <SelectItem key={project.id} value={project.id}>
-                                        {project.name}
-                                    </SelectItem>
+                                {/* <SelectItem value="none">Select Projects</SelectItem> */}
+                                {(projectsList as any[])
+                                    .map((project: any) => ({ id: getProjectId(project), name: (project as any).name }))
+                                    .filter((p: any) => !!p.id)
+                                    .map((p: any) => (
+                                        <SelectItem key={p.id!} value={p.id!}>
+                                            {p.name}
+                                        </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -136,33 +182,41 @@ export default function Analytics() {
                         title=""
                         description=""
                         data={projectCommitData || []}
-                        timeRange="week"
-                        onTimeRangeChange={() => {}} // Disabled as requested
+                        timeRange={projectTimeRange}
+                        onTimeRangeChange={(r) => setProjectTimeRange(r)}
+                        showTimeRangeTabs
+                        key={`proj-${selectedProjectId || 'none'}-${projectTimeRange}`}
                     />
                 </div>
                 
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="text-lg font-semibold">Repository Commit Activity</h3>
+                                <h3 className="text-lg font-semibold">Repository Commit Activity</h3>
                             <p className="text-sm text-muted-foreground">
                                 {selectedRepository ? `Commits for ${selectedRepository.name}` : "Select a repository to view commit activity"}
                             </p>
                         </div>
                         <Select
                             value={selectedRepositoryId || "none"}
-                            onValueChange={(value) => setSelectedRepository(value === "none" ? null : value)}
-                            disabled={!selectedProjectId}
+                            onValueChange={(value) => {
+                                const newVal = value === "none" ? null : value;
+                                console.log("Repository selected:", newVal);
+                                setSelectedRepository(newVal);
+                            }}
                         >
                             <SelectTrigger className="w-[200px]">
                                 <SelectValue placeholder="Select Repository" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="none">All Repositories</SelectItem>
-                                {repositories.map((repository) => (
-                                    <SelectItem key={repository.id} value={repository.id}>
-                                        {repository.name}
-                                    </SelectItem>
+                                {/* <SelectItem value="none">All Repositories</SelectItem> */}
+                                {(repositoriesList as any[])
+                                    .map((repository: any) => ({ id: getRepoId(repository), name: (repository as any).name }))
+                                    .filter((r: any) => !!r.id)
+                                    .map((r: any) => (
+                                        <SelectItem key={r.id!} value={r.id!}>
+                                            {r.name}
+                                        </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -171,8 +225,10 @@ export default function Analytics() {
                         title=""
                         description=""
                         data={repositoryCommitData || []}
-                        timeRange="week"
-                        onTimeRangeChange={() => {}} // Disabled as requested
+                        timeRange={repositoryTimeRange}
+                        onTimeRangeChange={(r) => setRepositoryTimeRange(r)}
+                        showTimeRangeTabs
+                        key={`repo-${selectedRepositoryId || 'none'}-${repositoryTimeRange}`}
                     />
                 </div>
             </div>
@@ -180,17 +236,9 @@ export default function Analytics() {
             {/* Row 3: Contributors */}
             <ContributorsLeaderboard
                 title="Top Contributors"
-                description={selectedProject ? `Contributors for ${selectedProject.name}` : selectedRepository ? `Contributors for ${selectedRepository.name}` : "Select a project or repository to view contributors"}
-                data={contributors.map((c, i) => ({ 
-                    id: c.user_id, 
-                    name: c.name, 
-                    email: c.email, 
-                    commits: c.commits,
-                    projectId: selectedProjectId || "unknown", 
-                    repositoryId: selectedRepositoryId || "unknown" 
-                }))}
-                projects={projects}
-                repositories={repositories}
+                description="Most active contributors"
+                projects={projectsList as any}
+                repositories={repositoriesList as any}
             />
         </div>
     );

@@ -15,14 +15,7 @@ import {
     ChartLegend,
     ChartLegendContent,
 } from "@/components/ui/chart";
-import {
-    Line,
-    LineChart,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    ResponsiveContainer,
-} from "recharts";
+import { Area, AreaChart, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type TimeRange = "week" | "month" | "year";
@@ -38,6 +31,7 @@ interface CommitTrendsChartProps {
     data: CommitPoint[];
     timeRange?: TimeRange;
     onTimeRangeChange?: (range: TimeRange) => void;
+    showTimeRangeTabs?: boolean;
 }
 
 export function CommitTrendsChart({
@@ -46,6 +40,7 @@ export function CommitTrendsChart({
     data,
     timeRange = "week",
     onTimeRangeChange,
+    showTimeRangeTabs = true,
 }: CommitTrendsChartProps) {
     const chartConfig = {
         commits: {
@@ -64,47 +59,59 @@ export function CommitTrendsChart({
                             <CardDescription>{description}</CardDescription>
                         )}
                     </div>
-                    <Tabs value={timeRange} onValueChange={(v) => onTimeRangeChange?.(v as TimeRange)}>
-                        <TabsList>
-                            <TabsTrigger value="week">Week</TabsTrigger>
-                            <TabsTrigger value="month">Month</TabsTrigger>
-                            <TabsTrigger value="year">Year</TabsTrigger>
-                        </TabsList>
-                    </Tabs>
+                    {showTimeRangeTabs && (
+                        <Tabs value={timeRange} onValueChange={(v) => onTimeRangeChange?.(v as TimeRange)}>
+                            <TabsList>
+                                <TabsTrigger value="week">Week</TabsTrigger>
+                                <TabsTrigger value="month">Month</TabsTrigger>
+                                <TabsTrigger value="year">Year</TabsTrigger>
+                            </TabsList>
+                        </Tabs>
+                    )}
                 </div>
             </CardHeader>
-            <CardContent>
-                <ChartContainer config={chartConfig} className="h-[280px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={data} margin={{ left: 12, right: 12 }}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis
-                                dataKey="date"
-                                tickLine={false}
-                                axisLine={false}
-                                tickMargin={8}
-                            />
-                            <YAxis
-                                width={40}
-                                tickLine={false}
-                                axisLine={false}
-                                tickMargin={8}
-                            />
-                            <Line
-                                type="monotone"
-                                dataKey="commits"
-                                stroke="var(--color-commits)"
-                                strokeWidth={2}
-                                dot={{ r: 3, strokeWidth: 2, fill: "var(--color-commits)" }}
-                                activeDot={{ r: 4 }}
-                            />
-                            <ChartTooltip
-                                cursor={{ strokeDasharray: "3 3" }}
-                                content={<ChartTooltipContent nameKey="commits" />}
-                            />
-                            <ChartLegend content={<ChartLegendContent />} />
-                        </LineChart>
-                    </ResponsiveContainer>
+            <CardContent className="px-4">
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                    <AreaChart data={data} margin={{ left: 0, right: 0, bottom: 24 }}>
+                        <defs>
+                            <linearGradient id="fillCommits" x1="0" y1="0" x2="0" y2="1">
+                                {/* Light blue gradient for better contrast in dark mode */}
+                                <stop offset="5%" stopColor="#93C5FD" stopOpacity={0.35} />
+                                <stop offset="95%" stopColor="#93C5FD" stopOpacity={0.05} />
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis
+                            dataKey="date"
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={12}
+                            minTickGap={24}
+                            padding={{ left: 16, right: 16 }}
+                        />
+                        <YAxis
+                            width={40}
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={8}
+                            domain={[0, 'dataMax']}
+                        />
+                        <Area
+                            type="monotone"
+                            dataKey="commits"
+                            stroke="#60A5FA"
+                            strokeWidth={2}
+                            fill="url(#fillCommits)"
+                            fillOpacity={1}
+                            dot={{ r: 3, strokeWidth: 2, fill: "#60A5FA" }}
+                            activeDot={{ r: 4 }}
+                        />
+                        <ChartTooltip
+                            cursor={{ strokeDasharray: "3 3" }}
+                            content={<ChartTooltipContent nameKey="commits" />}
+                        />
+                        <ChartLegend content={<ChartLegendContent />} />
+                    </AreaChart>
                 </ChartContainer>
             </CardContent>
         </Card>

@@ -45,7 +45,7 @@ export default function LoginPage() {
     const onSubmit = async (values: LoginData) => {
         try {
             setError("");
-            toast(`values: ${JSON.stringify(values)}`);
+            // toast(`values: ${JSON.stringify(values)}`);
             await login(values);
             toast.success("Login successful!");
             window.location.href = "/dashboard";
