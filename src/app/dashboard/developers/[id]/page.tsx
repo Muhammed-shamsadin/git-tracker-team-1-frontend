@@ -33,137 +33,81 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-
-// Mock data
-const developerData = {
-    id: "u1",
-    name: "John Doe",
-    email: "john@example.com",
-    role: "Full Stack Developer",
-    avatar: "/placeholder.svg?height=80&width=80",
-    location: "San Francisco, CA",
-    bio: "Experienced full-stack developer with 8+ years in React, Node.js, and cloud technologies. Passionate about building scalable applications and mentoring junior developers.",
-    skills: [
-        "React",
-        "Node.js",
-        "TypeScript",
-        "AWS",
-        "Docker",
-        "PostgreSQL",
-        "GraphQL",
-        "Next.js",
-    ],
-    joined_at: "2024-03-15T10:00:00Z",
-    last_active: "2 hours ago",
-    stats: {
-        total_projects: 4,
-        total_repositories: 8,
-        total_commits: 342,
-        lines_of_code: 25680,
-    },
-};
-
-const projects = [
-    {
-        id: "p1234567-8901-2345-6789-012345678901",
-        name: "Git Tracker",
-        description: "Track local git repositories and developer progress",
-        status: "active",
-        role: "Lead Developer",
-        repositories_count: 3,
-        commits: 127,
-        last_updated: "2025-08-03T12:00:00Z",
-    },
-    {
-        id: "p2345678-9012-3456-7890-123456789012",
-        name: "E-commerce Platform",
-        description: "Modern e-commerce solution with React and Node.js",
-        status: "active",
-        role: "Backend Developer",
-        repositories_count: 2,
-        commits: 89,
-        last_updated: "2025-08-02T15:30:00Z",
-    },
-    {
-        id: "p3456789-0123-4567-8901-234567890123",
-        name: "Mobile App",
-        description: "React Native mobile application for iOS and Android",
-        status: "completed",
-        role: "Full Stack Developer",
-        repositories_count: 1,
-        commits: 67,
-        last_updated: "2025-07-28T09:15:00Z",
-    },
-];
-
-const repositories = [
-    {
-        id: "r1",
-        name: "git-tracker-backend",
-        project: "Git Tracker",
-        description: "NestJS backend for Git Tracker application",
-        commits: 78,
-        lines_added: 8450,
-        lines_removed: 2100,
-        last_commit: "2 hours ago",
-    },
-    {
-        id: "r2",
-        name: "git-tracker-frontend",
-        project: "Git Tracker",
-        description: "Next.js frontend for Git Tracker application",
-        commits: 34,
-        lines_added: 2890,
-        lines_removed: 890,
-        last_commit: "1 day ago",
-    },
-    {
-        id: "r3",
-        name: "ecommerce-api",
-        project: "E-commerce Platform",
-        description: "REST API for e-commerce platform",
-        commits: 45,
-        lines_added: 3200,
-        lines_removed: 1200,
-        last_commit: "2 days ago",
-    },
-];
-
-const recentCommits = [
-    {
-        id: "c1",
-        message: "Added user authentication system with JWT tokens",
-        repository: "git-tracker-backend",
-        project: "Git Tracker",
-        timestamp: "2025-08-03T10:30:00Z",
-        files_changed: 8,
-        lines_added: 245,
-        lines_removed: 12,
-    },
-    {
-        id: "c2",
-        message: "Updated dashboard UI components and responsive design",
-        repository: "git-tracker-frontend",
-        project: "Git Tracker",
-        timestamp: "2025-08-03T08:15:00Z",
-        files_changed: 12,
-        lines_added: 189,
-        lines_removed: 45,
-    },
-    {
-        id: "c3",
-        message: "Implemented payment processing with Stripe integration",
-        repository: "ecommerce-api",
-        project: "E-commerce Platform",
-        timestamp: "2025-08-02T16:45:00Z",
-        files_changed: 6,
-        lines_added: 156,
-        lines_removed: 23,
-    },
-];
+import { useEffect } from "react";
+import { useUserStore } from "@/stores/userStore";
+import DeveloperDetailsLoading from "./loading";
+import { timeAgo } from "@/lib/utils";
 
 export default function DeveloperDetailsPage() {
     const params = useParams();
+    const { developerDetails, isLoading, error, fetchDevDetail } =
+        useUserStore();
+
+    const developerId = params.id as string;
+
+    useEffect(() => {
+        if (developerId) {
+            fetchDevDetail(developerId);
+        }
+    }, [developerId, fetchDevDetail]);
+
+    if (isLoading) {
+        return <DeveloperDetailsLoading />;
+    }
+
+    if (error) {
+        return (
+            <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" asChild>
+                        <Link href="/dashboard/developers">
+                            <ArrowLeft className="mr-2 w-4 h-4" />
+                            Back to Developers
+                        </Link>
+                    </Button>
+                </div>
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="space-y-2 text-center">
+                            <h3 className="font-semibold text-destructive text-lg">
+                                Error
+                            </h3>
+                            <p className="text-muted-foreground">{error}</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+
+    if (!developerDetails) {
+        return (
+            <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" asChild>
+                        <Link href="/dashboard/developers">
+                            <ArrowLeft className="mr-2 w-4 h-4" />
+                            Back to Developers
+                        </Link>
+                    </Button>
+                </div>
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="space-y-2 text-center">
+                            <h3 className="font-semibold text-lg">
+                                Developer Not Found
+                            </h3>
+                            <p className="text-muted-foreground">
+                                The developer you're looking for doesn't exist.
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+
+    const { user, stats, projects, repositories } = developerDetails;
     return (
         <div className="space-y-6">
             {/* Back Navigation */}
@@ -181,71 +125,73 @@ export default function DeveloperDetailsPage() {
                 <div className="flex items-start gap-6">
                     <Avatar className="w-20 h-20">
                         <AvatarImage
-                            src={developerData.avatar || "/placeholder.svg"}
+                            src={user.profileImage || "/placeholder.svg"}
                         />
                         <AvatarFallback className="text-lg">
-                            {developerData.name
+                            {user.fullName
                                 .split(" ")
-                                .map((n) => n[0])
+                                .map((n: string) => n[0])
                                 .join("")}
                         </AvatarFallback>
                     </Avatar>
                     <div className="space-y-3">
                         <div className="flex items-center gap-3">
                             <h1 className="font-bold text-3xl tracking-tight">
-                                {developerData.name}
+                                {user.fullName}
                             </h1>
                             <Badge variant="secondary">
-                                {developerData.role}
+                                {user.userType === "developer"
+                                    ? "Developer"
+                                    : user.userType}
                             </Badge>
                         </div>
                         <p className="max-w-2xl text-muted-foreground">
-                            {developerData.bio}
+                            {user.profile?.bio || "No bio available"}
                         </p>
                         <div className="flex items-center gap-4 text-muted-foreground text-sm">
                             <div className="flex items-center gap-1">
                                 <Mail className="w-4 h-4" />
-                                {developerData.email}
+                                {user.email}
                             </div>
-                            <div className="flex items-center gap-1">
-                                <MapPin className="w-4 h-4" />
-                                {developerData.location}
-                            </div>
+                            {user.profile?.location && (
+                                <div className="flex items-center gap-1">
+                                    <MapPin className="w-4 h-4" />
+                                    {user.profile.location}
+                                </div>
+                            )}
                             <div className="flex items-center gap-1">
                                 <Calendar className="w-4 h-4" />
                                 Joined{" "}
-                                {new Date(
-                                    developerData.joined_at
-                                ).toLocaleDateString()}
+                                {new Date(user.createdAt).toLocaleDateString()}
                             </div>
-                            <div className="flex items-center gap-1">
-                                <Clock className="w-4 h-4" />
-                                Active {developerData.last_active}
-                            </div>
+                            {user.lastLogin && (
+                                <div className="flex items-center gap-1">
+                                    <Clock className="w-4 h-4" />
+                                    Last login{" "}
+                                    {new Date(
+                                        user.lastLogin
+                                    ).toLocaleDateString()}
+                                </div>
+                            )}
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                            {developerData.skills.map((skill) => (
-                                <Badge
-                                    key={skill}
-                                    variant="outline"
-                                    className="text-xs"
-                                >
-                                    {skill}
-                                </Badge>
-                            ))}
-                        </div>
+                        {user.profile?.skills &&
+                            user.profile.skills.length > 0 && (
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {user.profile.skills.map(
+                                        (skill: string) => (
+                                            <Badge
+                                                key={skill}
+                                                variant="outline"
+                                                className="text-xs"
+                                            >
+                                                {skill}
+                                            </Badge>
+                                        )
+                                    )}
+                                </div>
+                            )}
                     </div>
                 </div>
-                {developerData.id && (
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" asChild>
-                            <Link href="/dashboard/settings">
-                                <Settings className="mr-2 w-4 h-4" />
-                                Settings
-                            </Link>
-                        </Button>
-                    </div>
-                )}
             </div>
 
             {/* Tabs */}
@@ -269,7 +215,7 @@ export default function DeveloperDetailsPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="font-bold text-2xl">
-                                    {developerData.stats.total_projects}
+                                    {stats.totalProjects}
                                 </div>
                             </CardContent>
                         </Card>
@@ -282,7 +228,7 @@ export default function DeveloperDetailsPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="font-bold text-2xl">
-                                    {developerData.stats.total_repositories}
+                                    {stats.totalRepositories}
                                 </div>
                             </CardContent>
                         </Card>
@@ -295,7 +241,7 @@ export default function DeveloperDetailsPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="font-bold text-2xl">
-                                    {developerData.stats.total_commits}
+                                    {stats.totalCommits}
                                 </div>
                             </CardContent>
                         </Card>
@@ -308,15 +254,10 @@ export default function DeveloperDetailsPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="font-bold text-2xl">
-                                    {developerData.stats.lines_of_code.toLocaleString()}
+                                    {stats.totalLinesOfCode.toLocaleString()}
                                 </div>
                             </CardContent>
                         </Card>
-                    </div>
-                    <div className="gap-6 grid md:grid-cols-2">
-                        {/* Contribution Activity */}
-
-                        <div>Recent commit placeholder</div>
                     </div>
                 </TabsContent>
 
@@ -337,67 +278,49 @@ export default function DeveloperDetailsPage() {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Project</TableHead>
-                                        <TableHead>Role</TableHead>
+
                                         <TableHead>Status</TableHead>
                                         <TableHead>Repositories</TableHead>
                                         <TableHead>Commits</TableHead>
                                         <TableHead>Last Updated</TableHead>
-                                        <TableHead>Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {projects.map((project) => (
-                                        <TableRow key={project.id}>
+                                    {projects.map((project: any) => (
+                                        <TableRow key={project.projectId}>
                                             <TableCell>
                                                 <div>
                                                     <div className="font-medium">
-                                                        {project.name}
+                                                        {project.projectName}
                                                     </div>
                                                     <div className="text-muted-foreground text-sm">
-                                                        {project.description}
+                                                        {
+                                                            project.projectDescription
+                                                        }
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
-                                                <Badge variant="secondary">
-                                                    {project.role}
-                                                </Badge>
-                                            </TableCell>
+
                                             <TableCell>
                                                 <Badge
                                                     variant={
-                                                        project.status ===
+                                                        project.projectStatus ===
                                                         "active"
                                                             ? "secondary"
                                                             : "outline"
                                                     }
                                                 >
-                                                    {project.status}
+                                                    {project.projectStatus}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
-                                                {project.repositories_count}
+                                                {project.totalRepos}
                                             </TableCell>
                                             <TableCell>
-                                                {project.commits}
+                                                {project.totalCommits}
                                             </TableCell>
                                             <TableCell>
-                                                {new Date(
-                                                    project.last_updated
-                                                ).toLocaleDateString()}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    asChild
-                                                >
-                                                    <Link
-                                                        href={`/dashboard/projects/${project.id}`}
-                                                    >
-                                                        View
-                                                    </Link>
-                                                </Button>
+                                                {timeAgo(project.lastUpdated)}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -426,51 +349,41 @@ export default function DeveloperDetailsPage() {
                                         <TableHead>Repository</TableHead>
                                         <TableHead>Project</TableHead>
                                         <TableHead>Commits</TableHead>
-                                        <TableHead>Lines Added</TableHead>
-                                        <TableHead>Lines Removed</TableHead>
+
                                         <TableHead>Last Commit</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {repositories.map((repo) => (
-                                        <TableRow key={repo.id}>
+                                    {repositories.map((repo: any) => (
+                                        <TableRow key={repo.repoId}>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <GitBranch className="w-4 h-4 text-muted-foreground" />
                                                     <div>
                                                         <div className="font-medium">
-                                                            {repo.name}
+                                                            {repo.repoName}
                                                         </div>
                                                         <div className="text-muted-foreground text-sm">
-                                                            {repo.description}
+                                                            {
+                                                                repo.repoDescription
+                                                            }
                                                         </div>
                                                     </div>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant="outline">
-                                                    {repo.project}
+                                                    {repo.projectName}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant="secondary">
-                                                    {repo.commits}
+                                                    {repo.totalCommits}
                                                 </Badge>
                                             </TableCell>
+
                                             <TableCell>
-                                                <span className="font-medium text-green-600">
-                                                    +
-                                                    {repo.lines_added.toLocaleString()}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className="font-medium text-red-600">
-                                                    -
-                                                    {repo.lines_removed.toLocaleString()}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell>
-                                                {repo.last_commit}
+                                                {timeAgo(repo.lastUpdated)}
                                             </TableCell>
                                         </TableRow>
                                     ))}
