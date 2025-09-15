@@ -1,311 +1,133 @@
-// TODO: Uncomment and update the notification store implementation when the API is ready
+import { create } from "zustand";
+import api from "@/lib/axios";
+import { produce } from "immer";
 
-// import { create } from "zustand";
-// import { persist } from "zustand/middleware";
-// import api from "@/lib/axios";
+export interface Notification {
+    _id: string;
+    message: string;
+    type: string;
+    isRead: boolean;
+    createdAt: string;
+    entityId?: string;
+    entityModel?: string;
+}
 
-// export interface Notification {
-//     _id: string;
-//     type: "alert" | "assignment" | "comment" | "commit" | "project_update";
-//     title: string;
-//     message: string;
-//     userId: string;
-//     isRead: boolean;
-//     metadata?: {
-//         projectId?: string;
-//         repositoryId?: string;
-//         commitId?: string;
-//         authorId?: string;
-//     };
-//     createdAt: string;
-//     updatedAt: string;
-// }
+interface NotificationState {
+    notifications: Notification[];
+    unreadCount: number;
+    isLoading: boolean;
+    error: string | null;
+    eventSource: EventSource | null;
+    connect: () => void;
+    disconnect: () => void;
+    fetchInitialNotifications: () => Promise<void>;
+    markAsRead: (notificationId: string) => Promise<void>;
+    markAllAsRead: () => Promise<void>;
+}
 
-// interface PaginatedNotifications {
-//     notifications: Notification[];
-//     total: number;
-//     page: number;
-//     limit: number;
-//     totalPages: number;
-//     unreadCount: number;
-// }
+export const useNotificationStore = create<NotificationState>((set, get) => ({
+    notifications: [],
+    unreadCount: 0,
+    isLoading: false,
+    error: null,
+    eventSource: null,
 
-// interface NotificationFilters {
-//     type?: string;
-//     isRead?: boolean;
-//     startDate?: string;
-//     endDate?: string;
-// }
+    connect: () => {
+        if (get().eventSource) return;
+        
+        const token = localStorage.getItem("auth-token");
+        if (!token) {
+            console.error("No auth token found for SSE connection.");
+            return;
+        }
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+        const eventSource = new EventSource(`${baseUrl}/notifications/stream?token=${token}`);
+        
+        eventSource.onopen = () => console.log("SSE Connection Opened.");
 
-// interface NotificationState {
-//     notifications: Notification[];
-//     paginatedNotifications: PaginatedNotifications | null;
-//     unreadCount: number;
-//     isLoading: boolean;
-//     error: string | null;
-//     filters: NotificationFilters;
+        eventSource.onmessage = (event) => {
+            // --- THIS IS THE FIX ---
+            // The backend SSE sends a JSON string like: '{"data":{"_id":"...", "message": "..."}}'
+            // We must parse this string and then access the inner 'data' property.
+            const eventData = JSON.parse(event.data);
+            const newNotification: Notification = eventData.data || eventData;
 
-//     // Fetch operations
-//     fetchNotifications: (
-//         page?: number,
-//         limit?: number,
-//         filters?: NotificationFilters
-//     ) => Promise<void>;
-//     fetchUnreadCount: () => Promise<void>;
+            // Safety check to prevent errors if the data is malformed
+            if (!newNotification || !newNotification._id) {
+                console.warn("Received a malformed notification via SSE:", eventData);
+                return;
+            }
 
-//     // Actions
-//     markAsRead: (notificationId: string) => Promise<boolean>;
-//     markAllAsRead: () => Promise<boolean>;
-//     deleteNotification: (notificationId: string) => Promise<boolean>;
-//     deleteAllRead: () => Promise<boolean>;
+            set(produce((state: NotificationState) => {
+                // Prevent duplicate notifications from being added (handles race conditions)
+                if (!state.notifications.some(n => n._id === newNotification._id)) {
+                    state.notifications.unshift(newNotification);
+                    if (!newNotification.isRead) {
+                        state.unreadCount += 1;
+                    }
+                }
+            }));
+        };
 
-//     // Filters
-//     setFilters: (filters: NotificationFilters) => void;
-//     clearFilters: () => void;
+        eventSource.onerror = (error) => {
+            console.error("SSE Error:", error);
+            eventSource.close();
+            set({ eventSource: null });
+        };
+        set({ eventSource });
+    },
 
-//     // Real-time updates (for future WebSocket integration)
-//     addNotification: (notification: Notification) => void;
-//     updateNotification: (
-//         notificationId: string,
-//         updates: Partial<Notification>
-//     ) => void;
-// }
+    disconnect: () => {
+        get().eventSource?.close();
+        set({ eventSource: null });
+        console.log("SSE Connection Closed.");
+    },
 
-// export const useNotificationStore = create<NotificationState>()(
-//     persist(
-//         (set, get) => ({
-//             notifications: [],
-//             paginatedNotifications: null,
-//             unreadCount: 0,
-//             isLoading: false,
-//             error: null,
-//             filters: {},
+    fetchInitialNotifications: async () => {
+        set({ isLoading: true, error: null });
+        try {
+            const response = await api.get("/notifications");
+            // This logic correctly handles if your API wraps the response in a 'data' object or not.
+            const notifications = response.data.data || response.data;
+            const unreadCount = notifications.filter((n: Notification) => !n.isRead).length;
+            set({ notifications, unreadCount, isLoading: false });
+        } catch (error: any) {
+            set({ error: error.response?.data?.message || "Failed to fetch notifications", isLoading: false });
+        }
+    },
 
-//             fetchNotifications: async (
-//                 page = 1,
-//                 limit = 20,
-//                 filters?: NotificationFilters
-//             ) => {
-//                 set({ isLoading: true, error: null });
-//                 try {
-//                     const currentFilters = filters || get().filters;
-//                     const params = new URLSearchParams({
-//                         page: page.toString(),
-//                         limit: limit.toString(),
-//                         ...currentFilters,
-//                     });
+    markAsRead: async (notificationId: string) => {
+        const originalState = { notifications: get().notifications, unreadCount: get().unreadCount };
+        const notificationToUpdate = originalState.notifications.find(n => n._id === notificationId);
+        if (!notificationToUpdate || notificationToUpdate.isRead) return;
 
-//                     const response = await api.get(
-//                         `/dashboard/notifications?${params}`
-//                     );
-//                     const data = response.data.data || response.data;
+        set(produce((state: NotificationState) => {
+            const notification = state.notifications.find(n => n._id === notificationId);
+            if (notification) {
+                notification.isRead = true;
+                state.unreadCount = Math.max(0, state.unreadCount - 1);
+            }
+        }));
+        try {
+            await api.patch(`/notifications/${notificationId}/read`);
+        } catch (error) {
+            set(originalState);
+            console.error("Failed to mark notification as read:", error);
+        }
+    },
 
-//                     const paginated: PaginatedNotifications = {
-//                         notifications: data.notifications || data,
-//                         total: data.total || 0,
-//                         page: data.page || page,
-//                         limit: data.limit || limit,
-//                         totalPages: data.totalPages || 1,
-//                         unreadCount: data.unreadCount || 0,
-//                     };
-
-//                     set({
-//                         notifications: paginated.notifications,
-//                         paginatedNotifications: paginated,
-//                         unreadCount: paginated.unreadCount,
-//                         isLoading: false,
-//                     });
-//                 } catch (error: any) {
-//                     set({
-//                         error: error.message || "Failed to fetch notifications",
-//                         isLoading: false,
-//                     });
-//                 }
-//             },
-
-//             fetchUnreadCount: async () => {
-//                 try {
-//                     const response = await api.get(
-//                         "/dashboard/notifications/unread-count"
-//                     );
-//                     const count =
-//                         response.data.data?.count || response.data.count || 0;
-//                     set({ unreadCount: count });
-//                 } catch (error: any) {
-//                     console.error("Failed to fetch unread count:", error);
-//                 }
-//             },
-
-//             markAsRead: async (notificationId: string) => {
-//                 set({ isLoading: true, error: null });
-//                 try {
-//                     const response = await api.patch(
-//                         `/dashboard/notifications/${notificationId}/read`
-//                     );
-
-//                     if (response.status === 200) {
-//                         set((state) => ({
-//                             notifications: state.notifications.map(
-//                                 (notification) =>
-//                                     notification._id === notificationId
-//                                         ? { ...notification, isRead: true }
-//                                         : notification
-//                             ),
-//                             unreadCount: Math.max(0, state.unreadCount - 1),
-//                             isLoading: false,
-//                         }));
-//                         return true;
-//                     }
-//                     set({ isLoading: false });
-//                     return false;
-//                 } catch (error: any) {
-//                     set({
-//                         error:
-//                             error.message ||
-//                             "Failed to mark notification as read",
-//                         isLoading: false,
-//                     });
-//                     return false;
-//                 }
-//             },
-
-//             markAllAsRead: async () => {
-//                 set({ isLoading: true, error: null });
-//                 try {
-//                     const response = await api.patch(
-//                         "/dashboard/notifications/mark-all-read"
-//                     );
-
-//                     if (response.status === 200) {
-//                         set((state) => ({
-//                             notifications: state.notifications.map(
-//                                 (notification) => ({
-//                                     ...notification,
-//                                     isRead: true,
-//                                 })
-//                             ),
-//                             unreadCount: 0,
-//                             isLoading: false,
-//                         }));
-//                         return true;
-//                     }
-//                     set({ isLoading: false });
-//                     return false;
-//                 } catch (error: any) {
-//                     set({
-//                         error:
-//                             error.message ||
-//                             "Failed to mark all notifications as read",
-//                         isLoading: false,
-//                     });
-//                     return false;
-//                 }
-//             },
-
-//             deleteNotification: async (notificationId: string) => {
-//                 set({ isLoading: true, error: null });
-//                 try {
-//                     const response = await api.delete(
-//                         `/dashboard/notifications/${notificationId}`
-//                     );
-
-//                     if (response.status === 200) {
-//                         set((state) => {
-//                             const notification = state.notifications.find(
-//                                 (n) => n._id === notificationId
-//                             );
-//                             const wasUnread =
-//                                 notification && !notification.isRead;
-
-//                             return {
-//                                 notifications: state.notifications.filter(
-//                                     (notification) =>
-//                                         notification._id !== notificationId
-//                                 ),
-//                                 unreadCount: wasUnread
-//                                     ? Math.max(0, state.unreadCount - 1)
-//                                     : state.unreadCount,
-//                                 isLoading: false,
-//                             };
-//                         });
-//                         return true;
-//                     }
-//                     set({ isLoading: false });
-//                     return false;
-//                 } catch (error: any) {
-//                     set({
-//                         error: error.message || "Failed to delete notification",
-//                         isLoading: false,
-//                     });
-//                     return false;
-//                 }
-//             },
-
-//             deleteAllRead: async () => {
-//                 set({ isLoading: true, error: null });
-//                 try {
-//                     const response = await api.delete(
-//                         "/dashboard/notifications/read"
-//                     );
-
-//                     if (response.status === 200) {
-//                         set((state) => ({
-//                             notifications: state.notifications.filter(
-//                                 (notification) => !notification.isRead
-//                             ),
-//                             isLoading: false,
-//                         }));
-//                         return true;
-//                     }
-//                     set({ isLoading: false });
-//                     return false;
-//                 } catch (error: any) {
-//                     set({
-//                         error:
-//                             error.message ||
-//                             "Failed to delete read notifications",
-//                         isLoading: false,
-//                     });
-//                     return false;
-//                 }
-//             },
-
-//             setFilters: (filters: NotificationFilters) => {
-//                 set({ filters });
-//             },
-
-//             clearFilters: () => {
-//                 set({ filters: {} });
-//             },
-
-//             addNotification: (notification: Notification) => {
-//                 set((state) => ({
-//                     notifications: [notification, ...state.notifications],
-//                     unreadCount: !notification.isRead
-//                         ? state.unreadCount + 1
-//                         : state.unreadCount,
-//                 }));
-//             },
-
-//             updateNotification: (
-//                 notificationId: string,
-//                 updates: Partial<Notification>
-//             ) => {
-//                 set((state) => ({
-//                     notifications: state.notifications.map((notification) =>
-//                         notification._id === notificationId
-//                             ? { ...notification, ...updates }
-//                             : notification
-//                     ),
-//                 }));
-//             },
-//         }),
-//         {
-//             name: "notification-storage",
-//             partialize: (state) => ({
-//                 unreadCount: state.unreadCount,
-//                 filters: state.filters,
-//             }),
-//         }
-//     )
-// );
+    markAllAsRead: async () => {
+        if (get().unreadCount === 0) return;
+        const originalState = { notifications: get().notifications, unreadCount: get().unreadCount };
+        set(produce((state: NotificationState) => {
+            state.notifications.forEach(n => { n.isRead = true });
+            state.unreadCount = 0;
+        }));
+        try {
+            await api.patch("/notifications/read-all");
+        } catch (error) {
+            set(originalState);
+            console.error("Failed to mark all as read:", error);
+        }
+    },
+}));
