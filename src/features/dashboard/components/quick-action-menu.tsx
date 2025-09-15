@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import Link from "next/link";
 
 export function QuickActionsMenu() {
     return (
@@ -17,10 +18,12 @@ export function QuickActionsMenu() {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-36">
-                <DropdownMenuItem>New Project</DropdownMenuItem>
-                <DropdownMenuItem>New Repository</DropdownMenuItem>
-                <DropdownMenuItem>Add Developer</DropdownMenuItem>
-                <DropdownMenuItem>Generate Report</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/projects`}>New Project</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/analytics`}>View Report</Link>
+                </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
     );
