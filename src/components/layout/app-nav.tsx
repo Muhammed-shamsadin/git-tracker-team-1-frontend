@@ -250,7 +250,7 @@ export default function AppNavbar() {
             onOpenChange={setIsNotificationDropdownOpen}
           >
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative hidden sm:flex">
+              <Button variant="ghost" size="icon" className="relative flex">
                 <Bell className="w-4 h-4" />
                 {unreadCount > 0 && (
                   <div className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
