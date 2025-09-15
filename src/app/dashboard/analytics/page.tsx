@@ -99,8 +99,30 @@ export default function Analytics() {
     const selectedProject = projectsList.find((p: any) => getProjectId(p) === selectedProjectId);
     const selectedRepository = repositoriesList.find((r: any) => getRepoId(r) === selectedRepositoryId);
 
-    // Use real contributor data from API or fallback to empty array
-    const contributors = projectContributors || repositoryContributors || [];
+    // Contributors leaderboard now fetches independently; no coupled data here
+
+    // Auto-select defaults: if no project/repo selected, pick the first available item
+    useEffect(() => {
+        if (!selectedProjectId) {
+            const firstProjectId = (projectsList as any[])
+                .map((p: any) => getProjectId(p))
+                .find((id: any) => !!id);
+            if (firstProjectId) {
+                setSelectedProject(firstProjectId as string);
+            }
+        }
+    }, [selectedProjectId, projectsList, setSelectedProject]);
+
+    useEffect(() => {
+        if (!selectedRepositoryId) {
+            const firstRepoId = (repositoriesList as any[])
+                .map((r: any) => getRepoId(r))
+                .find((id: any) => !!id);
+            if (firstRepoId) {
+                setSelectedRepository(firstRepoId as string);
+            }
+        }
+    }, [selectedRepositoryId, repositoriesList, setSelectedRepository]);
 
     return (
         <div className="space-y-6">
@@ -144,7 +166,7 @@ export default function Analytics() {
                                 <SelectValue placeholder="Select Project" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="none">Select Projects</SelectItem>
+                                {/* <SelectItem value="none">Select Projects</SelectItem> */}
                                 {(projectsList as any[])
                                     .map((project: any) => ({ id: getProjectId(project), name: (project as any).name }))
                                     .filter((p: any) => !!p.id)
@@ -187,7 +209,7 @@ export default function Analytics() {
                                 <SelectValue placeholder="Select Repository" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="none">All Repositories</SelectItem>
+                                {/* <SelectItem value="none">All Repositories</SelectItem> */}
                                 {(repositoriesList as any[])
                                     .map((repository: any) => ({ id: getRepoId(repository), name: (repository as any).name }))
                                     .filter((r: any) => !!r.id)
@@ -214,16 +236,7 @@ export default function Analytics() {
             {/* Row 3: Contributors */}
             <ContributorsLeaderboard
                 title="Top Contributors"
-                description={selectedProject ? `Contributors for ${selectedProject.name}` : selectedRepository ? `Contributors for ${selectedRepository.name}` : "Select a project or repository to view contributors"}
-                data={contributors.map((c, i) => ({ 
-                    id: c.user_id, 
-                    name: c.name, 
-                    email: c.email, 
-                    commits: c.commits,
-                    // Use currently selected project/repo (contributors from API don't include these fields)
-                    projectId: selectedProjectId ?? undefined,
-                    repositoryId: selectedRepositoryId ?? undefined,
-                }))}
+                description="Most active contributors"
                 projects={projectsList as any}
                 repositories={repositoriesList as any}
             />
