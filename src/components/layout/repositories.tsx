@@ -1,5 +1,5 @@
 "use client";
-import { mockRepositories } from "@/data/repositories";
+// import { mockRepositories } from "@/data/repositories";
 import { Repository } from "@/types/Repository";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -61,7 +61,7 @@ import {
 // ];
 
 export default function RepositoriesPage() {
-    const [repos, setRepos] = useState<Repository[]>(mockRepositories);
+    // const [repos, setRepos] = useState<Repository[]>(mockRepositories);
 
     const formatCommitCount = (count: number) => {
         return count.toLocaleString();
@@ -84,9 +84,9 @@ export default function RepositoriesPage() {
                 </Button>
             </div>
 
-            <div className="space-y-4">
+            {/* <div className="space-y-4">
                 {repos.map((repo) => (
-                    <Card key={repo.id}>
+                    <Card key={repo._id}>
                         <CardContent className="p-6">
                             <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-4">
@@ -190,9 +190,9 @@ export default function RepositoriesPage() {
                         </CardContent>
                     </Card>
                 ))}
-            </div>
+            </div> */}
 
-            <div className="gap-4 grid md:grid-cols-4">
+            {/* <div className="gap-4 grid md:grid-cols-4">
                 <Card>
                     <CardContent className="p-4">
                         <div className="font-bold text-2xl">{repos.length}</div>
@@ -200,9 +200,9 @@ export default function RepositoriesPage() {
                             Total Repositories
                         </p>
                     </CardContent>
-                </Card>
+                </Card> */}
 
-                <Card>
+                {/* <Card>
                     <CardContent className="p-4">
                         <div className="font-bold text-2xl">
                             {repos.reduce(
@@ -214,9 +214,9 @@ export default function RepositoriesPage() {
                             Total Branches
                         </p>
                     </CardContent>
-                </Card>
+                </Card> */}
 
-                <Card>
+                {/* <Card>
                     <CardContent className="p-4">
                         <div className="font-bold text-2xl">
                             {formatCommitCount(
@@ -230,9 +230,9 @@ export default function RepositoriesPage() {
                             Total Commits
                         </p>
                     </CardContent>
-                </Card>
+                </Card> */}
 
-                <Card>
+                {/* <Card>
                     <CardContent className="p-4">
                         <div className="font-bold text-2xl">
                             {
@@ -245,7 +245,7 @@ export default function RepositoriesPage() {
                         </p>
                     </CardContent>
                 </Card>
-            </div>
+            </div> */}
         </div>
     );
 }
