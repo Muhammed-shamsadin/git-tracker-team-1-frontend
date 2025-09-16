@@ -53,8 +53,15 @@ interface RepositoryState {
 }
 
 export const useRepositoryStore = create<RepositoryState>()(
-    persist(
-        (set, get) => ({
+    (persist as any)(
+        (
+            set: (
+                partial:
+                    | Partial<RepositoryState>
+                    | ((state: RepositoryState) => Partial<RepositoryState>)
+            ) => void,
+            get: () => RepositoryState
+        ) => ({
             repositories: [],
             projectRepositories: [],
             paginatedRepositories: null,
@@ -344,7 +351,7 @@ export const useRepositoryStore = create<RepositoryState>()(
         }),
         {
             name: "repository-storage",
-            partialize: (state) => ({
+            partialize: (state: RepositoryState) => ({
                 repositories: state.repositories,
                 currentRepository: state.currentRepository,
                 projectRepositories: state.projectRepositories,

@@ -27,7 +27,7 @@ export default function SettingsPage() {
   const router = useRouter();
 
   const { currentUser, updateMe, isLoading: storeLoading } = useUserStore();
-  const { user: authUser } = useAuthStore();
+  const { user: authUser, checkAuth } = useAuthStore();
 
   const [skills, setSkills] = useState([
     "React",
@@ -50,29 +50,39 @@ export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
 
+  // Ensure authStore.user is fresh whenever Settings mounts
+  useEffect(() => {
+    checkAuth().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // populate local state from auth user (preferred) or currentUser when available
   useEffect(() => {
-    if (authUser) {
-      const nameParts = (authUser.fullName || "").split(" ");
-      setFirstName(nameParts.shift() || "");
-      setLastName(nameParts.join(" ") || "");
-      setEmail(authUser.email || "");
-    } else if (currentUser) {
-      const nameParts = (currentUser.fullName || "").split(" ");
-      setFirstName(nameParts.shift() || "");
-      setLastName(nameParts.join(" ") || "");
-      setEmail(currentUser.email || "");
-    }
+    const applyFrom = (u: any) => {
+      const fullNameStr = u?.fullName || "";
+      const nameParts = fullNameStr.split(" ");
+      const f = nameParts.shift() || "";
+      const l = nameParts.join(" ") || "";
+      const em = u?.email || "";
+      const pn =
+        u?.phoneNumber ?? u?.profile?.phoneNumber ?? u?.profile?.phone ?? u?.phone ?? "";
+      const loc = u?.profile?.location || "";
+      const org = u?.companyName || "";
+      const skl = Array.isArray(u?.profile?.skills) ? u.profile.skills : undefined;
 
-    if (currentUser) {
-      setLocation(currentUser.profile?.location || "");
-      setOrganizationName(currentUser.companyName || "");
-      if (
-        currentUser.profile?.skills &&
-        Array.isArray(currentUser.profile.skills)
-      ) {
-        setSkills(currentUser.profile.skills);
-      }
+      if (f && f !== firstName) setFirstName(f);
+      if (l && l !== lastName) setLastName(l);
+      if (em && em !== email) setEmail(em);
+      if (pn && pn !== phone) setPhone(pn);
+      if (loc && loc !== location) setLocation(loc);
+      if (org && org !== organizationName) setOrganizationName(org);
+      if (skl && JSON.stringify(skl) !== JSON.stringify(skills)) setSkills(skl);
+    };
+
+    if (authUser) {
+      applyFrom(authUser);
+    } else if (currentUser) {
+      applyFrom(currentUser);
     }
 
     // load avatar from localStorage if available
@@ -182,9 +192,9 @@ export default function SettingsPage() {
       <Tabs defaultValue="profile" className="w-full">
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          {/* <TabsTrigger value="notifications">Notifications</TabsTrigger> */}
           <TabsTrigger value="recyclebin">Recycle Bin</TabsTrigger>
-          <TabsTrigger value="appearance">Appearance</TabsTrigger>
+          {/* <TabsTrigger value="appearance">Appearance</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="profile" className="space-y-6">
@@ -359,37 +369,52 @@ export default function SettingsPage() {
           <div className="flex justify-end">
             <Button
               onClick={async () => {
-                const fullName = [firstName, lastName]
-                  .filter(Boolean)
-                  .join(" ");
+                const fullName = [firstName, lastName].filter(Boolean).join(" ");
                 const payload = {
                   fullName: fullName || undefined,
                   companyName: organizationName || undefined,
+                  phoneNumber: phone || undefined,
                   profile: {
                     location: location || undefined,
                     skills: skills && skills.length ? skills : undefined,
                   },
                 };
                 try {
-                  const result = await updateMe(payload);
+                  const result: any = await updateMe(payload);
                   if (result) {
-                    // Immediately update local form state so the UI reflects saved values
-                    const nameParts = (result.fullName || "").split(" ");
-                    setFirstName(nameParts.shift() || firstName);
-                    setLastName(nameParts.join(" ") || lastName);
+                    // Use submitted values to ensure UI reflects latest changes immediately
+                    setFirstName(firstName);
+                    setLastName(lastName);
                     setEmail(result.email || email);
-                    setLocation(result.profile?.location || location);
-                    setOrganizationName(result.companyName || organizationName);
-                    if (
-                      result.profile?.skills &&
-                      Array.isArray(result.profile.skills)
-                    ) {
-                      setSkills(result.profile.skills);
+                    setPhone(phone);
+                    setLocation(location);
+                    setOrganizationName(organizationName);
+                    if (skills && Array.isArray(skills)) {
+                      setSkills(skills);
                     }
 
+                    // Merge into auth store so other pages and hydration read latest data
+                    try {
+                      // Build a merged user prioritizing submitted values, then API result, then previous authUser
+                      const prev = (useAuthStore.getState() as any).user || {};
+                      const merged = {
+                        ...prev,
+                        ...result,
+                        fullName: fullName || result?.fullName || prev?.fullName,
+                        companyName: organizationName || result?.companyName || prev?.companyName,
+                        phoneNumber: phone || result?.phoneNumber || prev?.phoneNumber,
+                        profile: {
+                          ...(prev?.profile || {}),
+                          ...(result?.profile || {}),
+                          location: location || result?.profile?.location || prev?.profile?.location,
+                          skills: (skills && skills.length ? skills : (result?.profile?.skills || prev?.profile?.skills)) || [],
+                        },
+                      };
+                      // @ts-ignore zustand setState is available
+                      useAuthStore.setState({ user: merged });
+                    } catch {}
+
                     toast.success("Profile updated successfully");
-                    // keep router.refresh if server refetch is desired
-                    router.refresh();
                   } else {
                     toast.error("Failed to update profile");
                   }
@@ -406,7 +431,7 @@ export default function SettingsPage() {
         </TabsContent>
 
         {/* Placeholder for other tabs */}
-        <TabsContent value="notifications">
+        {/* <TabsContent value="notifications">
           <Card>
             <CardHeader>
               <CardTitle>Notifications Settings</CardTitle>
@@ -417,7 +442,9 @@ export default function SettingsPage() {
               </p>
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
+
+        {/* RECYCLE BIN */}
         <TabsContent value="recyclebin">
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -489,7 +516,9 @@ export default function SettingsPage() {
             </Card>
           </div>
         </TabsContent>
-        <TabsContent value="appearance">
+
+        {/* APPEARANCE */}
+        {/* <TabsContent value="appearance">
           <Card>
             <CardHeader>
               <CardTitle>Appearance Settings</CardTitle>
@@ -500,7 +529,7 @@ export default function SettingsPage() {
               </p>
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
     </div>
   );

@@ -44,8 +44,15 @@ interface UserState {
 }
 
 export const useUserStore = create<UserState>()(
-    persist(
-        (set, get) => ({
+    (persist as any)(
+        (
+            set: (
+                partial:
+                    | Partial<UserState>
+                    | ((state: UserState) => Partial<UserState>)
+            ) => void,
+            get: () => UserState
+        ) => ({
             users: [],
             paginatedUsers: null,
             currentUser: null,
@@ -152,9 +159,19 @@ export const useUserStore = create<UserState>()(
             fetchDevDetail: async (id: string) => {
                 set({ isLoading: true, error: null });
                 try {
-                    /* Lines 155-163 omitted */
+                    const response = await api.get(
+                        `/users/${id}?withDetails=true`
+                    );
+                    const data = response.data.data || response.data;
+                    set({ developerDetails: data, isLoading: false });
                 } catch (error: any) {
-                    /* Lines 164-171 omitted */
+                    set({
+                        error:
+                            error?.response?.data?.message ||
+                            error?.message ||
+                            "Failed to fetch developer details",
+                        isLoading: false,
+                    });
                 }
             },
 
@@ -337,7 +354,7 @@ export const useUserStore = create<UserState>()(
         }),
         {
             name: "user-storage",
-            partialize: (state) => ({
+            partialize: (state: UserState) => ({
                 users: state.users,
                 currentUser: state.currentUser,
                 fetchedUser: state.fetchedUser,

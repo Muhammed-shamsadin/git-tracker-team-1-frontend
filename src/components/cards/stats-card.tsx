@@ -11,7 +11,7 @@ export function StatsCard({ title, value, change, icon }: StatsCardProps) {
             </CardHeader>
             <CardContent>
                 <div className="font-bold text-2xl">{value}</div>
-                {change && (
+                {/* {change && (
                     <div className="flex items-center gap-1 text-muted-foreground text-xs">
                         {change.type === "increase" ? (
                             <TrendingUp className="w-3 h-3 text-green-500" />
@@ -29,7 +29,7 @@ export function StatsCard({ title, value, change, icon }: StatsCardProps) {
                         </span>
                         <span>from last month</span>
                     </div>
-                )}
+                )} */}
             </CardContent>
         </Card>
     );

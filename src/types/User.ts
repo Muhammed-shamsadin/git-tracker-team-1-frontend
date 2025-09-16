@@ -15,6 +15,7 @@ export const UserSchema = z.object({
     userType: z.enum(["client", "developer", "superadmin"]),
     profileImage: z.string().nullable(),
     companyName: z.string().optional(),
+    phoneNumber: z.string().optional().nullable(),
     workspaces: z.array(z.string()).optional(),
     registeredRepos: z.array(z.string()).optional(),
     lastLogin: z.string().nullable().optional(),

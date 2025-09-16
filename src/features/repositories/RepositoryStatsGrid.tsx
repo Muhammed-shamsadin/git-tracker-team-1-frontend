@@ -64,7 +64,7 @@ export function RepositoryStatsGrid({ repository }: RepositoryStatsGridProps) {
                 </CardHeader>
                 <CardContent>
                     <div className="font-bold text-2xl">
-                        {stats.lines_of_code.toLocaleString()}
+                        {Math.abs(stats.lines_of_code).toLocaleString()}
                     </div>
                 </CardContent>
             </Card>

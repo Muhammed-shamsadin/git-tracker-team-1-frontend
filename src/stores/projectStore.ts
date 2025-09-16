@@ -65,7 +65,7 @@ interface ProjectState {
         projectId: string,
         developerId: string
     ) => Promise<any>;
-    fetchProjectMembers: (projectId: string) => Promise<any[]>;
+    fetchProjectMembers: (projectId: string, opts?: { silent?: boolean }) => Promise<any[]>;
 
     // Utilities
     clearCurrentProject: () => void;
@@ -74,8 +74,15 @@ interface ProjectState {
 }
 
 export const useProjectStore = create<ProjectState>()(
-    persist(
-        (set, get) => ({
+    (persist as any)(
+        (
+            set: (
+                partial:
+                    | Partial<ProjectState>
+                    | ((state: ProjectState) => Partial<ProjectState>)
+            ) => void,
+            get: () => ProjectState
+        ) => ({
             projects: [],
             paginatedProjects: null,
             currentProject: null,
@@ -99,6 +106,19 @@ export const useProjectStore = create<ProjectState>()(
                         limit?: number;
                     } = response.data.data;
                     const projects = data.projects || response.data;
+
+                    // Debug: log what the backend returned for visibility
+                    try {
+                        const loggedList = Array.isArray(data?.projects)
+                            ? data.projects
+                            : Array.isArray(response.data?.data)
+                            ? response.data.data
+                            : Array.isArray(response.data)
+                            ? response.data
+                            : [];
+                        // eslint-disable-next-line no-console
+                        console.log("[Projects] fetchAllProjects ->", loggedList.map((p: any) => ({ id: p?._id || p?.id, status: p?.status, name: p?.name })));
+                    } catch {}
 
                     set({
                         projects: projects,
@@ -133,6 +153,10 @@ export const useProjectStore = create<ProjectState>()(
                         message: projectData?.message || response.data.message,
                         isLoading: false,
                     });
+                    // silent fetch of members to ensure members table gets data
+                    try {
+                        await get().fetchProjectMembers(id, { silent: true });
+                    } catch {}
                 } catch (error: any) {
                     set({
                         error:
@@ -363,6 +387,18 @@ export const useProjectStore = create<ProjectState>()(
                     const response = await api.get(
                         "/users/clients/me/projects"
                     );
+                    // Debug: log backend result
+                    try {
+                        const payload = response.data?.data ?? response.data;
+                        const list = Array.isArray(payload)
+                            ? payload
+                            : Array.isArray(payload?.projects)
+                            ? payload.projects
+                            : [];
+                        // eslint-disable-next-line no-console
+                        console.log("[Projects] fetchClientProjects ->", list.map((p: any) => ({ id: p?._id || p?.id, status: p?.status, name: p?.name })));
+                    } catch {}
+
                     set({
                         projects: response.data.data || response.data,
                         isLoading: false,
@@ -385,6 +421,18 @@ export const useProjectStore = create<ProjectState>()(
                     const response = await api.get(
                         "/users/developers/me/projects"
                     );
+                    // Debug: log backend result
+                    try {
+                        const payload = response.data?.data ?? response.data;
+                        const list = Array.isArray(payload)
+                            ? payload
+                            : Array.isArray(payload?.projects)
+                            ? payload.projects
+                            : [];
+                        // eslint-disable-next-line no-console
+                        console.log("[Projects] fetchDeveloperProjects ->", list.map((p: any) => ({ id: p?._id || p?.id, status: p?.status, name: p?.name })));
+                    } catch {}
+
                     set({
                         projects: response.data.data || response.data,
                         isLoading: false,
@@ -466,18 +514,31 @@ export const useProjectStore = create<ProjectState>()(
                     return { repositories: [], total: 0 };
                 }
             },
-            fetchProjectMembers: async (projectId: string) => {
-                set({ isLoading: true, error: null });
+            fetchProjectMembers: async (projectId: string, opts?: { silent?: boolean }) => {
+                if (!opts?.silent) set({ isLoading: true, error: null });
                 try {
                     const response = await api.get(
                         `/projects/${projectId}/members`
                     );
                     const members =
                         response.data.data?.members || response.data;
-                    set({
+                    const normalizedMembers = Array.isArray(members)
+                        ? members.map((m: any) => ({
+                              userId: m.userId || m.user_id,
+                              name: m.name,
+                              email: m.email,
+                              role: m.role,
+                              joinedAt: m.joinedAt || m.joined_at,
+                          }))
+                        : [];
+                    set((state) => ({
                         members: members,
-                        isLoading: false,
-                    });
+                        currentProject:
+                            state.currentProject && state.currentProject._id === projectId
+                                ? { ...state.currentProject, members: normalizedMembers }
+                                : state.currentProject,
+                        ...(opts?.silent ? {} : { isLoading: false }),
+                    }));
                     return members;
                 } catch (error: any) {
                     set({
@@ -485,7 +546,7 @@ export const useProjectStore = create<ProjectState>()(
                             error.response?.data?.message ||
                             error.message ||
                             "Failed to fetch project members",
-                        isLoading: false,
+                        ...(opts?.silent ? {} : { isLoading: false }),
                     });
                     return [];
                 }
@@ -506,7 +567,7 @@ export const useProjectStore = create<ProjectState>()(
         }),
         {
             name: "project-storage",
-            partialize: (state) => ({
+            partialize: (state: ProjectState) => ({
                 projects: state.projects,
                 currentProject: state.currentProject,
                 members: state.members,
