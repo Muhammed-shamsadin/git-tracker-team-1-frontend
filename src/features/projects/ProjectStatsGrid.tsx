@@ -4,6 +4,10 @@ import { Activity, Users, GitBranch } from "lucide-react";
 import { ProjectDetail } from "@/types/Project";
 
 export function ProjectStatsGrid({ project }: { project: ProjectDetail }) {
+    const membersCount = Math.max(
+        project.membersCount ?? 0,
+        project.members?.length ?? 0
+    );
     return (
         <div className="gap-4 grid md:grid-cols-4">
             <Card>
@@ -27,9 +31,7 @@ export function ProjectStatsGrid({ project }: { project: ProjectDetail }) {
                     <Users className="w-4 h-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="font-bold text-2xl">
-                        {project.membersCount ?? project.members?.length ?? 0}
-                    </div>
+                    <div className="font-bold text-2xl">{membersCount}</div>
                 </CardContent>
             </Card>
             <Card>

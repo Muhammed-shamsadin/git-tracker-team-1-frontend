@@ -12,7 +12,7 @@ import {
     ActivityItem,
     RecentActivityList,
 } from "@/features/projects/RecentActivityList";
-import { CommitGraphPlaceholder } from "@/features/projects/CommitGraphPlaceholder";
+import { CommitTrendsChart } from "@/features/analytics/CommitTrendsChart";
 import { RepositoriesTable } from "@/features/projects/RepositoriesTable";
 import { MembersTable } from "@/features/projects/MembersTable";
 import { useAuthStore } from "@/stores/authStore";
@@ -21,18 +21,32 @@ import ProjectDetailsLoading from "@/features/projects/project-details-skeleton"
 import { AddDeveloperDialog } from "@/features/projects/add-developer-dialog";
 import { timeAgo } from "@/lib/utils";
 import { RecentActivity } from "@/features/projects/recent-activity";
+import { useAnalyticsStore } from "@/stores/analyticsStore";
 
 export default function ProjectDetailsPage() {
     const { id } = useParams();
     const { user } = useAuthStore();
-    const { currentProject, fetchProjectById, isLoading, error } =
-        useProjectStore();
+    const {
+        currentProject,
+        fetchProjectById,
+        fetchProjectMembers,
+        members,
+        isLoading,
+        error,
+    } = useProjectStore();
     const { canManageMembers, isMember } =
         useProjectPermissions(currentProject);
+    const { projectCommitData, fetchProjectAnalytics } = useAnalyticsStore();
 
     useEffect(() => {
-        if (id) fetchProjectById(id as string);
-    }, [id, fetchProjectById, user?.userType]);
+        if (id) {
+            const projectId = id as string;
+            fetchProjectById(projectId);
+            fetchProjectMembers(projectId, { silent: true });
+            // Load project commit activity for the last 30 days (month)
+            fetchProjectAnalytics(projectId, "month");
+        }
+    }, [id, fetchProjectById, fetchProjectMembers, fetchProjectAnalytics, user?.userType]);
 
     if (isLoading || !currentProject) {
         return (
@@ -57,7 +71,13 @@ export default function ProjectDetailsPage() {
                 <TabsContent value="overview" className="space-y-6">
                     <ProjectStatsGrid project={currentProject} />
                     <div className="gap-6 grid md:grid-cols-2">
-                        <CommitGraphPlaceholder />
+                        <CommitTrendsChart
+                            title="Commit Activity"
+                            description="Commits over the last 30 days"
+                            data={projectCommitData || []}
+                            timeRange="month"
+                            showTimeRangeTabs={false}
+                        />
                         <RecentActivity
                             projectId={currentProject._id}
                             title="Recent Project Activity"
@@ -105,7 +125,18 @@ export default function ProjectDetailsPage() {
                         )}
                     </div>
                     <MembersTable
-                        members={currentProject.members}
+                        members={
+                            currentProject.members &&
+                            currentProject.members.length > 0
+                                ? currentProject.members
+                                : (members || []).map((m) => ({
+                                      userId: (m as any).userId ?? (m as any).user_id,
+                                      name: (m as any).name,
+                                      email: (m as any).email,
+                                      role: (m as any).role,
+                                      joinedAt: (m as any).joinedAt ?? (m as any).joined_at,
+                                  }))
+                        }
                         projectId={currentProject._id}
                     />
                 </TabsContent>

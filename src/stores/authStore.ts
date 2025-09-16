@@ -36,8 +36,8 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>()(
-    persist(
-        (set, get) => ({
+    (persist as any)(
+    (set: (partial: Partial<AuthState> | ((state: AuthState) => Partial<AuthState>)) => void, get: () => AuthState) => ({
             user: null,
             token: null,
             isLoading: false,
@@ -116,9 +116,20 @@ export const useAuthStore = create<AuthState>()(
                     );
 
                     const { user } = parsed;
+                    const prev = get().user;
+                    const merged = {
+                        ...(prev || {}),
+                        ...user,
+                        // preserve phoneNumber if backend omits it
+                        phoneNumber: user?.phoneNumber ?? prev?.phoneNumber,
+                        profile: {
+                            ...(prev?.profile || {}),
+                            ...(user?.profile || {}),
+                        },
+                    } as any;
 
                     set({
-                        user,
+                        user: merged,
                         token,
                         isAuthenticated: true,
                     });
@@ -166,7 +177,7 @@ export const useAuthStore = create<AuthState>()(
         }),
         {
             name: "auth-storage",
-            partialize: (state) => ({
+            partialize: (state: AuthState) => ({
                 user: state.user,
                 token: state.token,
                 isAuthenticated: state.isAuthenticated,

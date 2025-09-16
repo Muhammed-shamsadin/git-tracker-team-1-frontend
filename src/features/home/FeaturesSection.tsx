@@ -13,42 +13,42 @@ const features = [
         title: "Register and track repositories effortlessly",
         description:
             "Register your local Git repositories and connect them to projects. Track changes, commits, and branches automatically with real-time monitoring.",
-        image: "/placeholder-repo-management.jpg",
+        image: <img src="/assets/repo detail.png" alt="Repository Management" className="w-full h-auto rounded-lg shadow" />,
     },
     {
         category: "Team Collaboration",
         title: "Manage projects and team members",
         description:
             "Create and manage development projects with ease. Invite team members, organize repositories under specific projects, and streamline collaboration.",
-        image: "/placeholder-team-collaboration.jpg",
+        image: <img src="/assets/new project.png" alt="Team Collaboration" className="w-full h-auto rounded-lg shadow" />,
     },
     {
         category: "Analytics & Insights",
         title: "Comprehensive performance analytics",
         description:
             "Get detailed insights into developer contributions, commit patterns, and project progress. Analyze team performance with powerful metrics and visualizations.",
-        image: "/placeholder-analytics.jpg",
+        image: <img src="/assets/analytics.png" alt="Analytics & Insights" className="w-full h-auto rounded-lg shadow" />,
     },
     {
         category: "Data Collection",
         title: "Automated Git data collection",
         description:
             "Seamlessly collect Git data including branch information, commit details, and file changes from your registered repositories with automated polling.",
-        image: "/placeholder-data-collection.jpg",
+        image: <img src="/assets/commit detail page.png" alt="Data Collection" className="w-full h-auto rounded-lg shadow" />,
     },
     {
         category: "Real-time Monitoring",
         title: "Monitor repository activity live",
         description:
             "Track repository activity in real-time with periodic polling. Stay updated on the latest changes and monitor development progress as it happens.",
-        image: "/placeholder-monitoring.jpg",
+        image: <img src="/assets/dev project.png" alt="Real-time Monitoring" className="w-full h-auto rounded-lg shadow" />,
     },
     {
         category: "Performance Metrics",
         title: "Compare and analyze team insights",
         description:
             "Compare developer contributions across projects and analyze team performance metrics. Identify bottlenecks and optimize your development workflow.",
-        image: "/placeholder-insights.jpg",
+        image: <img src="/assets/repo commit.png" alt="Performance Metrics" className="w-full h-auto rounded-lg shadow" />,
     },
 ];
 
@@ -78,10 +78,7 @@ export function FeaturesSection() {
                             {/* Feature Image/Placeholder */}
                             <div className="group flex justify-center items-center bg-muted border border-border/50 rounded-xl w-full aspect-[4/3] overflow-hidden transition-all duration-300 basis-1/2">
                                 <div className="p-8 text-center">
-                                    <p className="text-muted-foreground text-sm">
-                                        {feature.title.toLowerCase()} interface
-                                        mockup
-                                    </p>
+                                    {feature.image}
                                 </div>
                             </div>
 
