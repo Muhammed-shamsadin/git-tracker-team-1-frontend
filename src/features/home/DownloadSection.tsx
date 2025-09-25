@@ -15,9 +15,9 @@ const downloadOptions = [
         platform: "Windows",
         icon: Monitor,
         description: "Windows 10 or later",
-        size: "255.3 MB",
-        version: "v0.2.2",
-        downloadUrl: "#",
+        size: "89 MB",
+        version: "v1.0.1",
+        downloadUrl: "https://drive.google.com/file/d/1uZ521E7l_H34HrMUeyc5EWUF3FzTDSco/view",
     },
     {
         platform: "macOS",
@@ -61,7 +61,7 @@ export function DownloadSection() {
                 </div>
 
                 <div className="gap-8 grid md:grid-cols-3 mx-auto mb-16 max-w-5xl">
-                    {downloadOptions.map((option) => (
+                    {downloadOptions.map((option, idx) => (
                         <Card
                             key={option.platform}
                             className="group hover:shadow-lg text-center transition-all hover:-translate-y-1 duration-300"
@@ -82,12 +82,19 @@ export function DownloadSection() {
                                     <span>Version {option.version}</span>
                                     <span>{option.size}</span>
                                 </div>
-                                <Button className="w-full" asChild>
-                                    <a href={option.downloadUrl}>
+                                {idx === 0 ? (
+                                    <Button className="w-full" asChild>
+                                        <a href={option.downloadUrl} download>
+                                            <Download className="mr-2 w-4 h-4" />
+                                            Download
+                                        </a>
+                                    </Button>
+                                ) : (
+                                    <Button className="w-full" disabled>
                                         <Download className="mr-2 w-4 h-4" />
-                                        Download
-                                    </a>
-                                </Button>
+                                        Coming Soon
+                                    </Button>
+                                )}
                             </CardContent>
                         </Card>
                     ))}
